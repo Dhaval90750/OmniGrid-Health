@@ -1,0 +1,22 @@
+# Backend
+codebase/backend/target/
+codebase/backend/.mvn/
+codebase/backend/.idea/
+
+# Frontend
+codebase/frontend/node_modules/
+codebase/frontend/.next/
+codebase/frontend/out/
+
+# Mobile
+codebase/mobile/build/
+codebase/mobile/.gradle/
+
+# IDE / Other
+.gemini/
+.vscode/
+.env
+codebase/postgres_data/
+codebase/elasticsearch_data/
+codebase/redis_data/
+*.log

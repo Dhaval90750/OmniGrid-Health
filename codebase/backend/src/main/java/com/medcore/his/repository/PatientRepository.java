@@ -1,0 +1,26 @@
+package com.medcore.his.repository;
+
+import com.medcore.his.domain.patient.Patient;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface PatientRepository extends JpaRepository<Patient, UUID> {
+    
+    Optional<Patient> findByUhid(String uhid);
+    
+    @Query("SELECT p FROM Patient p WHERE " +
+           "LOWER(p.uhid) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(p.mobileNumber) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(p.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(p.lastName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Patient> searchPatients(String keyword);
+
+    @Query("SELECT COUNT(p) FROM Patient p")
+    long countTotalPatients();
+}

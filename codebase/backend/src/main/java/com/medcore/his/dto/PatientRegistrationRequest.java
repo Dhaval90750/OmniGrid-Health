@@ -1,0 +1,36 @@
+package com.medcore.his.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+public class PatientRegistrationRequest {
+    
+    @NotBlank
+    private String firstName;
+    
+    @NotBlank
+    private String lastName;
+    
+    @NotNull
+    private LocalDate dateOfBirth;
+    
+    @NotBlank
+    private String gender;
+    
+    @NotBlank
+    private String mobileNumber;
+    
+    private String bloodGroup;
+    private String email;
+    private String addressLine1;
+    private String city;
+    private String state;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+}
