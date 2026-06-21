@@ -24,16 +24,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // MVP Testing Bypass: Accept admin/admin since the DB is empty
-      if (username === "admin" && password === "admin") {
-        const dummyToken = "mock_jwt_token_for_testing";
-        login({ id: "1", username: "admin", roles: ["ROLE_ADMIN"] }, dummyToken);
-        router.push("/");
-        return;
-      }
-
       // Real backend call
       const response = await api.post("/auth/login", { username, password });
+      
+      // Backend returns JwtResponse: { token, id, username, email, roles }
       const { token, id, username: uname, roles } = response.data;
       
       login({ id, username: uname, roles }, token);

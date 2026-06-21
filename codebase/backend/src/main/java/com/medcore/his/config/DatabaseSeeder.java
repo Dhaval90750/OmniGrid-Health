@@ -10,8 +10,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.medcore.his.domain.auth.User;
+import com.medcore.his.domain.auth.Role;
+import com.medcore.his.repository.UserRepository;
+import com.medcore.his.repository.RoleRepository;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Configuration
 public class DatabaseSeeder {
@@ -20,8 +26,31 @@ public class DatabaseSeeder {
     @Transactional
     CommandLineRunner initDatabase(PatientRepository patientRepo, 
                                    StaffProfileRepository staffRepo, 
-                                   BloodInventoryRepository bloodRepo) {
+                                   BloodInventoryRepository bloodRepo,
+                                   UserRepository userRepo,
+                                   RoleRepository roleRepo,
+                                   PasswordEncoder passwordEncoder) {
         return args -> {
+            System.out.println("Checking Role Seeding...");
+            Role adminRole = roleRepo.findByName("ROLE_ADMIN").orElseGet(() -> {
+                Role role = new Role();
+                role.setName("ROLE_ADMIN");
+                role.setDescription("Administrator with full access");
+                return roleRepo.save(role);
+            });
+
+            System.out.println("Checking User Seeding...");
+            if (!userRepo.existsByUsername("admin")) {
+                User admin = new User();
+                admin.setUsername("admin");
+                admin.setPasswordHash(passwordEncoder.encode("admin123"));
+                admin.setFirstName("System");
+                admin.setLastName("Administrator");
+                admin.setEmail("admin@omnigrid.health");
+                admin.getRoles().add(adminRole);
+                userRepo.save(admin);
+                System.out.println("Seeded Default Admin: admin / admin123");
+            }
             if (staffRepo.count() == 0) {
                 System.out.println("Seeding StaffProfiles...");
                 
