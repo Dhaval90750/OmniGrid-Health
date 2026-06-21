@@ -82,6 +82,17 @@ export default function LoginPage() {
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
+
+            <div className="text-center mt-4">
+              <span className="text-sm text-text-secondary">Don't have an account? </span>
+              <button 
+                type="button" 
+                onClick={() => router.push("/register")}
+                className="text-sm text-primary hover:underline font-semibold"
+              >
+                Register Here
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>
