@@ -29,7 +29,7 @@ export default function IpdDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        
+
         {/* Quick Stats */}
         <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -64,8 +64,8 @@ export default function IpdDashboard() {
             <div className="flex justify-between items-center w-full">
               <CardTitle>Active Admissions</CardTitle>
               <div className="w-64">
-                <Input 
-                  placeholder="Search by UHID, Ward, Bed..." 
+                <Input
+                  placeholder="Search by UHID, Ward, Bed..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
