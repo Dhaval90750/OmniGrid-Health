@@ -3,9 +3,9 @@ spring:
     name: his-backend
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/medcore_db
-    username: medcore
-    password: medcore_password
+    url: jdbc:postgresql://db.xsozisuoykdqtshyhrkd.supabase.co:5432/postgres
+    username: postgres
+    password: fzk#k92a/GsENV7
     driver-class-name: org.postgresql.Driver
     
   jpa:

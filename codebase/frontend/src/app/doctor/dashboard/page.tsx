@@ -31,7 +31,7 @@ export default function DoctorDashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-semibold text-text-primary">Doctor Dashboard</h2>
-          <p className="text-text-secondary text-sm">Today's OPD Appointments</p>
+          <p className="text-text-secondary text-sm">Today&apos;s OPD Appointments</p>
         </div>
       </div>
 

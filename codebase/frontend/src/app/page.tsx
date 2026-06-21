@@ -11,7 +11,7 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-text-primary mb-1">Welcome back, Dr. Smith</h2>
-          <p className="text-text-secondary text-sm">Here is what's happening today in OmniGrid Health.</p>
+          <p className="text-text-secondary text-sm">Here is what&apos;s happening today in OmniGrid Health.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="secondary">View Schedule</Button>

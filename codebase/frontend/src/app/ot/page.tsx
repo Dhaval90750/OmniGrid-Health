@@ -49,7 +49,7 @@ export default function OtDashboard() {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Today's Surgeries</CardTitle>
+              <CardTitle>Today&apos;s Surgeries</CardTitle>
               <Button variant="secondary">Book New Surgery</Button>
             </div>
           </CardHeader>

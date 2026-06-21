@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -13,13 +14,7 @@ export default function PatientProfile() {
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      fetchPatientDetails();
-    }
-  }, [id]);
-
-  const fetchPatientDetails = async () => {
+  const fetchPatientDetails = useCallback(async () => {
     try {
       const response = await api.get(`/patients/${id}`);
       setPatient(response.data);
@@ -28,7 +23,13 @@ export default function PatientProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchPatientDetails();
+    }
+  }, [id, fetchPatientDetails]);
 
   if (loading) return <div className="p-8 text-text-secondary">Loading patient profile...</div>;
   if (!patient) return <div className="p-8 text-error">Patient not found.</div>;
