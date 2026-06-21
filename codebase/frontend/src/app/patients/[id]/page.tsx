@@ -95,10 +95,30 @@ export default function PatientProfile() {
                     {patient.bloodGroup ? <Badge variant="error">{patient.bloodGroup}</Badge> : "—"}
                   </div>
                 </div>
+                <div>
+                  <div className="text-xs text-text-secondary mb-1">Marital Status</div>
+                  <div className="font-medium text-text-primary">{patient.maritalStatus || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary mb-1">Nationality</div>
+                  <div className="font-medium text-text-primary">{patient.nationality || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary mb-1">Language</div>
+                  <div className="font-medium text-text-primary">{patient.primaryLanguage || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary mb-1">Aadhaar (National ID)</div>
+                  <div className="font-medium text-text-primary">{patient.nationalId || "—"}</div>
+                </div>
                 <div className="col-span-2 md:col-span-3">
                   <div className="text-xs text-text-secondary mb-1">Address</div>
                   <div className="font-medium text-text-primary">
-                    {patient.addressLine1}, {patient.city}, {patient.state}
+                    {patient.addressLine1}
+                    {patient.addressLine2 ? `, ${patient.addressLine2}` : ""}
+                    {`, ${patient.city}, ${patient.state}`}
+                    {patient.country ? `, ${patient.country}` : ""}
+                    {patient.zipCode ? ` - ${patient.zipCode}` : ""}
                   </div>
                 </div>
               </div>
@@ -110,10 +130,14 @@ export default function PatientProfile() {
               <CardTitle>Emergency Contact</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <div className="text-xs text-text-secondary mb-1">Name</div>
                   <div className="font-medium text-text-primary">{patient.emergencyContactName || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary mb-1">Relationship</div>
+                  <div className="font-medium text-text-primary">{patient.emergencyContactRelation || "—"}</div>
                 </div>
                 <div>
                   <div className="text-xs text-text-secondary mb-1">Phone</div>

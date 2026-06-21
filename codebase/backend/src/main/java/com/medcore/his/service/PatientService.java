@@ -42,9 +42,17 @@ public class PatientService {
         patient.setBloodGroup(request.getBloodGroup());
         patient.setEmail(request.getEmail());
         patient.setAddressLine1(request.getAddressLine1());
+        patient.setAddressLine2(request.getAddressLine2());
         patient.setCity(request.getCity());
         patient.setState(request.getState());
+        patient.setCountry(request.getCountry());
+        patient.setZipCode(request.getZipCode());
+        patient.setMaritalStatus(request.getMaritalStatus());
+        patient.setNationality(request.getNationality());
+        patient.setPrimaryLanguage(request.getPrimaryLanguage());
+        patient.setNationalId(request.getNationalId());
         patient.setEmergencyContactName(request.getEmergencyContactName());
+        patient.setEmergencyContactRelation(request.getEmergencyContactRelation());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         
         // Generate UHID: MED-YYYY-XXXXXX

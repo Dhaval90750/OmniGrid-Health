@@ -29,8 +29,16 @@ public class PatientRegistrationRequest {
     private String bloodGroup;
     private String email;
     private String addressLine1;
+    private String addressLine2;
     private String city;
     private String state;
+    private String country;
+    private String zipCode;
+    private String maritalStatus;
+    private String nationality;
+    private String primaryLanguage;
+    private String nationalId;
     private String emergencyContactName;
+    private String emergencyContactRelation;
     private String emergencyContactPhone;
 }
