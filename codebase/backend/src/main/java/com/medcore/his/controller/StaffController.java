@@ -4,7 +4,9 @@ import com.medcore.his.domain.staff.CrossConsultation;
 import com.medcore.his.domain.staff.DutyRoster;
 import com.medcore.his.domain.staff.LeaveRequest;
 import com.medcore.his.domain.staff.StaffProfile;
+import com.medcore.his.domain.clinical.Visit;
 import com.medcore.his.service.StaffService;
+import com.medcore.his.repository.VisitRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +20,14 @@ import java.util.List;
 public class StaffController {
 
     private final StaffService staffService;
+    private final VisitRepository visitRepository;
+    private final com.medcore.his.repository.StaffProfileRepository staffProfileRepository;
 
     @Autowired
-    public StaffController(StaffService staffService) {
+    public StaffController(StaffService staffService, VisitRepository visitRepository, com.medcore.his.repository.StaffProfileRepository staffProfileRepository) {
         this.staffService = staffService;
+        this.visitRepository = visitRepository;
+        this.staffProfileRepository = staffProfileRepository;
     }
 
     @GetMapping("/profiles")
@@ -32,6 +38,16 @@ public class StaffController {
     @PostMapping("/profiles")
     public ResponseEntity<StaffProfile> createStaff(@RequestBody StaffProfile staff) {
         return new ResponseEntity<>(staffService.createStaff(staff), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<StaffProfile>> getDoctors() {
+        return ResponseEntity.ok(staffProfileRepository.findByRoleIn(List.of("Consultant", "Resident")));
+    }
+
+    @GetMapping("/doctors/{id}/queue")
+    public ResponseEntity<List<Visit>> getDoctorQueue(@PathVariable java.util.UUID id) {
+        return ResponseEntity.ok(visitRepository.findActiveQueueByDoctorAndDate(id, java.time.LocalDateTime.now()));
     }
 
     @GetMapping("/rosters")

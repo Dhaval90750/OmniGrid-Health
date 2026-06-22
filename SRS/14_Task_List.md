@@ -172,31 +172,33 @@
 - [ ] GET /api/v1/patients/{uhid}/qr — Generate/retrieve QR code
 - [ ] POST /api/v1/patients/{uhid}/photo — Upload patient photo (webcam)
 - [ ] GET /api/v1/patients/{uhid}/timeline — Patient event timeline
-- [ ] Implement UHID auto-generation (HOS-YYYY-NNNNNNN format)
+- [x] Implement UHID auto-generation (HOS-YYYY-NNNNNNN format)
 - [ ] Implement QR code generation (ZXing, JSON payload with UHID, name, DOB, blood group, allergy flag)
-- [ ] Implement duplicate detection (fuzzy matching on name + DOB + mobile)
+- [x] Implement duplicate detection (fuzzy matching on name + DOB + mobile)
 - [ ] GET /api/v1/patients/duplicates — Get potential duplicate list for review
 - [ ] POST /api/v1/patients/merge — Merge duplicate records (admin only)
 - [ ] Implement QR wristband print (Zebra ZPL thermal print format)
 - [ ] Implement registration slip PDF generation
 
 ### Backend — Allergy Service
-- [ ] POST /api/v1/patients/{uhid}/allergies — Add allergy
-- [ ] GET /api/v1/patients/{uhid}/allergies — List allergies
+- [x] POST /api/v1/patients/{uhid}/allergies — Add allergy
+- [x] GET /api/v1/patients/{uhid}/allergies — List allergies
 - [ ] PUT /api/v1/patients/{uhid}/allergies/{id} — Update allergy status
 - [ ] Implement allergy banner data (for display on every clinical screen)
 
 ### Frontend — Patient Screens
-- [ ] Patient search page (search bar, QR scan button, results table with quick actions)
-- [ ] New patient registration form (multi-step: personal → contact → emergency → insurance → photo)
+- [x] Patient search page (search bar, QR scan button, results table with quick actions)
+- [x] New patient registration form (multi-step: personal → contact → emergency → insurance → photo)
 - [ ] Registration form validation (required fields, format checks, Aadhaar Verhoeff)
-- [ ] Photo capture component (webcam integration)
-- [ ] Patient profile page (demographics card, QR display, edit button, allergy section, visit history)
-- [ ] Allergy entry form (allergen search, severity, reaction type)
-- [ ] Allergy banner component (red banner on all clinical screens)
+- [x] Photo capture component (webcam integration)
+- [x] Patient profile dashboard (overview of demographics, active alerts, vitals)
+- [x] Patient QR code generation + printable PDF for physical ID cards
+- [x] Patient profile page (demographics card, QR display, edit button, allergy section, visit history)
+- [x] Allergy entry form (allergen search, severity, reaction type)
+- [x] Allergy banner component (red banner on all clinical screens)
 - [ ] Duplicate review modal (side-by-side comparison, merge option)
-- [ ] QR wristband print button + preview
-- [ ] Registration slip print/PDF
+- [x] QR wristband print button + preview
+- [x] Registration slip print/PDF
 
 ### Testing
 - [ ] Unit tests: UHID generation, QR generation, duplicate detection
@@ -719,3 +721,17 @@
 ---
 
 *Task List v1.0 — MedCore HIS — Total: ~500+ individual tasks*
+
+## Mobile App Implementation
+- [x] Scaffold Android app with Jetpack Compose
+- [x] Implement UI for QR Scanner, AI Scribe, and Dashboards
+- [x] Implement dynamic runtime permissions for `CAMERA` and `RECORD_AUDIO`
+- [x] Implement local NetworkClient for API requests
+- [x] Set up Hilt Dependency Injection
+- [x] Configure local SQLite caching schema using Room Database
+- [x] Implement sync background jobs using WorkManager
+- [x] Bedside Vital Entry: Create entry dialog to save vitals
+- [x] MAR Bedside Barcode Scan: Scan medication barcode
+- [x] Nursing Assessments: Add Morse Falls Risk and Braden Pressure Ulcer
+- [x] Incidents Reporting: Form to log adverse events
+- [x] Operations Task Tracker: Bed turnaround, porter request

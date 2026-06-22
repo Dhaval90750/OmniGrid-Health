@@ -3,8 +3,14 @@ package com.medcore.his.controller;
 import com.medcore.his.dto.PatientRegistrationRequest;
 import com.medcore.his.dto.PatientResponse;
 import com.medcore.his.service.PatientService;
+import com.medcore.his.service.PdfGenerationService;
+import com.medcore.his.service.QrCodeService;
+import com.medcore.his.repository.PatientRepository;
+import com.medcore.his.domain.patient.Patient;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,10 +25,19 @@ import java.util.UUID;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PdfGenerationService pdfGenerationService;
+    private final QrCodeService qrCodeService;
+    private final PatientRepository patientRepository;
 
     @Autowired
-    public PatientController(PatientService patientService) {
+    public PatientController(PatientService patientService,
+                             PdfGenerationService pdfGenerationService,
+                             QrCodeService qrCodeService,
+                             PatientRepository patientRepository) {
         this.patientService = patientService;
+        this.pdfGenerationService = pdfGenerationService;
+        this.qrCodeService = qrCodeService;
+        this.patientRepository = patientRepository;
     }
 
     @PostMapping
@@ -42,5 +57,27 @@ public class PatientController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('NURSE') or hasRole('RECEPTIONIST')")
     public ResponseEntity<List<PatientResponse>> searchPatients(@RequestParam String q) {
         return ResponseEntity.ok(patientService.searchPatients(q));
+    }
+
+    @GetMapping("/{id}/qr-pdf")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('NURSE') or hasRole('RECEPTIONIST')")
+    public ResponseEntity<byte[]> getPatientQrPdf(@PathVariable UUID id) {
+        Patient patient = patientRepository.findById(id).orElse(null);
+        if (patient == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        String qrJson = "{\"uhid\":\"" + patient.getUhid() + "\",\"name\":\"" + patient.getFirstName() + " " + patient.getLastName() + "\"}";
+        byte[] qrBytes = qrCodeService.generateQrCodeImage(qrJson, 150, 150);
+        
+        byte[] pdfBytes = pdfGenerationService.generatePatientQrCardPdf(patient, qrBytes);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "patient_" + patient.getUhid() + "_qr.pdf");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }

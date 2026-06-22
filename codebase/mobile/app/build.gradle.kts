@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -56,6 +58,22 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     
+    // Room
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+
+    // WorkManager
+    val work_version = "2.9.0"
+    implementation("androidx.work:work-runtime-ktx:$work_version")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.50")
+    ksp("com.google.dagger:hilt-android-compiler:2.50")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("androidx.hilt:hilt-work:1.1.0")
+    ksp("androidx.hilt:hilt-compiler:1.1.0")
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

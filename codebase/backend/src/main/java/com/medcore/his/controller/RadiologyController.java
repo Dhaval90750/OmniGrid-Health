@@ -1,6 +1,7 @@
 package com.medcore.his.controller;
 
 import com.medcore.his.domain.radiology.RadiologyOrder;
+import com.medcore.his.domain.radiology.RadiologyReport;
 import com.medcore.his.domain.radiology.RadiologyTemplate;
 import com.medcore.his.service.RadiologyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,12 @@ public class RadiologyController {
     @PostMapping("/orders")
     public ResponseEntity<RadiologyOrder> createOrder(@RequestBody RadiologyOrder order) {
         RadiologyOrder saved = radiologyService.placeOrder(order);
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/reports")
+    public ResponseEntity<RadiologyReport> saveReport(@RequestBody RadiologyReport report) {
+        RadiologyReport saved = radiologyService.saveReport(report);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 }

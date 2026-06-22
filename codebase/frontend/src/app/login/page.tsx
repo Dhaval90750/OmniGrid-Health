@@ -84,7 +84,7 @@ export default function LoginPage() {
             </Button>
 
             <div className="text-center mt-4">
-              <span className="text-sm text-text-secondary">Don't have an account? </span>
+              <span className="text-sm text-text-secondary">Don&apos;t have an account? </span>
               <button 
                 type="button" 
                 onClick={() => router.push("/register")}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Webcam from "react-webcam";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -30,8 +31,24 @@ export default function NewPatientRegistration() {
     nationalId: "",
     emergencyContactName: "",
     emergencyContactRelation: "",
-    emergencyContactPhone: ""
+    emergencyContactName: "",
+    emergencyContactRelation: "",
+    emergencyContactPhone: "",
+    photoBase64: ""
   });
+  
+  const webcamRef = useRef<Webcam>(null);
+
+  const capturePhoto = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setFormData(prev => ({ ...prev, photoBase64: imageSrc }));
+    }
+  }, [webcamRef]);
+
+  const clearPhoto = () => {
+    setFormData(prev => ({ ...prev, photoBase64: "" }));
+  };
 
   const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", 
@@ -213,6 +230,32 @@ export default function NewPatientRegistration() {
               </div>
 
               <Input label="Contact Phone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone} onChange={handleChange} />
+            </CardContent>
+          </Card>
+
+          {/* Photo Capture */}
+          <Card>
+            <CardHeader><CardTitle>Patient Photo</CardTitle></CardHeader>
+            <CardContent className="flex flex-col items-center gap-4">
+              {formData.photoBase64 ? (
+                <div className="flex flex-col items-center gap-4">
+                  <img src={formData.photoBase64} alt="Patient" className="w-64 h-48 object-cover rounded-md border border-border" />
+                  <Button type="button" variant="secondary" onClick={clearPhoto}>Retake Photo</Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 w-full">
+                  <div className="w-full max-w-sm rounded-md overflow-hidden border border-border">
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={{ facingMode: "user" }}
+                      className="w-full"
+                    />
+                  </div>
+                  <Button type="button" variant="primary" onClick={capturePhoto}>Capture Photo</Button>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="justify-end gap-4">
               <Button type="button" variant="secondary" onClick={() => router.push("/patients")}>Cancel</Button>

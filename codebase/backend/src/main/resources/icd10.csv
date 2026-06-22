@@ -1,0 +1,501 @@
+code,description,category
+E67.0,Hypervitaminosis A,General
+A01.1,Paratyphoid fever A,General
+A79.82,Anaplasmosis [A. phagocytophilum],General
+E76.210,Morquio A mucopolysaccharidoses,General
+E78.41,Elevated Lipoprotein(a),General
+Z67.A2,Duffy a positive,General
+M96.830,Postprocedural hemorrhage of a musculoskeletal structure following a musculoskeletal system procedure,General
+M96.840,Postprocedural hematoma of a musculoskeletal structure following a musculoskeletal system procedure,General
+M96.842,Postprocedural seroma of a musculoskeletal structure following a musculoskeletal system procedure,General
+E50.9,"Vitamin A deficiency, unspecified",General
+Z14.01,Asymptomatic hemophilia A carrier,General
+Z14.02,Symptomatic hemophilia A carrier,General
+Z73.1,Type A behavior pattern,General
+I97.610,Postprocedural hemorrhage of a circulatory system organ or structure following a cardiac catheterization,General
+I97.630,Postprocedural hematoma of a circulatory system organ or structure following a cardiac catheterization,General
+I97.640,Postprocedural seroma of a circulatory system organ or structure following a cardiac catheterization,General
+M96.810,Intraoperative hemorrhage and hematoma of a musculoskeletal structure complicating a musculoskeletal system procedure,General
+M96.820,Accidental puncture and laceration of a musculoskeletal structure during a musculoskeletal system procedure,General
+B15.0,Hepatitis A with hepatic coma,General
+B15.9,Hepatitis A without hepatic coma,General
+E50.4,Vitamin A deficiency with keratomalacia,General
+E64.1,Sequelae of vitamin A deficiency,General
+E75.240,Niemann-Pick disease type A,General
+E88.811,"Insulin resistance syndrome, Type A",General
+H50.06,Alternating esotropia with A pattern,General
+H50.16,Alternating exotropia with A pattern,General
+T81.44XS,"Sepsis following a procedure, sequela",General
+Y93.81,"Activity, refereeing a sports activity",General
+Z67.10,"Type A blood, Rh positive",General
+Z67.11,"Type A blood, Rh negative",General
+Z67.A4,Duffy a and b positive,General
+G97.51,Postprocedural hemorrhage of a nervous system organ or structure following a nervous system procedure,General
+G97.61,Postprocedural hematoma of a nervous system organ or structure following a nervous system procedure,General
+G97.63,Postprocedural seroma of a nervous system organ or structure following a nervous system procedure,General
+J95.830,Postprocedural hemorrhage of a respiratory system organ or structure following a respiratory system procedure,General
+J95.860,Postprocedural hematoma of a respiratory system organ or structure following a respiratory system procedure,General
+J95.862,Postprocedural seroma of a respiratory system organ or structure following a respiratory system procedure,General
+K91.840,Postprocedural hemorrhage of a digestive system organ or structure following a digestive system procedure,General
+K91.870,Postprocedural hematoma of a digestive system organ or structure following a digestive system procedure,General
+K91.872,Postprocedural seroma of a digestive system organ or structure following a digestive system procedure,General
+N99.820,Postprocedural hemorrhage of a genitourinary system organ or structure following a genitourinary system procedure,General
+N99.840,Postprocedural hematoma of a genitourinary system organ or structure following a genitourinary system procedure,General
+N99.842,Postprocedural seroma of a genitourinary system organ or structure following a genitourinary system procedure,General
+I97.410,Intraoperative hemorrhage and hematoma of a circulatory system organ or structure complicating a cardiac catheterization,General
+I97.411,Intraoperative hemorrhage and hematoma of a circulatory system organ or structure complicating a cardiac bypass,General
+A40.0,"Sepsis due to streptococcus, group A",General
+D68.020,"Von Willebrand disease, type 2A",General
+D80.2,Selective deficiency of immunoglobulin A [IgA],General
+E50.0,Vitamin A deficiency with conjunctival xerosis,General
+E50.2,Vitamin A deficiency with corneal xerosis,General
+E50.5,Vitamin A deficiency with night blindness,General
+E50.8,Other manifestations of vitamin A deficiency,General
+E75.244,Niemann-Pick disease type A/B,General
+N18.31,"Chronic kidney disease, stage 3a",General
+QA0.0101,SCN2A-related neurodevelopmental disorder,General
+QA0.0102,CACNA1A-related neurodevelopmental disorder,General
+QA0.0131,SLC6A1-related disorder,General
+T81.40XS,"Infection following a procedure, unspecified, sequela",General
+T81.44XA,"Sepsis following a procedure, initial encounter",General
+T81.44XD,"Sepsis following a procedure, subsequent encounter",General
+Z55.5,Less than a high school diploma,General
+Z83.430,Family history of elevated lipoprotein(a),General
+G97.31,Intraoperative hemorrhage and hematoma of a nervous system organ or structure complicating a nervous system procedure,General
+I97.51,Accidental puncture and laceration of a circulatory system organ or structure during a circulatory system procedure,General
+J95.61,Intraoperative hemorrhage and hematoma of a respiratory system organ or structure complicating a respiratory system procedure,General
+J95.71,Accidental puncture and laceration of a respiratory system organ or structure during a respiratory system procedure,General
+K91.61,Intraoperative hemorrhage and hematoma of a digestive system organ or structure complicating a digestive system procedure,General
+K91.71,Accidental puncture and laceration of a digestive system organ or structure during a digestive system procedure,General
+N99.61,Intraoperative hemorrhage and hematoma of a genitourinary system organ or structure complicating a genitourinary system procedure,General
+N99.71,Accidental puncture and laceration of a genitourinary system organ or structure during a genitourinary system procedure,General
+E50.7,Other ocular manifestations of vitamin A deficiency,General
+E74.820,SLC13A5 Citrate Transporter Disorder,General
+H50.021,"Monocular esotropia with A pattern, right eye",General
+H50.022,"Monocular esotropia with A pattern, left eye",General
+H50.121,"Monocular exotropia with A pattern, right eye",General
+H50.122,"Monocular exotropia with A pattern, left eye",General
+N02.B9,Other recurrent and persistent immunoglobulin A nephropathy,General
+P70.1,Syndrome of infant of a diabetic mother,General
+Q93.59,Other deletions of part of a chromosome,General
+T81.40XA,"Infection following a procedure, unspecified, initial encounter",General
+T81.40XD,"Infection following a procedure, unspecified, subsequent encounter",General
+T81.82XS,"Emphysema (subcutaneous) resulting from a procedure, sequela",General
+A19.0,Acute miliary tuberculosis of a single specified site,General
+E50.3,Vitamin A deficiency with corneal ulceration and xerosis,General
+E50.6,Vitamin A deficiency with xerophthalmic scars of cornea,General
+T81.49XS,"Infection following a procedure, other surgical site, sequela",General
+T81.82XA,"Emphysema (subcutaneous) resulting from a procedure, initial encounter",General
+T81.82XD,"Emphysema (subcutaneous) resulting from a procedure, subsequent encounter",General
+E50.1,Vitamin A deficiency with Bitot's spot and conjunctival xerosis,General
+G97.41,Accidental puncture or laceration of dura during a procedure,General
+M96.831,Postprocedural hemorrhage of a musculoskeletal structure following other procedure,General
+M96.841,Postprocedural hematoma of a musculoskeletal structure following other procedure,General
+M96.843,Postprocedural seroma of a musculoskeletal structure following other procedure,General
+N02.B1,Recurrent and persistent immunoglobulin A nephropathy with glomerular lesion,General
+T81.41XS,"Infection following a procedure, superficial incisional surgical site, sequela",General
+T81.42XS,"Infection following a procedure, deep incisional surgical site, sequela",General
+T81.49XA,"Infection following a procedure, other surgical site, initial encounter",General
+T81.49XD,"Infection following a procedure, other surgical site, subsequent encounter",General
+W44.F1XS,"Bezoar entering into or through a natural orifice, sequela",General
+W44.F3XS,"Food entering into or through a natural orifice, sequela",General
+W44.F4XS,"Insect entering into or through a natural orifice, sequela",General
+W44.H1XS,"Needle entering into or through a natural orifice, sequela",General
+Z98.871,Personal history of in utero procedure while a fetus,General
+B95.0,"Streptococcus, group A, as the cause of diseases classified elsewhere",General
+F52.5,Vaginismus not due to a substance or known physiological condition,General
+F52.6,Dyspareunia not due to a substance or known physiological condition,General
+F98.0,Enuresis not due to a substance or known physiological condition,General
+F98.1,Encopresis not due to a substance or known physiological condition,General
+J09.X1,Influenza due to identified novel influenza A virus with pneumonia,General
+N02.B3,Recurrent and persistent immunoglobulin A nephropathy with diffuse membranoproliferative glomerulonephritis,General
+N02.B4,Recurrent and persistent immunoglobulin A nephropathy with diffuse membranous glomerulonephritis,General
+N02.B6,Recurrent and persistent immunoglobulin A nephropathy with diffuse mesangiocapillary glomerulonephritis,General
+O36.1111,"Maternal care for Anti-A sensitization, first trimester, fetus 1",General
+O36.1112,"Maternal care for Anti-A sensitization, first trimester, fetus 2",General
+O36.1113,"Maternal care for Anti-A sensitization, first trimester, fetus 3",General
+O36.1114,"Maternal care for Anti-A sensitization, first trimester, fetus 4",General
+O36.1115,"Maternal care for Anti-A sensitization, first trimester, fetus 5",General
+O36.1119,"Maternal care for Anti-A sensitization, first trimester, other fetus",General
+O36.1121,"Maternal care for Anti-A sensitization, second trimester, fetus 1",General
+O36.1122,"Maternal care for Anti-A sensitization, second trimester, fetus 2",General
+O36.1123,"Maternal care for Anti-A sensitization, second trimester, fetus 3",General
+O36.1124,"Maternal care for Anti-A sensitization, second trimester, fetus 4",General
+O36.1125,"Maternal care for Anti-A sensitization, second trimester, fetus 5",General
+O36.1129,"Maternal care for Anti-A sensitization, second trimester, other fetus",General
+O36.1131,"Maternal care for Anti-A sensitization, third trimester, fetus 1",General
+O36.1132,"Maternal care for Anti-A sensitization, third trimester, fetus 2",General
+O36.1133,"Maternal care for Anti-A sensitization, third trimester, fetus 3",General
+O36.1134,"Maternal care for Anti-A sensitization, third trimester, fetus 4",General
+O36.1135,"Maternal care for Anti-A sensitization, third trimester, fetus 5",General
+O36.1139,"Maternal care for Anti-A sensitization, third trimester, other fetus",General
+O36.1191,"Maternal care for Anti-A sensitization, unspecified trimester, fetus 1",General
+O36.1192,"Maternal care for Anti-A sensitization, unspecified trimester, fetus 2",General
+O36.1193,"Maternal care for Anti-A sensitization, unspecified trimester, fetus 3",General
+O36.1194,"Maternal care for Anti-A sensitization, unspecified trimester, fetus 4",General
+O36.1195,"Maternal care for Anti-A sensitization, unspecified trimester, fetus 5",General
+O36.1199,"Maternal care for Anti-A sensitization, unspecified trimester, other fetus",General
+T50.A26S,"Underdosing of mixed bacterial vaccines without a pertussis component, sequela",General
+T81.41XA,"Infection following a procedure, superficial incisional surgical site, initial encounter",General
+T81.41XD,"Infection following a procedure, superficial incisional surgical site, subsequent encounter",General
+T81.42XA,"Infection following a procedure, deep incisional surgical site, initial encounter",General
+T81.42XD,"Infection following a procedure, deep incisional surgical site, subsequent encounter",General
+T81.43XS,"Infection following a procedure, organ and space surgical site, sequela",General
+T81.72XS,"Complication of vein following a procedure, not elsewhere classified, sequela",General
+W44.A0XS,"Battery unspecified, entering into or through a natural orifice, sequela",General
+W44.A1XS,"Button battery entering into or through a natural orifice, sequela",General
+W44.A9XS,"Other batteries entering into or through a natural orifice, sequela",General
+W44.B1XS,"Plastic bead entering into or through a natural orifice, sequela",General
+W44.B2XS,"Plastic coin entering into or through a natural orifice, sequela",General
+W44.B4XS,"Plastic jewelry entering into or through a natural orifice, sequela",General
+W44.B5XS,"Plastic bottle entering into or through a natural orifice, sequela",General
+W44.C0XS,"Glass unspecified, entering into or through a natural orifice, sequela",General
+W44.C1XS,"Sharp glass entering into or through a natural orifice, sequela",General
+W44.C2XS,"Intact glass entering into or through a natural orifice, sequela",General
+W44.F1XA,"Bezoar entering into or through a natural orifice, initial encounter",General
+W44.F1XD,"Bezoar entering into or through a natural orifice, subsequent encounter",General
+W44.F2XS,"Rubber band entering into or through a natural orifice, sequela",General
+W44.F3XA,"Food entering into or through a natural orifice, initial encounter",General
+W44.F3XD,"Food entering into or through a natural orifice, subsequent encounter",General
+W44.F4XA,"Insect entering into or through a natural orifice, initial encounter",General
+W44.F4XD,"Insect entering into or through a natural orifice, subsequent encounter",General
+W44.G1XS,"Audio device entering into or through a natural orifice, sequela",General
+W44.H1XA,"Needle entering into or through a natural orifice, initial encounter",General
+W44.H1XD,"Needle entering into or through a natural orifice, subsequent encounter",General
+X80.XXXS,"Intentional self-harm by jumping from a high place, sequela",General
+Y35.832S,"Legal intervention involving a conducted energy device, bystander injured, sequela",General
+Y35.833S,"Legal intervention involving a conducted energy device, suspect injured, sequela",General
+Z22.4,Carrier of infections with a predominantly sexual mode of transmission,General
+D78.21,Postprocedural hemorrhage of the spleen following a procedure on the spleen,General
+D78.31,Postprocedural hematoma of the spleen following a procedure on the spleen,General
+D78.33,Postprocedural seroma of the spleen following a procedure on the spleen,General
+F29,Unspecified psychosis not due to a substance or known physiological condition,General
+F51.09,Other insomnia not due to a substance or known physiological condition,General
+F51.19,Other hypersomnia not due to a substance or known physiological condition,General
+J09.X3,Influenza due to identified novel influenza A virus with gastrointestinal manifestations,General
+J09.X9,Influenza due to identified novel influenza A virus with other manifestations,General
+L76.21,Postprocedural hemorrhage of skin and subcutaneous tissue following a dermatologic procedure,General
+L76.31,Postprocedural hematoma of skin and subcutaneous tissue following a dermatologic procedure,General
+L76.33,Postprocedural seroma of skin and subcutaneous tissue following a dermatologic procedure,General
+M96.811,Intraoperative hemorrhage and hematoma of a musculoskeletal structure complicating other procedure,General
+M96.821,Accidental puncture and laceration of a musculoskeletal structure during other procedure,General
+N02.B5,Recurrent and persistent immunoglobulin A nephropathy with diffuse mesangial proliferative glomerulonephritis,General
+O98.32,Other infections with a predominantly sexual mode of transmission complicating childbirth,General
+T50.A16S,"Underdosing of pertussis vaccine, including combinations with a pertussis component, sequela",General
+T50.A23S,"Poisoning by mixed bacterial vaccines without a pertussis component, assault, sequela",General
+T50.A24S,"Poisoning by mixed bacterial vaccines without a pertussis component, undetermined, sequela",General
+T50.A25S,"Adverse effect of mixed bacterial vaccines without a pertussis component, sequela",General
+T50.A26A,"Underdosing of mixed bacterial vaccines without a pertussis component, initial encounter",General
+T50.A26D,"Underdosing of mixed bacterial vaccines without a pertussis component, subsequent encounter",General
+T71.221S,"Asphyxiation due to being trapped in a car trunk, accidental, sequela",General
+T71.223S,"Asphyxiation due to being trapped in a car trunk, assault, sequela",General
+T71.224S,"Asphyxiation due to being trapped in a car trunk, undetermined, sequela",General
+T71.231S,"Asphyxiation due to being trapped in a (discarded) refrigerator, accidental, sequela",General
+T71.233S,"Asphyxiation due to being trapped in a (discarded) refrigerator, assault, sequela",General
+T71.234S,"Asphyxiation due to being trapped in a (discarded) refrigerator, undetermined, sequela",General
+T81.43XA,"Infection following a procedure, organ and space surgical site, initial encounter",General
+T81.43XD,"Infection following a procedure, organ and space surgical site, subsequent encounter",General
+T81.710S,"Complication of mesenteric artery following a procedure, not elsewhere classified, sequela",General
+T81.711S,"Complication of renal artery following a procedure, not elsewhere classified, sequela",General
+T81.718S,"Complication of other artery following a procedure, not elsewhere classified, sequela",General
+T81.719S,"Complication of unspecified artery following a procedure, not elsewhere classified, sequela",General
+T81.72XA,"Complication of vein following a procedure, not elsewhere classified, initial encounter",General
+T81.72XD,"Complication of vein following a procedure, not elsewhere classified, subsequent encounter",General
+W44.A0XA,"Battery unspecified, entering into or through a natural orifice, initial encounter",General
+W44.A0XD,"Battery unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.A1XA,"Button battery entering into or through a natural orifice, initial encounter",General
+W44.A1XD,"Button battery entering into or through a natural orifice, subsequent encounter",General
+W44.A9XA,"Other batteries entering into or through a natural orifice, initial encounter",General
+W44.A9XD,"Other batteries entering into or through a natural orifice, subsequent encounter",General
+W44.B0XS,"Plastic object unspecified, entering into or through a natural orifice, sequela",General
+W44.B1XA,"Plastic bead entering into or through a natural orifice, initial encounter",General
+W44.B1XD,"Plastic bead entering into or through a natural orifice, subsequent encounter",General
+W44.B2XA,"Plastic coin entering into or through a natural orifice, initial encounter",General
+W44.B2XD,"Plastic coin entering into or through a natural orifice, subsequent encounter",General
+W44.B4XA,"Plastic jewelry entering into or through a natural orifice, initial encounter",General
+W44.B4XD,"Plastic jewelry entering into or through a natural orifice, subsequent encounter",General
+W44.B5XA,"Plastic bottle entering into or through a natural orifice, initial encounter",General
+W44.B5XD,"Plastic bottle entering into or through a natural orifice, subsequent encounter",General
+W44.B9XS,"Other plastic object entering into or through a natural orifice, sequela",General
+W44.C0XA,"Glass unspecified, entering into or through a natural orifice, initial encounter",General
+W44.C0XD,"Glass unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.C1XA,"Sharp glass entering into or through a natural orifice, initial encounter",General
+W44.C1XD,"Sharp glass entering into or through a natural orifice, subsequent encounter",General
+W44.C2XA,"Intact glass entering into or through a natural orifice, initial encounter",General
+W44.C2XD,"Intact glass entering into or through a natural orifice, subsequent encounter",General
+W44.D1XS,"Magnetic metal bead entering into or through a natural orifice, sequela",General
+W44.D2XS,"Magnetic metal coin entering into or through a natural orifice, sequela",General
+W44.D3XS,"Magnetic metal toy entering into or through a natural orifice, sequela",General
+W44.D4XS,"Magnetic metal jewelry entering into or through a natural orifice, sequela",General
+W44.F2XA,"Rubber band entering into or through a natural orifice, initial encounter",General
+W44.F2XD,"Rubber band entering into or through a natural orifice, subsequent encounter",General
+W44.G1XA,"Audio device entering into or through a natural orifice, initial encounter",General
+W44.G1XD,"Audio device entering into or through a natural orifice, subsequent encounter",General
+W44.H9XS,"Other sharp object entering into or through a natural orifice, sequela",General
+W44.8XXS,"Other foreign body entering into or through a natural orifice, sequela",General
+W44.9XXS,"Unspecified foreign body entering into or through a natural orifice, sequela",General
+X80.XXXA,"Intentional self-harm by jumping from a high place, initial encounter",General
+X80.XXXD,"Intentional self-harm by jumping from a high place, subsequent encounter",General
+Y30.XXXS,"Falling, jumping or pushed from a high place, undetermined intent, sequela",General
+Y35.832A,"Legal intervention involving a conducted energy device, bystander injured, initial encounter",General
+Y35.832D,"Legal intervention involving a conducted energy device, bystander injured, subsequent encounter",General
+Y35.833A,"Legal intervention involving a conducted energy device, suspect injured, initial encounter",General
+Y35.833D,"Legal intervention involving a conducted energy device, suspect injured, subsequent encounter",General
+Y35.839S,"Legal intervention involving a conducted energy device, unspecified person injured, sequela",General
+F28,Other psychotic disorder not due to a substance or known physiological condition,General
+F51.8,Other sleep disorders not due to a substance or known physiological condition,General
+F51.9,"Sleep disorder not due to a substance or known physiological condition, unspecified",General
+F52.8,Other sexual dysfunction not due to a substance or known physiological condition,General
+F52.9,Unspecified sexual dysfunction not due to a substance or known physiological condition,General
+G97.52,Postprocedural hemorrhage of a nervous system organ or structure following other procedure,General
+G97.62,Postprocedural hematoma of a nervous system organ or structure following other procedure,General
+G97.64,Postprocedural seroma of a nervous system organ or structure following other procedure,General
+I97.611,Postprocedural hemorrhage of a circulatory system organ or structure following cardiac bypass,General
+I97.620,Postprocedural hemorrhage of a circulatory system organ or structure following other procedure,General
+I97.621,Postprocedural hematoma of a circulatory system organ or structure following other procedure,General
+I97.622,Postprocedural seroma of a circulatory system organ or structure following other procedure,General
+I97.631,Postprocedural hematoma of a circulatory system organ or structure following cardiac bypass,General
+I97.641,Postprocedural seroma of a circulatory system organ or structure following cardiac bypass,General
+J09.X2,Influenza due to identified novel influenza A virus with other respiratory manifestations,General
+J95.831,Postprocedural hemorrhage of a respiratory system organ or structure following other procedure,General
+J95.861,Postprocedural hematoma of a respiratory system organ or structure following other procedure,General
+J95.863,Postprocedural seroma of a respiratory system organ or structure following other procedure,General
+K91.841,Postprocedural hemorrhage of a digestive system organ or structure following other procedure,General
+K91.871,Postprocedural hematoma of a digestive system organ or structure following other procedure,General
+K91.873,Postprocedural seroma of a digestive system organ or structure following other procedure,General
+N02.B2,Recurrent and persistent immunoglobulin A nephropathy with focal and segmental glomerular lesion,General
+N99.821,Postprocedural hemorrhage of a genitourinary system organ or structure following other procedure,General
+N99.841,Postprocedural hematoma of a genitourinary system organ or structure following other procedure,General
+N99.843,Postprocedural seroma of a genitourinary system organ or structure following other procedure,General
+O36.1110,"Maternal care for Anti-A sensitization, first trimester, not applicable or unspecified",General
+O36.1120,"Maternal care for Anti-A sensitization, second trimester, not applicable or unspecified",General
+O36.1130,"Maternal care for Anti-A sensitization, third trimester, not applicable or unspecified",General
+O36.1190,"Maternal care for Anti-A sensitization, unspecified trimester, not applicable or unspecified",General
+O98.33,Other infections with a predominantly sexual mode of transmission complicating the puerperium,General
+T50.A13S,"Poisoning by pertussis vaccine, including combinations with a pertussis component, assault, sequela",General
+T50.A14S,"Poisoning by pertussis vaccine, including combinations with a pertussis component, undetermined, sequela",General
+T50.A15S,"Adverse effect of pertussis vaccine, including combinations with a pertussis component, sequela",General
+T50.A16A,"Underdosing of pertussis vaccine, including combinations with a pertussis component, initial encounter",General
+T50.A16D,"Underdosing of pertussis vaccine, including combinations with a pertussis component, subsequent encounter",General
+T50.A21S,"Poisoning by mixed bacterial vaccines without a pertussis component, accidental (unintentional), sequela",General
+T50.A23A,"Poisoning by mixed bacterial vaccines without a pertussis component, assault, initial encounter",General
+T50.A23D,"Poisoning by mixed bacterial vaccines without a pertussis component, assault, subsequent encounter",General
+T50.A24A,"Poisoning by mixed bacterial vaccines without a pertussis component, undetermined, initial encounter",General
+T50.A24D,"Poisoning by mixed bacterial vaccines without a pertussis component, undetermined, subsequent encounter",General
+T50.A25A,"Adverse effect of mixed bacterial vaccines without a pertussis component, initial encounter",General
+T50.A25D,"Adverse effect of mixed bacterial vaccines without a pertussis component, subsequent encounter",General
+T71.221A,"Asphyxiation due to being trapped in a car trunk, accidental, initial encounter",General
+T71.221D,"Asphyxiation due to being trapped in a car trunk, accidental, subsequent encounter",General
+T71.223A,"Asphyxiation due to being trapped in a car trunk, assault, initial encounter",General
+T71.223D,"Asphyxiation due to being trapped in a car trunk, assault, subsequent encounter",General
+T71.224A,"Asphyxiation due to being trapped in a car trunk, undetermined, initial encounter",General
+T71.224D,"Asphyxiation due to being trapped in a car trunk, undetermined, subsequent encounter",General
+T71.231A,"Asphyxiation due to being trapped in a (discarded) refrigerator, accidental, initial encounter",General
+T71.231D,"Asphyxiation due to being trapped in a (discarded) refrigerator, accidental, subsequent encounter",General
+T71.233A,"Asphyxiation due to being trapped in a (discarded) refrigerator, assault, initial encounter",General
+T71.233D,"Asphyxiation due to being trapped in a (discarded) refrigerator, assault, subsequent encounter",General
+T71.234A,"Asphyxiation due to being trapped in a (discarded) refrigerator, undetermined, initial encounter",General
+T71.234D,"Asphyxiation due to being trapped in a (discarded) refrigerator, undetermined, subsequent encounter",General
+T81.60XS,"Unspecified acute reaction to foreign substance accidentally left during a procedure, sequela",General
+T81.61XS,"Aseptic peritonitis due to foreign substance accidentally left during a procedure, sequela",General
+T81.69XS,"Other acute reaction to foreign substance accidentally left during a procedure, sequela",General
+T81.710A,"Complication of mesenteric artery following a procedure, not elsewhere classified, initial encounter",General
+T81.710D,"Complication of mesenteric artery following a procedure, not elsewhere classified, subsequent encounter",General
+T81.711A,"Complication of renal artery following a procedure, not elsewhere classified, initial encounter",General
+T81.711D,"Complication of renal artery following a procedure, not elsewhere classified, subsequent encounter",General
+T81.718A,"Complication of other artery following a procedure, not elsewhere classified, initial encounter",General
+T81.718D,"Complication of other artery following a procedure, not elsewhere classified, subsequent encounter",General
+T81.719A,"Complication of unspecified artery following a procedure, not elsewhere classified, initial encounter",General
+T81.719D,"Complication of unspecified artery following a procedure, not elsewhere classified, subsequent encounter",General
+V43.44XS,"Person boarding or alighting a car injured in collision with van, sequela",General
+V48.4XXS,"Person boarding or alighting a car injured in noncollision transport accident, sequela",General
+W23.2XXS,"Caught, crushed, jammed or pinched between a moving and stationary object, sequela",General
+W44.B0XA,"Plastic object unspecified, entering into or through a natural orifice, initial encounter",General
+W44.B0XD,"Plastic object unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.B9XA,"Other plastic object entering into or through a natural orifice, initial encounter",General
+W44.B9XD,"Other plastic object entering into or through a natural orifice, subsequent encounter",General
+W44.D0XS,"Magnetic metal object unspecified, entering into or through a natural orifice, sequela",General
+W44.D1XA,"Magnetic metal bead entering into or through a natural orifice, initial encounter",General
+W44.D1XD,"Magnetic metal bead entering into or through a natural orifice, subsequent encounter",General
+W44.D2XA,"Magnetic metal coin entering into or through a natural orifice, initial encounter",General
+W44.D2XD,"Magnetic metal coin entering into or through a natural orifice, subsequent encounter",General
+W44.D3XA,"Magnetic metal toy entering into or through a natural orifice, initial encounter",General
+W44.D3XD,"Magnetic metal toy entering into or through a natural orifice, subsequent encounter",General
+W44.D4XA,"Magnetic metal jewelry entering into or through a natural orifice, initial encounter",General
+W44.D4XD,"Magnetic metal jewelry entering into or through a natural orifice, subsequent encounter",General
+W44.D9XS,"Other magnetic metal objects entering into or through a natural orifice, sequela",General
+W44.E1XS,"Non-magnetic metal bead entering into or through a natural orifice, sequela",General
+W44.E2XS,"Non-magnetic metal coin entering into or through a natural orifice, sequela",General
+W44.E3XS,"Non-magnetic metal toy entering into or through a natural orifice, sequela",General
+W44.E4XS,"Non-magnetic metal jewelry entering into or through a natural orifice, sequela",General
+W44.G9XS,"Other non-organic objects entering into or through a natural orifice, sequela",General
+W44.H0XS,"Other sharp object unspecified, entering into or through a natural orifice, sequela",General
+W44.H2XS,"Knife, sword or dagger entering into or through a natural orifice, sequela",General
+W44.H9XA,"Other sharp object entering into or through a natural orifice, initial encounter",General
+W44.H9XD,"Other sharp object entering into or through a natural orifice, subsequent encounter",General
+W44.8XXA,"Other foreign body entering into or through a natural orifice, initial encounter",General
+W44.8XXD,"Other foreign body entering into or through a natural orifice, subsequent encounter",General
+W44.9XXA,"Unspecified foreign body entering into or through a natural orifice, initial encounter",General
+W44.9XXD,"Unspecified foreign body entering into or through a natural orifice, subsequent encounter",General
+Y30.XXXA,"Falling, jumping or pushed from a high place, undetermined intent, initial encounter",General
+Y30.XXXD,"Falling, jumping or pushed from a high place, undetermined intent, subsequent encounter",General
+Y35.831S,"Legal intervention involving a conducted energy device, law enforcement official injured, sequela",General
+Y35.839A,"Legal intervention involving a conducted energy device, unspecified person injured, initial encounter",General
+Y35.839D,"Legal intervention involving a conducted energy device, unspecified person injured, subsequent encounter",General
+Z11.3,Encounter for screening for infections with a predominantly sexual mode of transmission,General
+D78.01,Intraoperative hemorrhage and hematoma of the spleen complicating a procedure on the spleen,General
+D78.11,Accidental puncture and laceration of the spleen during a procedure on the spleen,General
+L76.01,Intraoperative hemorrhage and hematoma of skin and subcutaneous tissue complicating a dermatologic procedure,General
+L76.11,Accidental puncture and laceration of skin and subcutaneous tissue during a dermatologic procedure,General
+O98.311,"Other infections with a predominantly sexual mode of transmission complicating pregnancy, first trimester",General
+O98.312,"Other infections with a predominantly sexual mode of transmission complicating pregnancy, second trimester",General
+O98.313,"Other infections with a predominantly sexual mode of transmission complicating pregnancy, third trimester",General
+O98.319,"Other infections with a predominantly sexual mode of transmission complicating pregnancy, unspecified trimester",General
+T50.A11S,"Poisoning by pertussis vaccine, including combinations with a pertussis component, accidental (unintentional), sequela",General
+T50.A13A,"Poisoning by pertussis vaccine, including combinations with a pertussis component, assault, initial encounter",General
+T50.A13D,"Poisoning by pertussis vaccine, including combinations with a pertussis component, assault, subsequent encounter",General
+T50.A14A,"Poisoning by pertussis vaccine, including combinations with a pertussis component, undetermined, initial encounter",General
+T50.A14D,"Poisoning by pertussis vaccine, including combinations with a pertussis component, undetermined, subsequent encounter",General
+T50.A15A,"Adverse effect of pertussis vaccine, including combinations with a pertussis component, initial encounter",General
+T50.A15D,"Adverse effect of pertussis vaccine, including combinations with a pertussis component, subsequent encounter",General
+T50.A21A,"Poisoning by mixed bacterial vaccines without a pertussis component, accidental (unintentional), initial encounter",General
+T50.A21D,"Poisoning by mixed bacterial vaccines without a pertussis component, accidental (unintentional), subsequent encounter",General
+T50.A22S,"Poisoning by mixed bacterial vaccines without a pertussis component, intentional self-harm, sequela",General
+T71.222S,"Asphyxiation due to being trapped in a car trunk, intentional self-harm, sequela",General
+T71.232S,"Asphyxiation due to being trapped in a (discarded) refrigerator, intentional self-harm, sequela",General
+T81.60XA,"Unspecified acute reaction to foreign substance accidentally left during a procedure, initial encounter",General
+T81.60XD,"Unspecified acute reaction to foreign substance accidentally left during a procedure, subsequent encounter",General
+T81.61XA,"Aseptic peritonitis due to foreign substance accidentally left during a procedure, initial encounter",General
+T81.61XD,"Aseptic peritonitis due to foreign substance accidentally left during a procedure, subsequent encounter",General
+T81.69XA,"Other acute reaction to foreign substance accidentally left during a procedure, initial encounter",General
+T81.69XD,"Other acute reaction to foreign substance accidentally left during a procedure, subsequent encounter",General
+V18.3XXS,"Person boarding or alighting a pedal cycle injured in noncollision transport accident, sequela",General
+V41.4XXS,"Person boarding or alighting a car injured in collision with pedal cycle, sequela",General
+V43.44XA,"Person boarding or alighting a car injured in collision with van, initial encounter",General
+V43.44XD,"Person boarding or alighting a car injured in collision with van, subsequent encounter",General
+V48.4XXA,"Person boarding or alighting a car injured in noncollision transport accident, initial encounter",General
+V48.4XXD,"Person boarding or alighting a car injured in noncollision transport accident, subsequent encounter",General
+W23.2XXA,"Caught, crushed, jammed or pinched between a moving and stationary object, initial encounter",General
+W23.2XXD,"Caught, crushed, jammed or pinched between a moving and stationary object, subsequent encounter",General
+W44.B3XS,"Plastic toy and toy part entering into or through a natural orifice, sequela",General
+W44.D0XA,"Magnetic metal object unspecified, entering into or through a natural orifice, initial encounter",General
+W44.D0XD,"Magnetic metal object unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.D9XA,"Other magnetic metal objects entering into or through a natural orifice, initial encounter",General
+W44.D9XD,"Other magnetic metal objects entering into or through a natural orifice, subsequent encounter",General
+W44.E0XS,"Non-magnetic metal object unspecified, entering into or through a natural orifice, sequela",General
+W44.E1XA,"Non-magnetic metal bead entering into or through a natural orifice, initial encounter",General
+W44.E1XD,"Non-magnetic metal bead entering into or through a natural orifice, subsequent encounter",General
+W44.E2XA,"Non-magnetic metal coin entering into or through a natural orifice, initial encounter",General
+W44.E2XD,"Non-magnetic metal coin entering into or through a natural orifice, subsequent encounter",General
+W44.E3XA,"Non-magnetic metal toy entering into or through a natural orifice, initial encounter",General
+W44.E3XD,"Non-magnetic metal toy entering into or through a natural orifice, subsequent encounter",General
+W44.E4XA,"Non-magnetic metal jewelry entering into or through a natural orifice, initial encounter",General
+W44.E4XD,"Non-magnetic metal jewelry entering into or through a natural orifice, subsequent encounter",General
+W44.E9XS,"Other non-magnetic metal objects entering into or through a natural orifice, sequela",General
+W44.G0XS,"Other non-organic objects unspecified, entering into or through a natural orifice, sequela",General
+W44.G3XS,"Combination metal and plastic jewelry entering into or through a natural orifice, sequela",General
+W44.G9XA,"Other non-organic objects entering into or through a natural orifice, initial encounter",General
+W44.G9XD,"Other non-organic objects entering into or through a natural orifice, subsequent encounter",General
+W44.H0XA,"Other sharp object unspecified, entering into or through a natural orifice, initial encounter",General
+W44.H0XD,"Other sharp object unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.H2XA,"Knife, sword or dagger entering into or through a natural orifice, initial encounter",General
+W44.H2XD,"Knife, sword or dagger entering into or through a natural orifice, subsequent encounter",General
+Y35.831A,"Legal intervention involving a conducted energy device, law enforcement official injured, initial encounter",General
+Y35.831D,"Legal intervention involving a conducted energy device, law enforcement official injured, subsequent encounter",General
+Y93.69,"Activity, other involving other sports and athletics played as a team or group",General
+G97.32,Intraoperative hemorrhage and hematoma of a nervous system organ or structure complicating other procedure,General
+I97.42,Intraoperative hemorrhage and hematoma of a circulatory system organ or structure complicating other procedure,General
+I97.52,Accidental puncture and laceration of a circulatory system organ or structure during other procedure,General
+I97.618,Postprocedural hemorrhage of a circulatory system organ or structure following other circulatory system procedure,General
+I97.638,Postprocedural hematoma of a circulatory system organ or structure following other circulatory system procedure,General
+I97.648,Postprocedural seroma of a circulatory system organ or structure following other circulatory system procedure,General
+J95.62,Intraoperative hemorrhage and hematoma of a respiratory system organ or structure complicating other procedure,General
+J95.72,Accidental puncture and laceration of a respiratory system organ or structure during other procedure,General
+K91.62,Intraoperative hemorrhage and hematoma of a digestive system organ or structure complicating other procedure,General
+K91.72,Accidental puncture and laceration of a digestive system organ or structure during other procedure,General
+N99.62,Intraoperative hemorrhage and hematoma of a genitourinary system organ or structure complicating other procedure,General
+N99.72,Accidental puncture and laceration of a genitourinary system organ or structure during other procedure,General
+T50.A11A,"Poisoning by pertussis vaccine, including combinations with a pertussis component, accidental (unintentional), initial encounter",General
+T50.A11D,"Poisoning by pertussis vaccine, including combinations with a pertussis component, accidental (unintentional), subsequent encounter",General
+T50.A12S,"Poisoning by pertussis vaccine, including combinations with a pertussis component, intentional self-harm, sequela",General
+T50.A22A,"Poisoning by mixed bacterial vaccines without a pertussis component, intentional self-harm, initial encounter",General
+T50.A22D,"Poisoning by mixed bacterial vaccines without a pertussis component, intentional self-harm, subsequent encounter",General
+T71.222A,"Asphyxiation due to being trapped in a car trunk, intentional self-harm, initial encounter",General
+T71.222D,"Asphyxiation due to being trapped in a car trunk, intentional self-harm, subsequent encounter",General
+T71.232A,"Asphyxiation due to being trapped in a (discarded) refrigerator, intentional self-harm, initial encounter",General
+T71.232D,"Asphyxiation due to being trapped in a (discarded) refrigerator, intentional self-harm, subsequent encounter",General
+V18.3XXA,"Person boarding or alighting a pedal cycle injured in noncollision transport accident, initial encounter",General
+V18.3XXD,"Person boarding or alighting a pedal cycle injured in noncollision transport accident, subsequent encounter",General
+V40.4XXS,"Person boarding or alighting a car injured in collision with pedestrian or animal, sequela",General
+V41.4XXA,"Person boarding or alighting a car injured in collision with pedal cycle, initial encounter",General
+V41.4XXD,"Person boarding or alighting a car injured in collision with pedal cycle, subsequent encounter",General
+V43.41XS,"Person boarding or alighting a car injured in collision with sport utility vehicle, sequela",General
+V43.42XS,"Person boarding or alighting a car injured in collision with other type car, sequela",General
+V43.43XS,"Person boarding or alighting a car injured in collision with pick-up truck, sequela",General
+V46.4XXS,"Person boarding or alighting a car injured in collision with other nonmotor vehicle, sequela",General
+V68.4XXS,"Person boarding or alighting a heavy transport vehicle injured in noncollision transport accident, sequela",General
+W44.B3XA,"Plastic toy and toy part entering into or through a natural orifice, initial encounter",General
+W44.B3XD,"Plastic toy and toy part entering into or through a natural orifice, subsequent encounter",General
+W44.E0XA,"Non-magnetic metal object unspecified, entering into or through a natural orifice, initial encounter",General
+W44.E0XD,"Non-magnetic metal object unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.E9XA,"Other non-magnetic metal objects entering into or through a natural orifice, initial encounter",General
+W44.E9XD,"Other non-magnetic metal objects entering into or through a natural orifice, subsequent encounter",General
+W44.G0XA,"Other non-organic objects unspecified, entering into or through a natural orifice, initial encounter",General
+W44.G0XD,"Other non-organic objects unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.G3XA,"Combination metal and plastic jewelry entering into or through a natural orifice, initial encounter",General
+W44.G3XD,"Combination metal and plastic jewelry entering into or through a natural orifice, subsequent encounter",General
+Z20.2,Contact with and (suspected) exposure to infections with a predominantly sexual mode of transmission,General
+T50.A12A,"Poisoning by pertussis vaccine, including combinations with a pertussis component, intentional self-harm, initial encounter",General
+T50.A12D,"Poisoning by pertussis vaccine, including combinations with a pertussis component, intentional self-harm, subsequent encounter",General
+V10.3XXS,"Person boarding or alighting a pedal cycle injured in collision with pedestrian or animal, sequela",General
+V11.3XXS,"Person boarding or alighting a pedal cycle injured in collision with other pedal cycle, sequela",General
+V38.4XXS,"Person boarding or alighting a three-wheeled motor vehicle injured in noncollision transport accident, sequela",General
+V40.4XXA,"Person boarding or alighting a car injured in collision with pedestrian or animal, initial encounter",General
+V40.4XXD,"Person boarding or alighting a car injured in collision with pedestrian or animal, subsequent encounter",General
+V43.41XA,"Person boarding or alighting a car injured in collision with sport utility vehicle, initial encounter",General
+V43.41XD,"Person boarding or alighting a car injured in collision with sport utility vehicle, subsequent encounter",General
+V43.42XA,"Person boarding or alighting a car injured in collision with other type car, initial encounter",General
+V43.42XD,"Person boarding or alighting a car injured in collision with other type car, subsequent encounter",General
+V43.43XA,"Person boarding or alighting a car injured in collision with pick-up truck, initial encounter",General
+V43.43XD,"Person boarding or alighting a car injured in collision with pick-up truck, subsequent encounter",General
+V46.4XXA,"Person boarding or alighting a car injured in collision with other nonmotor vehicle, initial encounter",General
+V46.4XXD,"Person boarding or alighting a car injured in collision with other nonmotor vehicle, subsequent encounter",General
+V47.4XXS,"Person boarding or alighting a car injured in collision with fixed or stationary object, sequela",General
+V68.4XXA,"Person boarding or alighting a heavy transport vehicle injured in noncollision transport accident, initial encounter",General
+V68.4XXD,"Person boarding or alighting a heavy transport vehicle injured in noncollision transport accident, subsequent encounter",General
+V86.46XS,"Person injured while boarding or alighting from a dirt bike or motor/cross bike, sequela",General
+W44.F0XS,"Objects of natural or organic material unspecified, entering into or through a natural orifice, sequela",General
+W44.F9XS,"Other object of natural or organic material, entering into or through a natural orifice, sequela",General
+G97.48,Accidental puncture and laceration of other nervous system organ or structure during a nervous system procedure,General
+H95.41,Postprocedural hemorrhage of ear and mastoid process following a procedure on the ear and mastoid process,General
+H95.51,Postprocedural hematoma of ear and mastoid process following a procedure on the ear and mastoid process,General
+H95.53,Postprocedural seroma of ear and mastoid process following a procedure on the ear and mastoid process,General
+I97.418,Intraoperative hemorrhage and hematoma of a circulatory system organ or structure complicating other circulatory system procedure,General
+V10.3XXA,"Person boarding or alighting a pedal cycle injured in collision with pedestrian or animal, initial encounter",General
+V10.3XXD,"Person boarding or alighting a pedal cycle injured in collision with pedestrian or animal, subsequent encounter",General
+V11.3XXA,"Person boarding or alighting a pedal cycle injured in collision with other pedal cycle, initial encounter",General
+V11.3XXD,"Person boarding or alighting a pedal cycle injured in collision with other pedal cycle, subsequent encounter",General
+V17.3XXS,"Person boarding or alighting a pedal cycle injured in collision with fixed or stationary object, sequela",General
+V31.4XXS,"Person boarding or alighting a three-wheeled motor vehicle injured in collision with pedal cycle, sequela",General
+V38.4XXA,"Person boarding or alighting a three-wheeled motor vehicle injured in noncollision transport accident, initial encounter",General
+V38.4XXD,"Person boarding or alighting a three-wheeled motor vehicle injured in noncollision transport accident, subsequent encounter",General
+V44.4XXS,"Person boarding or alighting a car injured in collision with heavy transport vehicle or bus, sequela",General
+V45.4XXS,"Person boarding or alighting a car injured in collision with railway train or railway vehicle, sequela",General
+V47.4XXA,"Person boarding or alighting a car injured in collision with fixed or stationary object, initial encounter",General
+V47.4XXD,"Person boarding or alighting a car injured in collision with fixed or stationary object, subsequent encounter",General
+V58.4XXS,"Person boarding or alighting a pick-up truck or van injured in noncollision transport accident, sequela",General
+V60.4XXS,"Person boarding or alighting a heavy transport vehicle injured in collision with pedestrian or animal, sequela",General
+V66.4XXS,"Person boarding or alighting a heavy transport vehicle injured in collision with other nonmotor vehicle, sequela",General
+V86.46XA,"Person injured while boarding or alighting from a dirt bike or motor/cross bike, initial encounter",General
+V86.46XD,"Person injured while boarding or alighting from a dirt bike or motor/cross bike, subsequent encounter",General
+W44.F0XA,"Objects of natural or organic material unspecified, entering into or through a natural orifice, initial encounter",General
+W44.F0XD,"Objects of natural or organic material unspecified, entering into or through a natural orifice, subsequent encounter",General
+W44.F9XA,"Other object of natural or organic material, entering into or through a natural orifice, initial encounter",General
+W44.F9XD,"Other object of natural or organic material, entering into or through a natural orifice, subsequent encounter",General
+V14.3XXS,"Person boarding or alighting a pedal cycle injured in collision with heavy transport vehicle or bus, sequela",General
+V15.3XXS,"Person boarding or alighting a pedal cycle injured in collision with railway train or railway vehicle, sequela",General
+V17.3XXA,"Person boarding or alighting a pedal cycle injured in collision with fixed or stationary object, initial encounter",General
+V17.3XXD,"Person boarding or alighting a pedal cycle injured in collision with fixed or stationary object, subsequent encounter",General
+V30.4XXS,"Person boarding or alighting a three-wheeled motor vehicle injured in collision with pedestrian or animal, sequela",General
+V31.4XXA,"Person boarding or alighting a three-wheeled motor vehicle injured in collision with pedal cycle, initial encounter",General
+V31.4XXD,"Person boarding or alighting a three-wheeled motor vehicle injured in collision with pedal cycle, subsequent encounter",General

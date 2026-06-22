@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { AllergyBanner } from "@/components/AllergyBanner";
 import { api } from "@/lib/api";
 
 export default function PatientProfile() {
@@ -13,6 +15,10 @@ export default function PatientProfile() {
   const router = useRouter();
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [newAllergen, setNewAllergen] = useState("");
+  const [newSeverity, setNewSeverity] = useState("Mild");
+  const [newReaction, setNewReaction] = useState("");
+  const [isAddingAllergy, setIsAddingAllergy] = useState(false);
 
   const fetchPatientDetails = useCallback(async () => {
     try {
@@ -30,6 +36,43 @@ export default function PatientProfile() {
       fetchPatientDetails();
     }
   }, [id, fetchPatientDetails]);
+
+  const handlePrintWristband = async () => {
+    try {
+      const response = await api.get(`/patients/${id}/qr-pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `wristband_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      console.error("Failed to download wristband", error);
+      alert("Error downloading wristband PDF.");
+    }
+  };
+
+  const handleAddAllergy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAllergen) return;
+    
+    try {
+      await api.post(`/allergies/patient/${id}`, {
+        allergen: newAllergen,
+        severity: newSeverity,
+        reaction: newReaction
+      });
+      setIsAddingAllergy(false);
+      setNewAllergen("");
+      setNewReaction("");
+      // Refresh patient to trigger re-renders if necessary
+      fetchPatientDetails();
+    } catch (error) {
+      console.error("Failed to add allergy", error);
+      alert("Error adding allergy.");
+    }
+  };
 
   if (loading) return <div className="p-8 text-text-secondary">Loading patient profile...</div>;
   if (!patient) return <div className="p-8 text-error">Patient not found.</div>;
@@ -50,7 +93,8 @@ export default function PatientProfile() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Core Identity & QR */}
-        <Card className="lg:col-span-1 border-primary/20 shadow-md">
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="border-primary/20 shadow-md">
           <CardContent className="p-6 flex flex-col items-center text-center">
             <div className="w-24 h-24 bg-primary-light text-primary rounded-full flex items-center justify-center text-3xl font-bold mb-4">
               {(patient.firstName?.[0] || "") + (patient.lastName?.[0] || "")}
@@ -71,9 +115,44 @@ export default function PatientProfile() {
               </div>
             )}
             
-            <Button variant="secondary" className="w-full mt-6">Print Wristband</Button>
+            <Button variant="secondary" className="w-full mt-6" onClick={handlePrintWristband}>
+              Print Wristband
+            </Button>
+            <Button variant="secondary" className="w-full mt-2" onClick={() => alert("Registration Slip PDF feature in progress")}>
+              Print Registration Slip
+            </Button>
           </CardContent>
         </Card>
+        
+        <Card>
+           <CardHeader><CardTitle>Allergies</CardTitle></CardHeader>
+           <CardContent>
+             <AllergyBanner patientId={id as string} />
+             
+             {isAddingAllergy ? (
+               <form onSubmit={handleAddAllergy} className="mt-4 space-y-3 bg-surface p-3 rounded-md border border-border">
+                 <Input placeholder="Allergen (e.g. Penicillin)" value={newAllergen} onChange={(e) => setNewAllergen(e.target.value)} required />
+                 <div className="flex gap-2">
+                   <select className="flex-1 p-2 border border-border rounded-md text-sm" value={newSeverity} onChange={(e) => setNewSeverity(e.target.value)}>
+                     <option>Mild</option>
+                     <option>Moderate</option>
+                     <option>Severe</option>
+                   </select>
+                   <Input placeholder="Reaction" value={newReaction} onChange={(e) => setNewReaction(e.target.value)} className="flex-2" />
+                 </div>
+                 <div className="flex justify-end gap-2">
+                   <Button variant="secondary" size="sm" type="button" onClick={() => setIsAddingAllergy(false)}>Cancel</Button>
+                   <Button variant="primary" size="sm" type="submit">Save</Button>
+                 </div>
+               </form>
+             ) : (
+               <Button variant="secondary" className="w-full mt-2" onClick={() => setIsAddingAllergy(true)}>
+                 + Add Allergy
+               </Button>
+             )}
+           </CardContent>
+        </Card>
+      </div>
 
         {/* Details Sections */}
         <div className="lg:col-span-2 space-y-6">

@@ -4,6 +4,7 @@ import com.medcore.his.domain.radiology.RadiologyOrder;
 import com.medcore.his.domain.radiology.RadiologyReport;
 import com.medcore.his.domain.radiology.RadiologyTemplate;
 import com.medcore.his.repository.RadiologyOrderRepository;
+import com.medcore.his.repository.RadiologyReportRepository;
 import com.medcore.his.repository.RadiologyTemplateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,15 @@ public class RadiologyService {
 
     private final RadiologyOrderRepository radiologyOrderRepository;
     private final RadiologyTemplateRepository radiologyTemplateRepository;
+    private final RadiologyReportRepository radiologyReportRepository;
 
     @Autowired
-    public RadiologyService(RadiologyOrderRepository radiologyOrderRepository, RadiologyTemplateRepository radiologyTemplateRepository) {
+    public RadiologyService(RadiologyOrderRepository radiologyOrderRepository, 
+                            RadiologyTemplateRepository radiologyTemplateRepository,
+                            RadiologyReportRepository radiologyReportRepository) {
         this.radiologyOrderRepository = radiologyOrderRepository;
         this.radiologyTemplateRepository = radiologyTemplateRepository;
+        this.radiologyReportRepository = radiologyReportRepository;
     }
 
     public List<RadiologyTemplate> getTemplatesByModality(String modality) {
@@ -35,9 +40,18 @@ public class RadiologyService {
 
     @Transactional
     public RadiologyReport saveReport(RadiologyReport report) {
-        // Tie report to order and update order status
-        report.getOrder().setStatus(report.getStatus().equals("Final") ? "Reported" : "Completed");
-        // Logic to persist report via a RadiologyReportRepository would go here
-        return report;
+        RadiologyOrder order = radiologyOrderRepository.findById(report.getOrder().getId())
+                .orElseThrow(() -> new RuntimeException("Radiology Order not found"));
+        
+        report.setOrder(order);
+        if ("Final".equals(report.getStatus())) {
+            order.setStatus("Reported");
+            report.setFinalizedAt(java.time.LocalDateTime.now());
+        } else {
+            order.setStatus("Completed");
+        }
+        
+        radiologyOrderRepository.save(order);
+        return radiologyReportRepository.save(report);
     }
 }

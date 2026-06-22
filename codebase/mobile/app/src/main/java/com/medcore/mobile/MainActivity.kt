@@ -1,8 +1,14 @@
 package com.medcore.mobile
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,6 +42,14 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
+import dagger.hilt.android.AndroidEntryPoint
+import com.medcore.mobile.ui.VitalsEntryScreen
+import com.medcore.mobile.ui.NursingAssessmentScreen
+import com.medcore.mobile.ui.IncidentReportScreen
+import com.medcore.mobile.ui.TaskTrackerScreen
+import com.medcore.mobile.ui.MarScannerScreen
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +67,8 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class Screen {
-    LOGIN, DASHBOARD, QR_SCANNER, PATIENT_SUMMARY, AI_SCRIBE
+    LOGIN, DASHBOARD, QR_SCANNER, PATIENT_SUMMARY, AI_SCRIBE,
+    VITALS_ENTRY, NURSING_ASSESSMENT, INCIDENT_REPORT, TASK_TRACKER, MAR_SCANNER
 }
 
 // Network Helpers using standard HttpURLConnection (Zero Dependencies)
@@ -161,6 +176,11 @@ fun MedCoreApp() {
             user = loggedInUser,
             onScanClick = { currentScreen = Screen.QR_SCANNER },
             onScribeClick = { currentScreen = Screen.AI_SCRIBE },
+            onVitalsClick = { currentScreen = Screen.VITALS_ENTRY },
+            onAssessClick = { currentScreen = Screen.NURSING_ASSESSMENT },
+            onIncidentClick = { currentScreen = Screen.INCIDENT_REPORT },
+            onTasksClick = { currentScreen = Screen.TASK_TRACKER },
+            onMarClick = { currentScreen = Screen.MAR_SCANNER },
             onLogout = {
                 token = ""
                 currentScreen = Screen.LOGIN
@@ -183,6 +203,31 @@ fun MedCoreApp() {
         Screen.AI_SCRIBE -> AiScribeScreen(
             apiUrl = apiUrl,
             token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.VITALS_ENTRY -> VitalsEntryScreen(
+            patientUhid = activePatient?.optString("uhid") ?: "UHID-12345",
+            onBack = { currentScreen = Screen.DASHBOARD },
+            onSubmit = { _, _, _, _, _ -> currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.NURSING_ASSESSMENT -> NursingAssessmentScreen(
+            patientUhid = activePatient?.optString("uhid") ?: "UHID-12345",
+            onBack = { currentScreen = Screen.DASHBOARD },
+            onSubmit = { _, _, _ -> currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.INCIDENT_REPORT -> IncidentReportScreen(
+            onBack = { currentScreen = Screen.DASHBOARD },
+            onSubmit = { _, _ -> currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.TASK_TRACKER -> TaskTrackerScreen(
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.MAR_SCANNER -> MarScannerScreen(
             onBack = { currentScreen = Screen.DASHBOARD }
         )
     }
@@ -303,12 +348,18 @@ fun DashboardScreen(
     user: String,
     onScanClick: () -> Unit,
     onScribeClick: () -> Unit,
+    onVitalsClick: () -> Unit,
+    onAssessClick: () -> Unit,
+    onIncidentClick: () -> Unit,
+    onTasksClick: () -> Unit,
+    onMarClick: () -> Unit,
     onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp)
+            .androidx.compose.foundation.verticalScroll(androidx.compose.foundation.rememberScrollState())
     ) {
         // Top Header
         Row(
@@ -388,6 +439,46 @@ fun DashboardScreen(
                 }
             }
         }
+        
+        Card(modifier = Modifier.fillMaxWidth().clickable { onVitalsClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AddCircle, contentDescription = "Vitals", tint = Color(0xFFE67C73), modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column { Text("Bedside Vitals", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Enter offline vitals (Room DB)", fontSize = 12.sp, color = Color.Gray) }
+            }
+        }
+        
+        Card(modifier = Modifier.fillMaxWidth().clickable { onAssessClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.List, contentDescription = "Assessments", tint = Color(0xFFF2A600), modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column { Text("Nursing Assessments", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Morse & Braden scales", fontSize = 12.sp, color = Color.Gray) }
+            }
+        }
+        
+        Card(modifier = Modifier.fillMaxWidth().clickable { onIncidentClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Warning, contentDescription = "Incidents", tint = Color(0xFFD32F2F), modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column { Text("Report Incident", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Log adverse events securely", fontSize = 12.sp, color = Color.Gray) }
+            }
+        }
+        
+        Card(modifier = Modifier.fillMaxWidth().clickable { onTasksClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.CheckCircle, contentDescription = "Tasks", tint = Color(0xFF1E8E3E), modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column { Text("Operations Tasks", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Turnaround & Porter tracker", fontSize = 12.sp, color = Color.Gray) }
+            }
+        }
+        
+        Card(modifier = Modifier.fillMaxWidth().clickable { onMarClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Search, contentDescription = "MAR", tint = Color(0xFF5E35B1), modifier = Modifier.size(36.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column { Text("MAR Bedside Scan", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("5-Rights Medication verification", fontSize = 12.sp, color = Color.Gray) }
+            }
+        }
     }
 }
 
@@ -398,6 +489,25 @@ fun QrScannerScreen(
 ) {
     var manualUhid by remember { mutableStateOf("") }
     var isScanningSimulated by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        hasCameraPermission = isGranted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            launcher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -424,18 +534,35 @@ fun QrScannerScreen(
                 .fillMaxWidth()
                 .height(300.dp)
                 .background(Color.Black, RoundedCornerShape(12.dp))
-                .border(2.dp, Color(0xFF1A73E8), RoundedCornerShape(12.dp)),
+                .border(2.dp, if (hasCameraPermission) Color(0xFF1A73E8) else Color.Red, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Simulated Camera",
-                    tint = Color.White,
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Simulating Camera Viewfinder...", color = Color.White, fontSize = 14.sp)
+            if (hasCameraPermission) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Simulated Camera",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Simulating Camera Viewfinder...", color = Color.White, fontSize = 14.sp)
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Permission Denied",
+                        tint = Color.Red,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Camera permission is required to scan QR codes.", color = Color.White, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
+                        Text("Grant Permission")
+                    }
+                }
             }
         }
         
@@ -571,6 +698,24 @@ fun AiScribeScreen(
     var isProcessing by remember { mutableStateOf(false) }
     var soapResult by remember { mutableStateOf<JSONObject?>(null) }
     val scope = rememberCoroutineScope()
+    
+    val context = LocalContext.current
+    var hasAudioPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        hasAudioPermission = isGranted
+        if (isGranted) {
+            isRecording = true
+            transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
+            isRecording = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -614,9 +759,13 @@ fun AiScribeScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = {
-                    isRecording = true
-                    transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
-                    isRecording = false
+                    if (hasAudioPermission) {
+                        isRecording = true
+                        transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
+                        isRecording = false
+                    } else {
+                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
                 },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335))

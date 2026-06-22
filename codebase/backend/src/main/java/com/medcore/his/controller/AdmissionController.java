@@ -1,6 +1,7 @@
 package com.medcore.his.controller;
 
 import com.medcore.his.domain.clinical.Admission;
+import com.medcore.his.domain.master.Bed;
 import com.medcore.his.service.AdmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,5 +31,35 @@ public class AdmissionController {
     @GetMapping("/active")
     public ResponseEntity<List<Admission>> getActiveAdmissions() {
         return ResponseEntity.ok(admissionService.getActiveAdmissions());
+    }
+
+    @PutMapping("/{id}/discharge")
+    public ResponseEntity<Admission> dischargePatient(
+            @PathVariable java.util.UUID id, 
+            @RequestBody java.util.Map<String, String> payload) {
+        String dischargeSummary = payload.get("dischargeSummary");
+        Admission discharged = admissionService.dischargePatient(id, dischargeSummary);
+        return ResponseEntity.ok(discharged);
+    }
+
+    @PutMapping("/beds/{bedId}/clean")
+    public ResponseEntity<Bed> markBedClean(@PathVariable java.util.UUID bedId) {
+        return ResponseEntity.ok(admissionService.markBedClean(bedId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Admission> getAdmissionById(@PathVariable java.util.UUID id) {
+        Admission admission = admissionService.getAdmission(id);
+        if (admission == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(admission);
+    }
+
+    @PutMapping("/{id}/transfer")
+    public ResponseEntity<Admission> transferPatient(
+            @PathVariable java.util.UUID id, 
+            @RequestBody java.util.Map<String, String> payload) {
+        java.util.UUID newBedId = java.util.UUID.fromString(payload.get("newBedId"));
+        Admission transferred = admissionService.transferPatient(id, newBedId);
+        return ResponseEntity.ok(transferred);
     }
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { AllergyBanner } from "@/components/AllergyBanner";
 import { api } from "@/lib/api";
 
 export default function ClinicalWorkspace() {
@@ -19,11 +20,17 @@ export default function ClinicalWorkspace() {
   
   // New State for Diagnosis & Rx
   const [diagnosis, setDiagnosis] = useState("");
+  const [diagnosisResults, setDiagnosisResults] = useState<any[]>([]);
+  const [selectedDiagnoses, setSelectedDiagnoses] = useState<any[]>([]);
+
   const [rxDrug, setRxDrug] = useState("");
+  const [rxDrugResults, setRxDrugResults] = useState<any[]>([]);
   const [rxDosage, setRxDosage] = useState("");
   const [rxFreq, setRxFreq] = useState("OD");
   const [rxDuration, setRxDuration] = useState("5");
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  
+  const [errorAlerts, setErrorAlerts] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadVisit() {
@@ -49,9 +56,48 @@ export default function ClinicalWorkspace() {
     return Math.abs(ageDate.getUTCFullYear() - 1970);
   };
 
+  const searchIcd10 = async (q: string) => {
+    setDiagnosis(q);
+    if (q.length > 2) {
+      const res = await api.get(`/search/icd10?q=${q}`);
+      setDiagnosisResults(res.data);
+    } else {
+      setDiagnosisResults([]);
+    }
+  };
+
+  const addDiagnosis = (diag: any) => {
+    if (!selectedDiagnoses.find(d => d.id === diag.id)) {
+      setSelectedDiagnoses([...selectedDiagnoses, diag]);
+    }
+    setDiagnosis("");
+    setDiagnosisResults([]);
+  };
+
+  const searchDrugs = async (q: string) => {
+    setRxDrug(q);
+    if (q.length > 2) {
+      const res = await api.get(`/search/drugs?q=${q}`);
+      setRxDrugResults(res.data);
+    } else {
+      setRxDrugResults([]);
+    }
+  };
+
+  const selectDrug = (drug: any) => {
+    setRxDrug(drug.genericName);
+    setRxDrugResults([]);
+  };
+
   const handleAddRx = () => {
     if (rxDrug && rxDosage) {
-      setPrescriptions([...prescriptions, { drug: rxDrug, dosage: rxDosage, freq: rxFreq, duration: rxDuration }]);
+      setPrescriptions([...prescriptions, { 
+        customDrugName: rxDrug, 
+        dosage: rxDosage, 
+        route: "Oral", 
+        frequency: rxFreq, 
+        durationDays: parseInt(rxDuration) 
+      }]);
       setRxDrug("");
       setRxDosage("");
     }
@@ -59,16 +105,46 @@ export default function ClinicalWorkspace() {
 
   const handleSave = async () => {
     try {
+      setErrorAlerts([]);
+      // Save Notes
       await api.post(`/visits/${id}/notes`, {
         historyOfPresentIllness: hpi,
         physicalExamination: examination,
         treatmentPlan: plan,
       });
-      alert("Clinical Note Saved!");
-      router.push("/doctor/dashboard");
-    } catch (err) {
-      console.error("Failed to save clinical note", err);
-      alert("Failed to save clinical note.");
+
+      // Save Prescriptions
+      if (prescriptions.length > 0) {
+        await api.post(`/visits/${id}/prescriptions`, {
+          lines: prescriptions,
+          notes: plan
+        });
+      }
+
+      alert("Clinical Encounter Finalized!");
+    } catch (err: any) {
+      console.error("Failed to save clinical note/prescription", err);
+      if (err.response?.status === 400 && Array.isArray(err.response.data)) {
+        setErrorAlerts(err.response.data);
+      } else {
+        alert("Failed to save clinical note.");
+      }
+    }
+  };
+
+  const downloadPrescription = async () => {
+    try {
+      const response = await api.get(`/visits/${id}/prescription-pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `prescription_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      console.error("Failed to download prescription", error);
+      alert("Error downloading prescription PDF. Did you save it first?");
     }
   };
 
@@ -88,6 +164,8 @@ export default function ClinicalWorkspace() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       
+      <AllergyBanner patientId={patient.id} />
+
       {/* Context Bar */}
       <div className="bg-primary-light text-primary-dark p-4 rounded-lg flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-6">
@@ -219,19 +297,31 @@ export default function ClinicalWorkspace() {
           <Card>
             <CardHeader><CardTitle>Diagnoses</CardTitle></CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-4">
-                <input 
-                  type="text"
-                  className="flex-1 p-2 border border-border rounded-md focus:border-primary outline-none"
-                  placeholder="Search ICD-10 or type diagnosis..."
-                  value={diagnosis}
-                  onChange={(e) => setDiagnosis(e.target.value)}
-                />
-                <Button variant="secondary" onClick={() => alert("Added Diagnosis")}>+ Add</Button>
+              <div className="relative mb-4">
+                <div className="flex gap-4">
+                  <input 
+                    type="text"
+                    className="flex-1 p-2 border border-border rounded-md focus:border-primary outline-none"
+                    placeholder="Search ICD-10..."
+                    value={diagnosis}
+                    onChange={(e) => searchIcd10(e.target.value)}
+                  />
+                </div>
+                {diagnosisResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {diagnosisResults.map((d: any) => (
+                      <div key={d.id} className="p-2 hover:bg-surface cursor-pointer text-sm" onClick={() => addDiagnosis(d)}>
+                        <span className="font-semibold">{d.code}</span> - {d.description}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Badge variant="info">Primary: Essential Hypertension (I10)</Badge>
-                <Badge variant="warning">Provisional: Type 2 Diabetes (E11)</Badge>
+              <div className="flex gap-2 flex-wrap">
+                {selectedDiagnoses.map(d => (
+                  <Badge key={d.id} variant="info">{d.code} : {d.description}</Badge>
+                ))}
+                {selectedDiagnoses.length === 0 && <span className="text-sm text-text-tertiary">No diagnoses added.</span>}
               </div>
             </CardContent>
           </Card>
@@ -239,10 +329,28 @@ export default function ClinicalWorkspace() {
           <Card>
             <CardHeader><CardTitle>Prescription Writer</CardTitle></CardHeader>
             <CardContent>
+              {errorAlerts.length > 0 && (
+                <div className="mb-4 p-3 bg-error/10 border border-error/20 text-error rounded-md">
+                  <h4 className="font-semibold mb-1">Clinical Safety Alerts:</h4>
+                  <ul className="list-disc pl-5 text-sm space-y-1">
+                    {errorAlerts.map((msg, i) => <li key={i}>{msg}</li>)}
+                  </ul>
+                </div>
+              )}
+              
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 relative">
                   <label className="text-xs text-text-secondary">Drug Name</label>
-                  <input type="text" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" placeholder="e.g. Paracetamol 650mg" value={rxDrug} onChange={(e) => setRxDrug(e.target.value)} />
+                  <input type="text" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" placeholder="Search Drugs..." value={rxDrug} onChange={(e) => searchDrugs(e.target.value)} />
+                  {rxDrugResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {rxDrugResults.map((d: any) => (
+                        <div key={d.id} className="p-2 hover:bg-surface cursor-pointer text-sm" onClick={() => selectDrug(d)}>
+                          <span className="font-semibold">{d.genericName}</span> ({d.brandName}) - {d.strength}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">Dosage</label>
@@ -279,10 +387,10 @@ export default function ClinicalWorkspace() {
                     <tbody>
                       {prescriptions.map((rx, idx) => (
                         <tr key={idx} className="border-b border-surface-hover">
-                          <td className="p-3 font-medium">{rx.drug}</td>
+                          <td className="p-3 font-medium">{rx.customDrugName}</td>
                           <td className="p-3">{rx.dosage}</td>
-                          <td className="p-3">{rx.freq}</td>
-                          <td className="p-3">{rx.duration} Days</td>
+                          <td className="p-3">{rx.frequency}</td>
+                          <td className="p-3">{rx.durationDays} Days</td>
                         </tr>
                       ))}
                     </tbody>
@@ -305,8 +413,8 @@ export default function ClinicalWorkspace() {
           </Card>
 
           <div className="flex justify-end gap-4">
-            <Button variant="secondary">Save Draft</Button>
-            <Button variant="primary" onClick={handleSave}>Sign & Finalize Encouter</Button>
+            <Button variant="secondary" onClick={downloadPrescription}>Print Prescription PDF</Button>
+            <Button variant="primary" onClick={handleSave}>Sign & Finalize Encounter</Button>
           </div>
         </div>
 

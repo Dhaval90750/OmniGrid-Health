@@ -10,18 +10,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class LabService {
 
     private final LabOrderRepository labOrderRepository;
     private final LabTestRepository labTestRepository;
+    private final com.medcore.his.repository.LabSampleRepository labSampleRepository;
+    private final com.medcore.his.repository.LabResultRepository labResultRepository;
 
     @Autowired
-    public LabService(LabOrderRepository labOrderRepository, LabTestRepository labTestRepository) {
+    public LabService(LabOrderRepository labOrderRepository, LabTestRepository labTestRepository,
+                      com.medcore.his.repository.LabSampleRepository labSampleRepository,
+                      com.medcore.his.repository.LabResultRepository labResultRepository) {
         this.labOrderRepository = labOrderRepository;
         this.labTestRepository = labTestRepository;
+        this.labSampleRepository = labSampleRepository;
+        this.labResultRepository = labResultRepository;
     }
 
     public List<LabTest> searchTests(String query) {
@@ -38,6 +46,54 @@ public class LabService {
         return labOrderRepository.save(order);
     }
 
-    // A real system would have separate methods for collecting, receiving, and entering results
-    // For MVP we can just save it all at once or mock the state changes in the controller.
-}
+    @Transactional
+    public List<LabSample> generateSampleBarcodes(UUID orderId) {
+        LabOrder order = labOrderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Lab Order not found"));
+        
+        for (LabSample sample : order.getSamples()) {
+            if (sample.getBarcode() == null || sample.getBarcode().isEmpty()) {
+                String barcode = "LAB-" + LocalDateTime.now().getYear() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                sample.setBarcode(barcode);
+                sample.setStatus("Pending_Collection");
+            }
+        }
+        labOrderRepository.save(order);
+        return order.getSamples();
+    }
+
+    @Transactional
+    public LabSample collectSample(UUID sampleId, com.medcore.his.domain.auth.User collector) {
+        LabSample sample = labSampleRepository.findById(sampleId)
+                .orElseThrow(() -> new RuntimeException("Sample not found"));
+        sample.setStatus("Collected");
+        sample.setCollectedAt(LocalDateTime.now());
+        sample.setCollectedBy(collector);
+        return labSampleRepository.save(sample);
+    }
+
+    @Transactional
+    public void authorizeResults(UUID sampleId, List<LabResult> results, com.medcore.his.domain.auth.User authorizer) {
+        LabSample sample = labSampleRepository.findById(sampleId)
+                .orElseThrow(() -> new RuntimeException("Sample not found"));
+        
+        for (LabResult result : results) {
+            result.setSample(sample);
+            result.setAuthorizedBy(authorizer);
+            result.setAuthorizedAt(LocalDateTime.now());
+            labResultRepository.save(result);
+        }
+        
+        sample.setStatus("Completed");
+        labSampleRepository.save(sample);
+        
+        // Check if all samples in order are completed
+        LabOrder order = sample.getOrder();
+        boolean allCompleted = order.getSamples().stream()
+                .allMatch(s -> "Completed".equals(s.getStatus()));
+                
+        if (allCompleted) {
+            order.setStatus("Completed");
+            labOrderRepository.save(order);
+        }
+    }

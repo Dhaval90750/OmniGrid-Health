@@ -3,9 +3,11 @@ package com.medcore.his.controller;
 import com.medcore.his.domain.clinical.Visit;
 import com.medcore.his.domain.clinical.ClinicalNote;
 import com.medcore.his.domain.auth.User;
+import com.medcore.his.domain.patient.Patient;
 import com.medcore.his.repository.VisitRepository;
 import com.medcore.his.repository.ClinicalNoteRepository;
 import com.medcore.his.repository.UserRepository;
+import com.medcore.his.repository.PatientRepository;
 import com.medcore.his.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,14 +28,53 @@ public class VisitController {
     private final VisitRepository visitRepository;
     private final ClinicalNoteRepository clinicalNoteRepository;
     private final UserRepository userRepository;
+    private final PatientRepository patientRepository;
 
     @Autowired
     public VisitController(VisitRepository visitRepository,
                            ClinicalNoteRepository clinicalNoteRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           PatientRepository patientRepository) {
         this.visitRepository = visitRepository;
         this.clinicalNoteRepository = clinicalNoteRepository;
         this.userRepository = userRepository;
+        this.patientRepository = patientRepository;
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createVisit(
+            @RequestBody Map<String, String> payload,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        UUID patientId = UUID.fromString(payload.get("patientId"));
+        UUID doctorId = UUID.fromString(payload.get("doctorId"));
+
+        Patient patient = patientRepository.findById(patientId).orElse(null);
+        User doctor = userRepository.findById(doctorId).orElse(null);
+
+        if (patient == null || doctor == null) {
+            return ResponseEntity.badRequest().body("Patient or Doctor not found");
+        }
+
+        Visit visit = new Visit();
+        visit.setPatient(patient);
+        visit.setDoctor(doctor);
+        visit.setVisitType(payload.getOrDefault("visitType", "OPD"));
+        visit.setStatus("SCHEDULED");
+        visit.setVisitDate(LocalDateTime.now());
+        visit.setChiefComplaint(payload.get("chiefComplaint"));
+
+        // OPD Token Queue Allocation
+        Integer maxToken = visitRepository.findMaxTokenNumberByDoctorIdAndVisitDate(doctorId, visit.getVisitDate());
+        visit.setTokenNumber((maxToken == null ? 0 : maxToken) + 1);
+        visit.setQueueStatus("WAITING");
+
+        visitRepository.save(visit);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(visit);
     }
 
     @GetMapping("/doctor/{doctorId}")
@@ -123,6 +164,29 @@ public class VisitController {
                     visitRepository.save(visit);
 
                     return ResponseEntity.ok(Map.of("message", "Clinical note saved and visit completed successfully!"));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateVisitStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> payload,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        return visitRepository.findById(id)
+                .map(visit -> {
+                    String status = payload.get("status");
+                    String queueStatus = payload.get("queueStatus");
+                    
+                    if (status != null) visit.setStatus(status);
+                    if (queueStatus != null) visit.setQueueStatus(queueStatus);
+                    
+                    visitRepository.save(visit);
+                    return ResponseEntity.ok(visit);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

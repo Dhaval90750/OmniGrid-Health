@@ -39,4 +39,10 @@ public class Visit extends BaseEntity {
 
     @Column(name = "chief_complaint", length = 255)
     private String chiefComplaint;
+
+    @Column(name = "token_number")
+    private Integer tokenNumber;
+
+    @Column(name = "queue_status", length = 50)
+    private String queueStatus = "WAITING";
 }

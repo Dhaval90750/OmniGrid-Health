@@ -1,0 +1,33 @@
+package com.medcore.his.controller;
+
+import com.medcore.his.domain.master.Ward;
+import com.medcore.his.repository.WardRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/api/v1/wards")
+public class WardController {
+
+    private final WardRepository wardRepository;
+
+    @Autowired
+    public WardController(WardRepository wardRepository) {
+        this.wardRepository = wardRepository;
+    }
+
+    @PostMapping
+    public ResponseEntity<Ward> createWard(@RequestBody Ward ward) {
+        return new ResponseEntity<>(wardRepository.save(ward), HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Ward>> getAllWards() {
+        return ResponseEntity.ok(wardRepository.findAll());
+    }
+}

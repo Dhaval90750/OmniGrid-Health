@@ -7,6 +7,7 @@ import com.medcore.his.dto.PatientRegistrationRequest;
 import com.medcore.his.dto.PatientResponse;
 import com.medcore.his.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +24,13 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final QrCodeService qrCodeService;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public PatientService(PatientRepository patientRepository, QrCodeService qrCodeService) {
+    public PatientService(PatientRepository patientRepository, QrCodeService qrCodeService, JdbcTemplate jdbcTemplate) {
         this.patientRepository = patientRepository;
         this.qrCodeService = qrCodeService;
+        this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -55,10 +58,22 @@ public class PatientService {
         patient.setEmergencyContactRelation(request.getEmergencyContactRelation());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         
-        // Generate UHID: MED-YYYY-XXXXXX
+        // Fuzzy / Exact Duplicate Registration Check
+        boolean exists = patientRepository.existsByMobileNumber(request.getMobileNumber()) ||
+                patientRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(
+                        request.getFirstName(), request.getLastName(), request.getDateOfBirth()
+                );
+        if (exists) {
+            throw new RuntimeException("Duplicate patient detected with same mobile number or identical name and DOB.");
+        }
+        
+        // Generate UHID: MED-YYYY-XXXXXX atomically via sequence
         String currentYear = String.valueOf(Year.now().getValue());
-        long currentCount = patientRepository.countTotalPatients() + 1;
-        String sequence = String.format("%06d", currentCount);
+        Long sequenceValue = jdbcTemplate.queryForObject("SELECT nextval('uhid_seq')", Long.class);
+        if (sequenceValue == null) {
+            throw new RuntimeException("Failed to generate UHID sequence");
+        }
+        String sequence = String.format("%06d", sequenceValue);
         String generatedUhid = "MED-" + currentYear + "-" + sequence;
         
         patient.setUhid(generatedUhid);

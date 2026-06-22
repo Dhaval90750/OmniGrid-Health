@@ -1,182 +1,196 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { api } from "@/lib/api";
 
-export default function RadiologyDashboard() {
-  const [activeTab, setActiveTab] = useState("worklist");
-  const [selectedStudy, setSelectedStudy] = useState<any>(null);
+export default function RadiologyWorkspace() {
+  const [activeOrder, setActiveOrder] = useState<any>(null);
+  const [templates, setTemplates] = useState<any[]>([]);
+  
+  const [findings, setFindings] = useState("");
+  const [impression, setImpression] = useState("");
+  const [isCritical, setIsCritical] = useState(false);
 
-  const handleOpenStudy = (study: any) => {
-    setSelectedStudy(study);
-    setActiveTab("reporting");
+  const mockPendingOrders = [
+    { id: "rad-101", patientName: "Jane Smith", uhid: "UHID-2042", modality: "X-Ray", study: "Chest PA", urgency: "Routine" },
+    { id: "rad-102", patientName: "Robert Johnson", uhid: "UHID-5501", modality: "MRI", study: "Brain w/ Contrast", urgency: "Stat" }
+  ];
+
+  useEffect(() => {
+    if (activeOrder) {
+      fetchTemplates(activeOrder.modality);
+    }
+  }, [activeOrder]);
+
+  const fetchTemplates = async (modality: string) => {
+    try {
+      const res = await api.get(`/radiology/templates?modality=${modality}`);
+      setTemplates(res.data);
+    } catch (e) {
+      console.error(e);
+      // fallback mock templates
+      setTemplates([
+        { id: "t1", templateName: `${modality} Normal`, contentTemplate: "Normal study without any significant abnormal findings." },
+        { id: "t2", templateName: `${modality} Abnormal`, contentTemplate: "Abnormal findings observed." }
+      ]);
+    }
+  };
+
+  const applyTemplate = (templateId: string) => {
+    const t = templates.find(x => x.id === templateId);
+    if (t) {
+      setFindings(t.contentTemplate);
+      setImpression("Normal");
+    }
+  };
+
+  const handleSaveReport = async (status: "Draft" | "Final") => {
+    try {
+      // await api.post(`/radiology/reports`, { ...payload, status });
+      alert(`Report saved as ${status}.`);
+      if (status === "Final") {
+        setActiveOrder(null);
+        setFindings("");
+        setImpression("");
+        setIsCritical(false);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save report.");
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Radiology Workstation</h1>
-          <p className="text-text-secondary text-sm">Manage imaging orders and reports</p>
+    <div className="flex h-[calc(100vh-80px)] -m-8">
+      {/* Left Sidebar: Pending Orders */}
+      <div className="w-80 border-r border-border bg-surface flex flex-col h-full overflow-y-auto">
+        <div className="p-4 border-b border-border font-semibold text-text-primary sticky top-0 bg-surface z-10 shadow-sm">
+          Pending Studies
+        </div>
+        <div className="p-2 space-y-2">
+          {mockPendingOrders.map((order) => (
+            <div 
+              key={order.id} 
+              className={`p-3 border rounded-md cursor-pointer transition-colors ${activeOrder?.id === order.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+              onClick={() => setActiveOrder(order)}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className="font-semibold text-sm">{order.patientName}</span>
+                {order.urgency === 'Stat' ? <Badge variant="error">STAT</Badge> : <Badge variant="secondary">Routine</Badge>}
+              </div>
+              <div className="text-xs text-text-secondary">{order.modality} • {order.study}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-border">
-        <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'worklist' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => { setActiveTab('worklist'); setSelectedStudy(null); }}
-        >
-          Worklist
-        </button>
-        <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'reporting' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('reporting')}
-        >
-          Reporting Station
-        </button>
-      </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col bg-background h-full">
+        {activeOrder ? (
+          <>
+            {/* Top Bar */}
+            <div className="p-4 bg-primary-light text-primary-dark flex justify-between items-center shadow-sm">
+              <div className="flex gap-6">
+                <div><span className="text-xs opacity-80 block uppercase">Patient</span><span className="font-bold">{activeOrder.patientName}</span></div>
+                <div><span className="text-xs opacity-80 block uppercase">Study</span><span className="font-bold">{activeOrder.modality} - {activeOrder.study}</span></div>
+              </div>
+              <Button variant="secondary" onClick={() => setActiveOrder(null)}>Close Study</Button>
+            </div>
 
-      {/* Content */}
-      {activeTab === "worklist" && (
-        <Card>
-          <CardHeader><CardTitle>Pending Studies</CardTitle></CardHeader>
-          <CardContent>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-border">
-                <tr>
-                  <th className="p-3">Patient</th>
-                  <th className="p-3">Modality</th>
-                  <th className="p-3">Study Description</th>
-                  <th className="p-3">Indication</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3">
-                    <div className="font-medium">Rahul Sharma</div>
-                    <div className="text-xs text-text-secondary">UHID: MED-2026-000001</div>
-                  </td>
-                  <td className="p-3 font-medium">MRI</td>
-                  <td className="p-3">MRI Brain</td>
-                  <td className="p-3 text-text-secondary truncate max-w-[150px]">Chronic headache, r/o space occupying lesion</td>
-                  <td className="p-3"><Badge variant="info">Images Available</Badge></td>
-                  <td className="p-3">
-                    <Button variant="primary" size="sm" onClick={() => handleOpenStudy({ id: 1, modality: 'MRI', study: 'MRI Brain', patient: 'Rahul Sharma' })}>Open & Report</Button>
-                  </td>
-                </tr>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3">
-                    <div className="font-medium">Sneha Patel</div>
-                    <div className="text-xs text-text-secondary">UHID: MED-2026-000045</div>
-                  </td>
-                  <td className="p-3 font-medium">X-Ray</td>
-                  <td className="p-3">Chest PA View</td>
-                  <td className="p-3 text-text-secondary truncate max-w-[150px]">Persistent cough</td>
-                  <td className="p-3"><Badge variant="warning">Scheduled</Badge></td>
-                  <td className="p-3">
-                    <Button variant="secondary" size="sm" disabled>Open & Report</Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+            {/* Split Workspace */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Viewer Mock */}
+              <div className="flex-1 bg-black flex flex-col justify-center items-center text-white/50 border-r border-border relative">
+                {/* Mocking a DICOM overlay text */}
+                <div className="absolute top-4 left-4 text-xs font-mono">
+                  {activeOrder.patientName}<br/>{activeOrder.uhid}<br/>DOB: 1980-01-01
+                </div>
+                <div className="absolute top-4 right-4 text-xs font-mono text-right">
+                  {activeOrder.modality}<br/>{activeOrder.study}<br/>Today
+                </div>
+                
+                <div className="w-64 h-64 border-2 border-white/20 rounded-full flex items-center justify-center animate-pulse">
+                  DICOM Viewer Integration<br/>(Cornerstone.js Frame)
+                </div>
 
-      {activeTab === "reporting" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* DICOM Viewer Placeholder */}
-          <Card className="h-[600px] flex flex-col">
-            <CardHeader className="border-b pb-4">
-              <div className="flex justify-between items-center">
-                <CardTitle>DICOM Viewer (Mock)</CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="secondary" size="sm">Window/Level</Button>
-                  <Button variant="secondary" size="sm">Measure</Button>
-                  <Button variant="secondary" size="sm">Pan</Button>
+                <div className="absolute bottom-4 left-4 text-xs font-mono">
+                  W: 1500 L: -500
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 bg-black flex items-center justify-center p-0 overflow-hidden relative">
-              {selectedStudy ? (
-                 <div className="text-center">
-                    <div className="text-white/50 text-xl font-medium mb-4">MOCK IMAGE VIEWER</div>
-                    <div className="text-white/80">{selectedStudy.patient} - {selectedStudy.study}</div>
-                    <div className="absolute top-4 left-4 text-white/50 text-xs text-left">
-                      <div>Name: {selectedStudy.patient}</div>
-                      <div>ID: MED-001</div>
-                      <div>DOB: 12/04/1985</div>
-                    </div>
-                    <div className="absolute bottom-4 right-4 text-white/50 text-xs text-right">
-                      <div>{selectedStudy.modality}</div>
-                      <div>W: 1500 L: -500</div>
-                    </div>
-                 </div>
-              ) : (
-                <div className="text-white/30">No study selected from worklist.</div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Reporting Panel */}
-          <Card className="h-[600px] flex flex-col">
-            <CardHeader className="border-b pb-4">
-               <div className="flex justify-between items-center">
-                <CardTitle>Radiology Report</CardTitle>
-                <select className="p-1 border border-border rounded text-sm outline-none">
-                  <option>Load Template...</option>
-                  <option>MRI Brain Normal</option>
-                  <option>X-Ray Chest Normal</option>
-                </select>
-               </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto pt-4 space-y-4">
-              {selectedStudy ? (
-                <>
-                  <div className="bg-surface p-3 rounded text-sm space-y-1 mb-4 border border-border">
-                    <div><span className="font-medium">Study:</span> {selectedStudy.study}</div>
-                    <div><span className="font-medium">Clinical Indication:</span> Chronic headache</div>
-                    <div><span className="font-medium">Technique:</span> Multi-planar, multi-sequence MRI of the brain was performed without IV contrast.</div>
+              {/* Reporting Panel */}
+              <div className="w-[450px] bg-surface flex flex-col h-full overflow-y-auto">
+                <div className="p-4 border-b border-border font-semibold text-text-primary">
+                  Findings Report
+                </div>
+                
+                <div className="p-4 space-y-4 flex-1">
+                  <div>
+                    <label className="text-xs font-medium text-text-secondary mb-1 block">Insert Template</label>
+                    <select 
+                      className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary"
+                      onChange={(e) => applyTemplate(e.target.value)}
+                    >
+                      <option value="">Select Template...</option>
+                      {templates.map(t => (
+                        <option key={t.id} value={t.id}>{t.templateName}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Findings</label>
+                    <label className="text-xs font-medium text-text-secondary mb-1 block">Findings</label>
                     <textarea 
-                      className="w-full h-48 p-3 border border-border rounded-md focus:border-primary outline-none resize-none text-sm"
-                      defaultValue={`The ventricles and basal cisterns are normal in size and configuration. \n\nNo acute intracranial hemorrhage, mass effect, or midline shift. \n\nNormal grey-white matter differentiation. \n\nThe visualized paranasal sinuses and mastoid air cells are clear.`}
+                      className="w-full h-40 p-3 border border-border rounded-md focus:border-primary outline-none resize-none text-sm"
+                      placeholder="Detailed findings..."
+                      value={findings}
+                      onChange={(e) => setFindings(e.target.value)}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-primary-dark">Impression</label>
+                    <label className="text-xs font-medium text-text-secondary mb-1 block">Impression</label>
                     <textarea 
-                      className="w-full h-24 p-3 border border-border rounded-md focus:border-primary outline-none resize-none font-medium text-sm"
-                      defaultValue={`1. Normal MRI of the Brain.\n2. No acute intracranial abnormality.`}
+                      className="w-full h-24 p-3 border border-border rounded-md focus:border-primary outline-none resize-none text-sm font-semibold"
+                      placeholder="Final impression/conclusion..."
+                      value={impression}
+                      onChange={(e) => setImpression(e.target.value)}
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 mb-4">
-                    <input type="checkbox" id="critical" className="rounded" />
-                    <label htmlFor="critical" className="text-sm font-medium text-error">Flag as Critical Finding</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="criticalFlag" 
+                      checked={isCritical}
+                      onChange={(e) => setIsCritical(e.target.checked)}
+                      className="rounded border-border text-error focus:ring-error"
+                    />
+                    <label htmlFor="criticalFlag" className="text-sm font-medium text-error cursor-pointer">
+                      Flag as Critical Finding
+                    </label>
                   </div>
+                </div>
 
-                  <div className="flex justify-end gap-3 mt-auto">
-                    <Button variant="secondary">Save Draft</Button>
-                    <Button variant="primary" onClick={() => alert("Report Finalized and digitally signed!")}>Sign & Finalize</Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-text-secondary text-center mt-10">Select a study to begin reporting.</div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                <div className="p-4 border-t border-border bg-surface shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex gap-2">
+                  <Button variant="secondary" className="flex-1" onClick={() => handleSaveReport("Draft")}>Save Draft</Button>
+                  <Button variant="primary" className="flex-1" onClick={() => handleSaveReport("Final")}>Sign & Finalize</Button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-text-secondary">
+            <div className="text-center">
+              <h3 className="text-xl font-medium mb-2">Radiology Workspace</h3>
+              <p>Select a pending study from the left sidebar to begin reporting.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

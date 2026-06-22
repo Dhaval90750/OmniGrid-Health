@@ -8,6 +8,9 @@ spring:
     password: ${DB_PASSWORD:medcore_password}
     driver-class-name: org.postgresql.Driver
     
+  elasticsearch:
+    uris: http://localhost:9200
+    
   jpa:
     hibernate:
       ddl-auto: validate

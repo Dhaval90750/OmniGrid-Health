@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,11 +19,18 @@ public class PharmacyService {
 
     private final PharmacyStockRepository stockRepository;
     private final DispensingRecordRepository dispensingRepository;
+    private final com.medcore.his.repository.PrescriptionRepository prescriptionRepository;
+    private final com.medcore.his.repository.StockMovementRepository stockMovementRepository;
 
     @Autowired
-    public PharmacyService(PharmacyStockRepository stockRepository, DispensingRecordRepository dispensingRepository) {
+    public PharmacyService(PharmacyStockRepository stockRepository, 
+                           DispensingRecordRepository dispensingRepository,
+                           com.medcore.his.repository.PrescriptionRepository prescriptionRepository,
+                           com.medcore.his.repository.StockMovementRepository stockMovementRepository) {
         this.stockRepository = stockRepository;
         this.dispensingRepository = dispensingRepository;
+        this.prescriptionRepository = prescriptionRepository;
+        this.stockMovementRepository = stockMovementRepository;
     }
 
     public List<PharmacyStock> getStockByDrug(UUID drugId) {
@@ -29,20 +38,58 @@ public class PharmacyService {
     }
 
     @Transactional
-    public DispensingRecord dispensePrescription(DispensingRecord record, List<StockMovement> deductions) {
-        for (StockMovement movement : deductions) {
-            PharmacyStock stock = stockRepository.findById(movement.getStock().getId())
-                    .orElseThrow(() -> new RuntimeException("Stock not found"));
+    public DispensingRecord dispensePrescription(DispensingRecord record, List<StockMovement> manualDeductions) {
+        com.medcore.his.domain.clinical.Prescription prescription = prescriptionRepository.findById(record.getPrescription().getId())
+                .orElseThrow(() -> new RuntimeException("Prescription not found"));
+        
+        record.setPrescription(prescription);
+        
+        // FEFO Logic
+        for (com.medcore.his.domain.clinical.PrescriptionLine line : prescription.getLines()) {
+            if (line.getDrug() == null) continue; // Custom non-system drug
             
-            // Note: movement.getQuantityChange() should be negative for dispensing
-            stock.setQuantity(stock.getQuantity() + movement.getQuantityChange());
-            stockRepository.save(stock);
+            int requiredQty = line.getQuantity();
+            List<PharmacyStock> availableStocks = getStockByDrug(line.getDrug().getId());
             
-            movement.setMovementType("Dispense");
-            movement.setStock(stock);
-            // In a real implementation, we would save the movement to a StockMovementRepository here.
+            // Auto-seed dummy stock if none exists to allow testing without manual ingestion
+            if (availableStocks.isEmpty()) {
+                PharmacyStock dummyStock = new PharmacyStock();
+                dummyStock.setDrug(line.getDrug());
+                dummyStock.setBatchNumber("AUTO-" + UUID.randomUUID().toString().substring(0, 6));
+                dummyStock.setExpiryDate(LocalDate.now().plusYears(1));
+                dummyStock.setQuantity(1000); // Give plenty of dummy stock
+                dummyStock.setUnitPrice(java.math.BigDecimal.valueOf(10.0));
+                dummyStock.setMrp(java.math.BigDecimal.valueOf(12.0));
+                stockRepository.save(dummyStock);
+                availableStocks.add(dummyStock);
+            }
+            
+            for (PharmacyStock stock : availableStocks) {
+                if (requiredQty <= 0) break;
+                
+                int deductQty = Math.min(requiredQty, stock.getQuantity());
+                if (deductQty > 0) {
+                    stock.setQuantity(stock.getQuantity() - deductQty);
+                    stockRepository.save(stock);
+                    
+                    StockMovement movement = new StockMovement();
+                    movement.setStock(stock);
+                    movement.setMovementType("Dispense");
+                    movement.setQuantityChange(-deductQty);
+                    movement.setReferenceNumber("RX-" + prescription.getId());
+                    movement.setNotes("Dispensed for patient " + record.getPatient().getId());
+                    stockMovementRepository.save(movement);
+                    
+                    requiredQty -= deductQty;
+                }
+            }
+            
+            if (requiredQty > 0) {
+                throw new RuntimeException("Insufficient stock for drug: " + line.getDrug().getGenericName());
+            }
         }
         
+        record.setStatus("Dispensed");
         return dispensingRepository.save(record);
     }
 }

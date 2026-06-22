@@ -23,4 +23,8 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     @Query("SELECT COUNT(p) FROM Patient p")
     long countTotalPatients();
+    
+    boolean existsByMobileNumber(String mobileNumber);
+    
+    boolean existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(String firstName, String lastName, java.time.LocalDate dateOfBirth);
 }

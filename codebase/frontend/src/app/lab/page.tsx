@@ -1,169 +1,187 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { api } from "@/lib/api";
 
 export default function LabDashboard() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState<"collection" | "results">("collection");
+  const [barcodeQuery, setBarcodeQuery] = useState("");
+  const [activeSample, setActiveSample] = useState<any>(null);
+  
+  // For results entry
+  const [results, setResults] = useState([{ testName: "Hemoglobin", value: "", unit: "g/dL", refRange: "13-17" }]);
+
+  const handleBarcodeScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate finding a sample
+    setActiveSample({
+      id: "sample-123",
+      barcode: barcodeQuery,
+      status: "Pending_Collection",
+      test: { testName: "CBC", category: "Hematology" },
+      patient: { name: "John Doe", uhid: "UHID-1001" }
+    });
+  };
+
+  const markCollected = async () => {
+    try {
+      // await api.post(`/lab/samples/${activeSample.id}/collect`);
+      alert(`Sample ${activeSample.barcode} marked as Collected.`);
+      setActiveSample(null);
+      setBarcodeQuery("");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const authorizeResults = async () => {
+    try {
+      // await api.post(`/lab/samples/${activeSample.id}/authorize`, formattedResults);
+      alert("Results Authorized and Signed off.");
+      setActiveSample(null);
+      setBarcodeQuery("");
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Laboratory Information System</h1>
-          <p className="text-text-secondary text-sm">Manage test orders, samples, and results</p>
+          <h2 className="text-2xl font-semibold text-text-primary">Laboratory Information System</h2>
+          <p className="text-text-secondary text-sm">Manage sample collection and result authorizations.</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-border">
+      <div className="flex gap-4 border-b border-border pb-2">
         <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('pending')}
+          className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${activeTab === 'collection' ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
+          onClick={() => setActiveTab('collection')}
         >
-          Pending Orders
+          Sample Collection
         </button>
         <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'processing' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('processing')}
-        >
-          Active Processing
-        </button>
-        <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'results' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+          className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${activeTab === 'results' ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-hover'}`}
           onClick={() => setActiveTab('results')}
         >
-          Result Entry
+          Pathologist Review
         </button>
       </div>
 
-      {/* Content */}
-      {activeTab === "pending" && (
-        <Card>
-          <CardHeader><CardTitle>Pending Sample Collections</CardTitle></CardHeader>
-          <CardContent>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-border">
-                <tr>
-                  <th className="p-3">Patient</th>
-                  <th className="p-3">Test Ordered</th>
-                  <th className="p-3">Priority</th>
-                  <th className="p-3">Ordered By</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3">
-                    <div className="font-medium">Rahul Sharma</div>
-                    <div className="text-xs text-text-secondary">UHID: MED-2026-000001</div>
-                  </td>
-                  <td className="p-3 font-medium">Complete Blood Count (CBC)</td>
-                  <td className="p-3"><Badge variant="warning">Routine</Badge></td>
-                  <td className="p-3">Dr. Anjali Desai</td>
-                  <td className="p-3">
-                    <Button variant="primary" size="sm" onClick={() => alert("Sample Barcode Printed & Collected")}>Collect Sample</Button>
-                  </td>
-                </tr>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3">
-                    <div className="font-medium">Sneha Patel</div>
-                    <div className="text-xs text-text-secondary">UHID: MED-2026-000045</div>
-                  </td>
-                  <td className="p-3 font-medium">Fasting Blood Sugar (FBS)</td>
-                  <td className="p-3"><Badge variant="error">Stat</Badge></td>
-                  <td className="p-3">Dr. Vikram Singh</td>
-                  <td className="p-3">
-                    <Button variant="primary" size="sm">Collect Sample</Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+      {activeTab === "collection" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader><CardTitle>Scan Barcode</CardTitle></CardHeader>
+            <CardContent>
+              <form onSubmit={handleBarcodeScan} className="flex gap-4">
+                <Input placeholder="Scan sample barcode..." value={barcodeQuery} onChange={(e) => setBarcodeQuery(e.target.value)} autoFocus className="flex-1" />
+                <Button type="submit" variant="secondary">Lookup</Button>
+              </form>
+            </CardContent>
+          </Card>
 
-      {activeTab === "processing" && (
-        <Card>
-          <CardHeader><CardTitle>Samples Received (In Processing)</CardTitle></CardHeader>
-          <CardContent>
-             <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-border">
-                <tr>
-                  <th className="p-3">Barcode ID</th>
-                  <th className="p-3">Patient</th>
-                  <th className="p-3">Test</th>
-                  <th className="p-3">Time Received</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3 font-mono text-xs">LAB-0001-A</td>
-                  <td className="p-3 font-medium">Vikram Singh</td>
-                  <td className="p-3">Lipid Profile</td>
-                  <td className="p-3">09:15 AM</td>
-                  <td className="p-3"><Badge variant="info">Processing - Auto Analyzer</Badge></td>
-                </tr>
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+          {activeSample && (
+            <Card className="border-primary/20 bg-primary-light">
+              <CardHeader><CardTitle>Sample Details</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between border-b border-primary/20 pb-2">
+                  <span className="text-sm">Patient</span>
+                  <span className="font-semibold">{activeSample.patient.name} ({activeSample.patient.uhid})</span>
+                </div>
+                <div className="flex justify-between border-b border-primary/20 pb-2">
+                  <span className="text-sm">Test</span>
+                  <span className="font-semibold">{activeSample.test.testName}</span>
+                </div>
+                <div className="flex justify-between pb-2">
+                  <span className="text-sm">Barcode</span>
+                  <span className="font-mono bg-white px-2 py-1 rounded">{activeSample.barcode}</span>
+                </div>
+                <Button variant="primary" className="w-full" onClick={markCollected}>
+                  Confirm Sample Collected
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {activeTab === "results" && (
-        <Card>
-          <CardHeader><CardTitle>Result Entry & Authorization</CardTitle></CardHeader>
-          <CardContent>
-             <div className="border border-border rounded-md p-4 mb-4">
-               <div className="flex justify-between border-b pb-4 mb-4">
-                 <div>
-                   <h3 className="font-bold text-lg">Complete Blood Count (CBC)</h3>
-                   <div className="text-sm text-text-secondary">Sample ID: LAB-0002-B | Patient: Amit Kumar (MED-2026-000089)</div>
-                 </div>
-                 <Badge variant="warning">Awaiting Results</Badge>
-               </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-1">
+            <CardHeader><CardTitle>Pending Reviews</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div 
+                  className="p-3 border border-border rounded-md hover:border-primary cursor-pointer transition-colors"
+                  onClick={() => handleBarcodeScan({ preventDefault: () => {} } as any)}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-sm">John Doe</span>
+                    <Badge variant="warning">Processing</Badge>
+                  </div>
+                  <div className="text-xs text-text-secondary">CBC • LAB-2026-A1B2C3D4</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-               <div className="space-y-4">
-                 <div className="grid grid-cols-4 gap-4 items-center border-b pb-2">
-                   <div className="col-span-1 font-medium text-sm">Hemoglobin (Hb)</div>
-                   <div className="col-span-1">
-                     <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" defaultValue={11.5} />
-                   </div>
-                   <div className="col-span-1 text-sm text-text-secondary">13.0 - 17.0 g/dL</div>
-                   <div className="col-span-1"><Badge variant="error">Low (Abnormal)</Badge></div>
-                 </div>
+          {activeSample && (
+            <Card className="md:col-span-2">
+              <CardHeader><CardTitle>Enter Results for {activeSample.test.testName}</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-surface p-4 rounded-md flex justify-between items-center text-sm">
+                  <div><span className="text-text-secondary">Patient:</span> <span className="font-medium">{activeSample.patient.name}</span></div>
+                  <div><span className="text-text-secondary">Barcode:</span> <span className="font-mono">{activeSample.barcode}</span></div>
+                </div>
 
-                 <div className="grid grid-cols-4 gap-4 items-center border-b pb-2">
-                   <div className="col-span-1 font-medium text-sm">Total WBC Count</div>
-                   <div className="col-span-1">
-                     <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" defaultValue={6500} />
-                   </div>
-                   <div className="col-span-1 text-sm text-text-secondary">4000 - 11000 /cumm</div>
-                   <div className="col-span-1"><Badge variant="success">Normal</Badge></div>
-                 </div>
+                <div className="border border-border rounded-md overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-surface border-b border-border">
+                      <tr>
+                        <th className="p-3 font-medium">Parameter</th>
+                        <th className="p-3 font-medium">Value</th>
+                        <th className="p-3 font-medium">Unit</th>
+                        <th className="p-3 font-medium">Reference</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.map((res, idx) => (
+                        <tr key={idx} className="border-b border-surface-hover">
+                          <td className="p-3">{res.testName}</td>
+                          <td className="p-3">
+                            <input 
+                              type="number" 
+                              className="w-24 p-1 border border-border rounded-md focus:border-primary outline-none"
+                              value={res.value}
+                              onChange={(e) => {
+                                const newRes = [...results];
+                                newRes[idx].value = e.target.value;
+                                setResults(newRes);
+                              }}
+                            />
+                          </td>
+                          <td className="p-3 text-text-secondary">{res.unit}</td>
+                          <td className="p-3 text-text-secondary">{res.refRange}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                 <div className="grid grid-cols-4 gap-4 items-center border-b pb-2">
-                   <div className="col-span-1 font-medium text-sm">Platelet Count</div>
-                   <div className="col-span-1">
-                     <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" defaultValue={150000} />
-                   </div>
-                   <div className="col-span-1 text-sm text-text-secondary">150000 - 450000 /cumm</div>
-                   <div className="col-span-1"><Badge variant="success">Normal</Badge></div>
-                 </div>
-               </div>
-
-               <div className="mt-6 flex justify-end gap-4">
-                 <Button variant="secondary">Save Draft</Button>
-                 <Button variant="primary" onClick={() => alert("Report Authorized & Sent to Doctor!")}>Authorize Report</Button>
-               </div>
-             </div>
-          </CardContent>
-        </Card>
+                <div className="flex justify-end gap-4">
+                  <Button variant="secondary" onClick={() => setActiveSample(null)}>Cancel</Button>
+                  <Button variant="primary" onClick={authorizeResults}>Sign & Authorize Report</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
-
     </div>
   );
 }
