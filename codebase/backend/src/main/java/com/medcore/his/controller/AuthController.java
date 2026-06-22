@@ -5,8 +5,10 @@ import com.medcore.his.domain.auth.User;
 import com.medcore.his.dto.JwtResponse;
 import com.medcore.his.dto.LoginRequest;
 import com.medcore.his.dto.SignupRequest;
+import com.medcore.his.domain.staff.StaffProfile;
 import com.medcore.his.repository.RoleRepository;
 import com.medcore.his.repository.UserRepository;
+import com.medcore.his.repository.StaffProfileRepository;
 import com.medcore.his.security.JwtUtils;
 import com.medcore.his.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -39,6 +41,9 @@ public class AuthController {
 
     @Autowired
     RoleRepository roleRepository;
+
+    @Autowired
+    StaffProfileRepository staffProfileRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -106,6 +111,9 @@ public class AuthController {
             if (!roleName.startsWith("ROLE_")) {
                 roleName = "ROLE_" + roleName;
             }
+            if (roleName.equals("ROLE_ADMIN")) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Error: Registration of administrative roles is not permitted."));
+            }
             final String finalRoleName = roleName;
             Role userRole = roleRepository.findByName(finalRoleName)
                     .orElseGet(() -> {
@@ -118,7 +126,26 @@ public class AuthController {
         }
 
         user.setRoles(roles);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Auto-create StaffProfile
+        StaffProfile profile = new StaffProfile();
+        profile.setFullName(signUpRequest.getFirstName() + " " + signUpRequest.getLastName());
+        
+        String roleStr = strRole != null ? strRole : "DOCTOR";
+        if (roleStr.startsWith("ROLE_")) {
+            roleStr = roleStr.substring(5);
+        }
+        roleStr = roleStr.substring(0, 1).toUpperCase() + roleStr.substring(1).toLowerCase();
+        profile.setRole(roleStr);
+        profile.setDepartment(roleStr.equalsIgnoreCase("doctor") ? "General Medicine" : "General Operations");
+        
+        long count = staffProfileRepository.count() + 1;
+        profile.setEmployeeCode("EMP-" + String.format("%03d", count));
+        profile.setEmail(signUpRequest.getEmail());
+        profile.setContactNumber("+91-9999988888");
+        profile.setIsActive(true);
+        staffProfileRepository.save(profile);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully!"));
     }

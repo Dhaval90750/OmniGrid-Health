@@ -40,16 +40,24 @@ public class DatabaseSeeder {
             });
 
             System.out.println("Checking User Seeding...");
-            if (!userRepo.existsByUsername("admin")) {
+            String adminUsername = System.getenv("MEDCORE_ADMIN_USERNAME");
+            if (adminUsername == null || adminUsername.isEmpty()) {
+                adminUsername = "admin";
+            }
+            String adminPassword = System.getenv("MEDCORE_ADMIN_PASSWORD");
+            if (adminPassword == null || adminPassword.isEmpty()) {
+                adminPassword = "admin123";
+            }
+            if (!userRepo.existsByUsername(adminUsername)) {
                 User admin = new User();
-                admin.setUsername("admin");
-                admin.setPasswordHash(passwordEncoder.encode("admin123"));
+                admin.setUsername(adminUsername);
+                admin.setPasswordHash(passwordEncoder.encode(adminPassword));
                 admin.setFirstName("System");
                 admin.setLastName("Administrator");
                 admin.setEmail("admin@omnigrid.health");
                 admin.getRoles().add(adminRole);
                 userRepo.save(admin);
-                System.out.println("Seeded Default Admin: admin / admin123");
+                System.out.println("Seeded Default Admin: " + adminUsername + " / " + adminPassword);
             }
             if (staffRepo.count() == 0) {
                 System.out.println("Seeding StaffProfiles...");

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { api } from "@/lib/api";
 
 export default function ClinicalWorkspace() {
   const { id } = useParams();
   const router = useRouter();
   
+  const [visit, setVisit] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [hpi, setHpi] = useState("");
   const [examination, setExamination] = useState("");
   const [plan, setPlan] = useState("");
@@ -22,6 +25,30 @@ export default function ClinicalWorkspace() {
   const [rxDuration, setRxDuration] = useState("5");
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
 
+  useEffect(() => {
+    async function loadVisit() {
+      try {
+        const res = await api.get(`/visits/${id}`);
+        setVisit(res.data);
+      } catch (err) {
+        console.error("Failed to load visit details", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) {
+      loadVisit();
+    }
+  }, [id]);
+
+  const calculateAge = (dobString: string) => {
+    if (!dobString) return "";
+    const dob = new Date(dobString);
+    const diffMs = Date.now() - dob.getTime();
+    const ageDate = new Date(diffMs);
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+  };
+
   const handleAddRx = () => {
     if (rxDrug && rxDosage) {
       setPrescriptions([...prescriptions, { drug: rxDrug, dosage: rxDosage, freq: rxFreq, duration: rxDuration }]);
@@ -30,10 +57,33 @@ export default function ClinicalWorkspace() {
     }
   };
 
-  const handleSave = () => {
-    alert("Clinical Note Saved!");
-    router.push("/doctor/dashboard");
+  const handleSave = async () => {
+    try {
+      await api.post(`/visits/${id}/notes`, {
+        historyOfPresentIllness: hpi,
+        physicalExamination: examination,
+        treatmentPlan: plan,
+      });
+      alert("Clinical Note Saved!");
+      router.push("/doctor/dashboard");
+    } catch (err) {
+      console.error("Failed to save clinical note", err);
+      alert("Failed to save clinical note.");
+    }
   };
+
+  if (loading) {
+    return <div className="p-8 text-center text-text-secondary">Loading clinical workspace...</div>;
+  }
+
+  if (!visit || !visit.patient) {
+    return <div className="p-8 text-center text-error">Visit/Patient details not found.</div>;
+  }
+
+  const patient = visit.patient;
+  const age = calculateAge(patient.dateOfBirth);
+  const genderLetter = patient.gender?.[0]?.toUpperCase() || "";
+  const patientInfo = `${patient.firstName} ${patient.lastName} (${age}${genderLetter})`;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -43,15 +93,15 @@ export default function ClinicalWorkspace() {
         <div className="flex items-center gap-6">
           <div>
             <div className="text-xs opacity-80 uppercase tracking-wider">Patient</div>
-            <div className="font-bold text-lg">Rahul Sharma (34M)</div>
+            <div className="font-bold text-lg">{patientInfo}</div>
           </div>
           <div>
             <div className="text-xs opacity-80 uppercase tracking-wider">UHID</div>
-            <div className="font-bold">MED-2026-000001</div>
+            <div className="font-bold">{patient.uhid}</div>
           </div>
           <div>
             <div className="text-xs opacity-80 uppercase tracking-wider">Allergies</div>
-            <Badge variant="error">Penicillin</Badge>
+            <Badge variant="error">{patient.bloodGroup ? `Blood Group: ${patient.bloodGroup}` : "Penicillin"}</Badge>
           </div>
         </div>
         <Button variant="secondary" onClick={() => router.push("/doctor/dashboard")}>End Consult</Button>

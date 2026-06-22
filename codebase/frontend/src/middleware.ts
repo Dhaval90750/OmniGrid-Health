@@ -19,9 +19,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Only run middleware on the root and specific sub-paths, avoiding static assets
+// Only run middleware on the root and specific sub-paths, avoiding static assets and public files
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|logo.png|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)).*)',
   ],
 };

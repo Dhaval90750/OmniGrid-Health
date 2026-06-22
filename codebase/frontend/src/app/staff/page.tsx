@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
+import { api } from "@/lib/api";
+
 export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState("directory");
 
@@ -12,10 +14,9 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/staff/profiles')
-      .then(res => res.json())
-      .then(data => {
-        setStaff(data);
+    api.get('/staff/profiles')
+      .then(res => {
+        setStaff(res.data);
         setLoading(false);
       })
       .catch(err => {

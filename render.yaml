@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: medcore-his-backend
+    env: docker
+    dockerfilePath: codebase/backend/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_HOST
+        fromDatabase:
+          name: medcore-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: medcore-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: medcore-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: medcore-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: medcore-postgres
+          property: password
+      - key: MEDCORE_ADMIN_USERNAME
+        value: admin
+      - key: MEDCORE_ADMIN_PASSWORD
+        generateValue: true
+      - key: medcore.app.jwtSecret
+        generateValue: true
+
+databases:
+  - name: medcore-postgres
+    plan: free

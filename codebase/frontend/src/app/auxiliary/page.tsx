@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
+import { api } from "@/lib/api";
+
 export default function AuxiliaryDashboard() {
   const [activeTab, setActiveTab] = useState("blood");
 
@@ -12,10 +14,9 @@ export default function AuxiliaryDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/auxiliary/blood-bank')
-      .then(res => res.json())
-      .then(data => {
-        setBloodInventory(data);
+    api.get('/auxiliary/blood-bank')
+      .then(res => {
+        setBloodInventory(res.data);
         setLoading(false);
       })
       .catch(err => {

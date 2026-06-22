@@ -32,6 +32,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("omnigrid_token");
+        document.cookie = "omnigrid_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;";
         window.location.href = "/login";
       }
     }

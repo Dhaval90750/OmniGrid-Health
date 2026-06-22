@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
+import { api } from "@/lib/api";
+
 export default function AiScribeDashboard() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -33,13 +35,8 @@ export default function AiScribeDashboard() {
   const handleExtractEntities = async () => {
     setIsProcessing(true);
     try {
-      const response = await fetch("http://localhost:8080/api/v1/ai/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript })
-      });
-      const data = await response.json();
-      setAiResult(data);
+      const response = await api.post("/ai/extract", { transcript });
+      setAiResult(response.data);
     } catch (error) {
       console.error("Failed to run AI", error);
     } finally {
@@ -114,7 +111,7 @@ export default function AiScribeDashboard() {
                     <div>
                       <span className="text-text-secondary">Symptoms:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {aiResult.extracted_symptoms.map((s: string, i: number) => (
+                        {aiResult.extracted_symptoms?.map((s: string, i: number) => (
                           <Badge key={i} variant="warning">{s}</Badge>
                         ))}
                       </div>
@@ -122,7 +119,7 @@ export default function AiScribeDashboard() {
                     <div>
                       <span className="text-text-secondary">Medications:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {aiResult.extracted_medications.map((m: string, i: number) => (
+                        {aiResult.extracted_medications?.map((m: string, i: number) => (
                           <Badge key={i} variant="info">{m}</Badge>
                         ))}
                       </div>
@@ -130,7 +127,7 @@ export default function AiScribeDashboard() {
                     <div className="col-span-2">
                       <span className="text-text-secondary">Vitals Detected:</span>
                       <div className="mt-1 font-medium">
-                        BP: {aiResult.vitals.blood_pressure} | HR: {aiResult.vitals.heart_rate}
+                        BP: {aiResult.vitals?.blood_pressure || "—"} | HR: {aiResult.vitals?.heart_rate || "—"}
                       </div>
                     </div>
                   </div>
@@ -139,10 +136,10 @@ export default function AiScribeDashboard() {
                 <div>
                   <h3 className="text-sm font-bold text-text-primary mb-2 border-b border-border pb-1">Generated SOAP Note</h3>
                   <div className="space-y-3 text-sm bg-surface p-3 rounded border border-border">
-                    <div><span className="font-bold text-primary">S</span>ubjective:<br/>{aiResult.generated_soap_note.Subjective}</div>
-                    <div><span className="font-bold text-primary">O</span>bjective:<br/>{aiResult.generated_soap_note.Objective}</div>
-                    <div><span className="font-bold text-primary">A</span>ssessment:<br/>{aiResult.generated_soap_note.Assessment}</div>
-                    <div><span className="font-bold text-primary">P</span>lan:<br/>{aiResult.generated_soap_note.Plan}</div>
+                    <div><span className="font-bold text-primary">S</span>ubjective:<br/>{aiResult.generated_soap_note?.Subjective || "—"}</div>
+                    <div><span className="font-bold text-primary">O</span>bjective:<br/>{aiResult.generated_soap_note?.Objective || "—"}</div>
+                    <div><span className="font-bold text-primary">A</span>ssessment:<br/>{aiResult.generated_soap_note?.Assessment || "—"}</div>
+                    <div><span className="font-bold text-primary">P</span>lan:<br/>{aiResult.generated_soap_note?.Plan || "—"}</div>
                   </div>
                 </div>
 

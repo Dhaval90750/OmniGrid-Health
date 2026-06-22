@@ -14,8 +14,12 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# Create a non-root user and group
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
 # Copy the built JAR from the build stage
-COPY --from=build /app/target/his-backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build --chown=spring:spring /app/target/his-backend-0.0.1-SNAPSHOT.jar app.jar
 
 # Render dynamic port binding
 EXPOSE 8080
