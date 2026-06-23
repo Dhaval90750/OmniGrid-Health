@@ -68,7 +68,7 @@ export default function WhoChecklist() {
           </div>
 
           <div className="flex justify-end pt-4 mt-4">
-            <Button variant={allChecked ? "success" : "secondary"} disabled={!allChecked}>Complete Sign-In</Button>
+            <Button variant={allChecked ? "primary" : "secondary"} disabled={!allChecked}>Complete Sign-In</Button>
           </div>
         </CardContent>
       </Card>
