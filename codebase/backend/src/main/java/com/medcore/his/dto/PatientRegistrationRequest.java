@@ -41,4 +41,6 @@ public class PatientRegistrationRequest {
     private String emergencyContactName;
     private String emergencyContactRelation;
     private String emergencyContactPhone;
+    
+    private boolean bypassDuplicateCheck = false;
 }

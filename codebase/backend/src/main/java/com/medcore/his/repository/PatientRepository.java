@@ -25,6 +25,9 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
     long countTotalPatients();
     
     boolean existsByMobileNumber(String mobileNumber);
+    Optional<Patient> findFirstByMobileNumber(String mobileNumber);
+    
     
     boolean existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(String firstName, String lastName, java.time.LocalDate dateOfBirth);
+    Optional<Patient> findFirstByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(String firstName, String lastName, java.time.LocalDate dateOfBirth);
 }

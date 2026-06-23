@@ -8,9 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/Input";
 import { api } from "@/lib/api";
 
+import { validateAadhaar } from "@/lib/aadhaarValidation";
+
 export default function NewPatientRegistration() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState("");
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicatePatient, setDuplicatePatient] = useState<any>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -64,16 +69,46 @@ export default function NewPatientRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError("");
+    
+    // Aadhaar Validation
+    if (formData.nationalId && formData.nationalId.length === 12) {
+      if (!validateAadhaar(formData.nationalId)) {
+        setValidationError("Invalid Aadhaar number according to Verhoeff checksum algorithm.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const response = await api.post("/patients", formData);
       // Redirect to the newly created patient profile
       router.push(`/patients/${response.data.id}`);
-    } catch (error) {
-      console.error("Failed to register patient", error);
-      alert("Registration failed. Please check the inputs.");
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        setDuplicatePatient(error.response.data.duplicatePatient);
+        setShowDuplicateModal(true);
+      } else {
+        console.error("Failed to register patient", error);
+        setValidationError("Registration failed. Please check the inputs.");
+      }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const forceCreatePatient = async () => {
+    setIsSubmitting(true);
+    try {
+      const payload = { ...formData, bypassDuplicateCheck: true };
+      const response = await api.post("/patients", payload);
+      router.push(`/patients/${response.data.id}`);
+    } catch (error) {
+      console.error("Failed to force register patient", error);
+      setValidationError("Registration failed. Please check the inputs.");
+    } finally {
+      setIsSubmitting(false);
+      setShowDuplicateModal(false);
     }
   };
 
@@ -83,6 +118,12 @@ export default function NewPatientRegistration() {
         <Button variant="secondary" onClick={() => router.push("/patients")}>← Back</Button>
         <h2 className="text-2xl font-semibold text-text-primary">New Patient Registration</h2>
       </div>
+
+      {validationError && (
+        <div className="p-4 rounded-[8px] bg-error-light text-error-dark border border-error-border text-sm font-medium">
+          {validationError}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
@@ -255,15 +296,56 @@ export default function NewPatientRegistration() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="justify-end gap-4">
-              <Button type="button" variant="secondary" onClick={() => router.push("/patients")}>Cancel</Button>
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                {isSubmitting ? "Registering..." : "Complete Registration"}
+            <div className="flex justify-end pt-6 gap-3 border-t border-border mt-6">
+              <Button variant="secondary" onClick={() => router.push("/patients")} type="button">Cancel</Button>
+              <Button variant="primary" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Registering..." : "Register Patient"}
               </Button>
-            </CardFooter>
+            </div>
           </Card>
         </div>
       </form>
+
+      {/* Duplicate Review Modal */}
+      {showDuplicateModal && duplicatePatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-border flex justify-between items-center bg-warning-light/20">
+              <h2 className="text-lg font-bold text-text-primary">Possible Duplicate Found</h2>
+              <button onClick={() => setShowDuplicateModal(false)} className="text-text-secondary hover:text-text-primary">&times;</button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-text-primary border-b border-border pb-2 mb-4">You Entered:</h3>
+                <div className="space-y-2 text-sm text-text-secondary">
+                  <p><span className="font-medium text-text-primary">Name:</span> {formData.firstName} {formData.lastName}</p>
+                  <p><span className="font-medium text-text-primary">DOB:</span> {formData.dateOfBirth}</p>
+                  <p><span className="font-medium text-text-primary">Mobile:</span> {formData.mobileNumber}</p>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-text-primary border-b border-border pb-2 mb-4">Existing Patient:</h3>
+                <div className="space-y-2 text-sm text-text-secondary">
+                  <p><span className="font-medium text-text-primary">UHID:</span> <span className="font-mono bg-surface px-1 py-0.5 rounded text-xs">{duplicatePatient.uhid}</span></p>
+                  <p><span className="font-medium text-text-primary">Name:</span> {duplicatePatient.firstName} {duplicatePatient.lastName}</p>
+                  <p><span className="font-medium text-text-primary">DOB:</span> {duplicatePatient.dateOfBirth}</p>
+                  <p><span className="font-medium text-text-primary">Mobile:</span> {duplicatePatient.mobileNumber}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border bg-surface flex justify-end gap-3">
+              <Button variant="secondary" onClick={forceCreatePatient} disabled={isSubmitting}>
+                {isSubmitting ? "Wait..." : "Create New Anyway"}
+              </Button>
+              <Button variant="primary" onClick={() => router.push(`/patients/${duplicatePatient.id}`)}>
+                Use Existing Profile
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

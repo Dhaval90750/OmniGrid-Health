@@ -58,13 +58,18 @@ public class PatientService {
         patient.setEmergencyContactRelation(request.getEmergencyContactRelation());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         
-        // Fuzzy / Exact Duplicate Registration Check
-        boolean exists = patientRepository.existsByMobileNumber(request.getMobileNumber()) ||
-                patientRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(
-                        request.getFirstName(), request.getLastName(), request.getDateOfBirth()
+        if (!request.isBypassDuplicateCheck()) {
+            Patient existing = patientRepository.findFirstByMobileNumber(request.getMobileNumber())
+                    .orElseGet(() -> patientRepository.findFirstByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(
+                            request.getFirstName(), request.getLastName(), request.getDateOfBirth()
+                    ).orElse(null));
+
+            if (existing != null) {
+                throw new com.medcore.his.exception.DuplicatePatientException(
+                        "Duplicate patient detected with same mobile number or identical name and DOB.",
+                        getPatientWithQrCode(existing)
                 );
-        if (exists) {
-            throw new RuntimeException("Duplicate patient detected with same mobile number or identical name and DOB.");
+            }
         }
         
         // Generate UHID: MED-YYYY-XXXXXX atomically via sequence
