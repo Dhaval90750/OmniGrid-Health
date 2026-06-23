@@ -40,7 +40,7 @@ export default function NarcoticRegister() {
                 <tr key={record.id} className="hover:bg-surface-hover">
                   <td className="p-4 whitespace-nowrap text-text-secondary">{record.date}</td>
                   <td className="p-4">
-                    {record.type === "RECEIPT" ? <Badge variant="success">RECEIPT</Badge> : <Badge variant="danger">ISSUE</Badge>}
+                    {record.type === "RECEIPT" ? <Badge variant="success">RECEIPT</Badge> : <Badge variant="error">ISSUE</Badge>}
                   </td>
                   <td className="p-4">
                     <div className="font-bold text-text-primary">{record.drug}</div>

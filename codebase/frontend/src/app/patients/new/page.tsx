@@ -31,8 +31,6 @@ export default function NewPatientRegistration() {
     nationalId: "",
     emergencyContactName: "",
     emergencyContactRelation: "",
-    emergencyContactName: "",
-    emergencyContactRelation: "",
     emergencyContactPhone: "",
     photoBase64: ""
   });
