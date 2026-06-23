@@ -119,7 +119,7 @@ object NetworkClient {
 @Composable
 fun MedCoreApp() {
     var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
-    var apiUrl by remember { mutableStateOf("http://10.0.2.2:8080/api/v1") } // Android localhost
+    var apiUrl by remember { mutableStateOf("https://medcore-his-backend-production.up.railway.app/api/v1") }
     var username by remember { mutableStateOf("admin") }
     var password by remember { mutableStateOf("admin123") }
     var token by remember { mutableStateOf("") }
@@ -188,6 +188,8 @@ fun MedCoreApp() {
         )
         
         Screen.QR_SCANNER -> QrScannerScreen(
+            apiUrl = apiUrl,
+            token = token,
             onBack = { currentScreen = Screen.DASHBOARD },
             onPatientDetected = { patientJson ->
                 activePatient = patientJson
@@ -207,7 +209,10 @@ fun MedCoreApp() {
         )
         
         Screen.VITALS_ENTRY -> VitalsEntryScreen(
-            patientUhid = activePatient?.optString("uhid") ?: "UHID-12345",
+            patientUhid = activePatient?.optString("uhid") ?: "UNKNOWN",
+            patientId = activePatient?.optString("id") ?: "",
+            apiUrl = apiUrl,
+            token = token,
             onBack = { currentScreen = Screen.DASHBOARD },
             onSubmit = { _, _, _, _, _ -> currentScreen = Screen.DASHBOARD }
         )
@@ -484,11 +489,16 @@ fun DashboardScreen(
 
 @Composable
 fun QrScannerScreen(
+    apiUrl: String,
+    token: String,
     onBack: () -> Unit,
     onPatientDetected: (JSONObject) -> Unit
 ) {
     var manualUhid by remember { mutableStateOf("") }
     var isScanningSimulated by remember { mutableStateOf(false) }
+    var isFetching by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     var hasCameraPermission by remember {
@@ -581,27 +591,44 @@ fun QrScannerScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Button(
-            onClick = {
-                if (manualUhid.isNotEmpty()) {
-                    try {
-                        val json = JSONObject(manualUhid)
-                        onPatientDetected(json)
-                    } catch (e: Exception) {
-                        // Fallback to minimal patient object if plain string is entered
-                        val fallback = JSONObject().apply {
-                            put("uhid", manualUhid)
-                            put("name", "Simulated Patient")
-                            put("dob", "1992-05-15")
+        if (errorMsg.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(errorMsg, color = Color.Red, fontSize = 13.sp, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (isFetching) {
+            CircularProgressIndicator()
+        } else {
+            Button(
+                onClick = {
+                    if (manualUhid.isNotEmpty()) {
+                        isFetching = true
+                        errorMsg = ""
+                        scope.launch {
+                            try {
+                                // Assume manualUhid is the actual UHID string, e.g. MED-1234
+                                val res = NetworkClient.get("$apiUrl/patients/search?q=$manualUhid", token)
+                                val jsonArray = JSONArray(res)
+                                if (jsonArray.length() > 0) {
+                                    val patient = jsonArray.getJSONObject(0)
+                                    onPatientDetected(patient)
+                                } else {
+                                    errorMsg = "Patient not found."
+                                }
+                            } catch (e: Exception) {
+                                errorMsg = "Error fetching patient: ${e.localizedMessage}"
+                            } finally {
+                                isFetching = false
+                            }
                         }
-                        onPatientDetected(fallback)
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
-        ) {
-            Text("Simulate Decode QR Code")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
+            ) {
+                Text("Fetch Patient by UHID")
+            }
         }
     }
 }
@@ -611,9 +638,11 @@ fun PatientSummaryScreen(
     patient: JSONObject,
     onBack: () -> Unit
 ) {
-    val name = patient.optString("name", "Rahul Sharma")
-    val uhid = patient.optString("uhid", "MED-2026-000001")
-    val dob = patient.optString("dob", "1992-08-10")
+    val firstName = patient.optString("firstName", "Unknown")
+    val lastName = patient.optString("lastName", "")
+    val name = "$firstName $lastName"
+    val uhid = patient.optString("uhid", "UNKNOWN-UHID")
+    val dob = patient.optString("dateOfBirth", "Unknown")
 
     Column(
         modifier = Modifier
