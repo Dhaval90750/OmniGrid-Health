@@ -48,17 +48,15 @@ public class DatabaseSeeder {
             if (adminPassword == null || adminPassword.isEmpty()) {
                 adminPassword = "admin123";
             }
-            if (!userRepo.existsByUsername(adminUsername)) {
-                User admin = new User();
-                admin.setUsername(adminUsername);
-                admin.setPasswordHash(passwordEncoder.encode(adminPassword));
-                admin.setFirstName("System");
-                admin.setLastName("Administrator");
-                admin.setEmail("admin@omnigrid.health");
-                admin.getRoles().add(adminRole);
-                userRepo.save(admin);
-                System.out.println("Seeded Default Admin: " + adminUsername + " / " + adminPassword);
-            }
+            User admin = userRepo.findByUsername(adminUsername).orElse(new User());
+            admin.setUsername(adminUsername);
+            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+            if (admin.getFirstName() == null) admin.setFirstName("System");
+            if (admin.getLastName() == null) admin.setLastName("Administrator");
+            if (admin.getEmail() == null) admin.setEmail("admin@omnigrid.health");
+            if (admin.getRoles().isEmpty()) admin.getRoles().add(adminRole);
+            userRepo.save(admin);
+            System.out.println("Seeded/Updated Admin: " + adminUsername + " / " + adminPassword);
             if (staffRepo.count() == 0) {
                 System.out.println("Seeding StaffProfiles...");
                 
