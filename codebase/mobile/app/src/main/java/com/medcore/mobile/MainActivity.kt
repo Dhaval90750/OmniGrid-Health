@@ -229,10 +229,15 @@ fun MedCoreApp() {
         )
         
         Screen.TASK_TRACKER -> TaskTrackerScreen(
+            apiUrl = apiUrl,
+            token = token,
             onBack = { currentScreen = Screen.DASHBOARD }
         )
         
         Screen.MAR_SCANNER -> MarScannerScreen(
+            apiUrl = apiUrl,
+            token = token,
+            patientId = activePatient?.optString("id") ?: "",
             onBack = { currentScreen = Screen.DASHBOARD }
         )
     }
@@ -536,28 +541,42 @@ fun QrScannerScreen(
             Text("QR Barcode Scanner", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
-        // Simulated Camera Viewfinder
+        // Real Camera Viewfinder
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .weight(1f) // Takes up remaining space
                 .background(Color.Black, RoundedCornerShape(12.dp))
                 .border(2.dp, if (hasCameraPermission) Color(0xFF1A73E8) else Color.Red, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             if (hasCameraPermission) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Simulated Camera",
-                        tint = Color.White,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Simulating Camera Viewfinder...", color = Color.White, fontSize = 14.sp)
-                }
+                com.medcore.mobile.ui.components.QrCameraPreview(
+                    onBarcodeScanned = { scannedValue ->
+                        if (!isFetching) {
+                            isFetching = true
+                            errorMsg = ""
+                            scope.launch {
+                                try {
+                                    val res = NetworkClient.get("$apiUrl/patients/search?q=$scannedValue", token)
+                                    val jsonArray = JSONArray(res)
+                                    if (jsonArray.length() > 0) {
+                                        val patient = jsonArray.getJSONObject(0)
+                                        onPatientDetected(patient)
+                                    } else {
+                                        errorMsg = "Patient not found for: $scannedValue"
+                                        isFetching = false
+                                    }
+                                } catch (e: Exception) {
+                                    errorMsg = "Error fetching patient: ${e.localizedMessage}"
+                                    isFetching = false
+                                }
+                            }
+                        }
+                    }
+                )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                     Icon(
@@ -576,19 +595,6 @@ fun QrScannerScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Text("Scan Simulator: Enter QR data payload", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        OutlinedTextField(
-            value = manualUhid,
-            onValueChange = { manualUhid = it },
-            label = { Text("Paste Patient QR/UHID String") },
-            placeholder = { Text("e.g. {\"uhid\":\"MED-2026-000001\",\"name\":\"Rahul Sharma\"}") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        
         Spacer(modifier = Modifier.height(16.dp))
         
         if (errorMsg.isNotEmpty()) {
@@ -599,36 +605,6 @@ fun QrScannerScreen(
 
         if (isFetching) {
             CircularProgressIndicator()
-        } else {
-            Button(
-                onClick = {
-                    if (manualUhid.isNotEmpty()) {
-                        isFetching = true
-                        errorMsg = ""
-                        scope.launch {
-                            try {
-                                // Assume manualUhid is the actual UHID string, e.g. MED-1234
-                                val res = NetworkClient.get("$apiUrl/patients/search?q=$manualUhid", token)
-                                val jsonArray = JSONArray(res)
-                                if (jsonArray.length() > 0) {
-                                    val patient = jsonArray.getJSONObject(0)
-                                    onPatientDetected(patient)
-                                } else {
-                                    errorMsg = "Patient not found."
-                                }
-                            } catch (e: Exception) {
-                                errorMsg = "Error fetching patient: ${e.localizedMessage}"
-                            } finally {
-                                isFetching = false
-                            }
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
-            ) {
-                Text("Fetch Patient by UHID")
-            }
         }
     }
 }
@@ -726,6 +702,7 @@ fun AiScribeScreen(
     var transcript by remember { mutableStateOf("") }
     var isProcessing by remember { mutableStateOf(false) }
     var soapResult by remember { mutableStateOf<JSONObject?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     
     val context = LocalContext.current
@@ -807,22 +784,15 @@ fun AiScribeScreen(
                     isProcessing = true
                     scope.launch {
                         try {
+                            errorMsg = ""
+                            soapResult = null
                             val body = JSONObject().apply {
                                 put("transcript", transcript)
                             }.toString()
                             val res = NetworkClient.post("$apiUrl/ai/extract", body, token)
                             soapResult = JSONObject(res)
                         } catch (e: Exception) {
-                            // Fallback mock
-                            soapResult = JSONObject().apply {
-                                put("confidence_score", 0.92)
-                                put("generated_soap_note", JSONObject().apply {
-                                    put("Subjective", "Fever and headache for 2 days.")
-                                    put("Objective", "BP 120/80, HR 85.")
-                                    put("Assessment", "Acute symptomatic fever.")
-                                    put("Plan", "Paracetamol PRN.")
-                                })
-                            }
+                            errorMsg = "Failed to connect to AI Server: ${e.localizedMessage}"
                         } finally {
                             isProcessing = false
                         }
@@ -835,8 +805,13 @@ fun AiScribeScreen(
                 Text(if (isProcessing) "Processing..." else "Process SOAP")
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (errorMsg.isNotEmpty()) {
+            Text(errorMsg, color = Color.Red, fontSize = 14.sp)
+        }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         if (soapResult != null) {
             Text("AI Extracted SOAP Note Summary", fontWeight = FontWeight.Bold, fontSize = 15.sp)

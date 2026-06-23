@@ -19,10 +19,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.launch
+import com.medcore.mobile.NetworkClient
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarScannerScreen(
+    apiUrl: String,
+    token: String,
+    patientId: String,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -43,6 +49,12 @@ fun MarScannerScreen(
             launcher.launch(Manifest.permission.CAMERA)
         }
     }
+
+    var manualDrugCode by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf("") }
+    var successMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -70,13 +82,21 @@ fun MarScannerScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(200.dp)
                     .background(Color.Black, RoundedCornerShape(12.dp))
                     .border(2.dp, if (hasCameraPermission) Color(0xFF4CAF50) else Color.Red, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (hasCameraPermission) {
-                    Text("Scanning for Barcodes...", color = Color.White)
+                    com.medcore.mobile.ui.components.QrCameraPreview(
+                        onBarcodeScanned = { scannedValue ->
+                            // Auto-populate and attempt submit if not currently loading
+                            if (!isLoading) {
+                                manualDrugCode = scannedValue
+                                // We can auto-submit or just let the user hit Administer
+                            }
+                        }
+                    )
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                         Icon(
@@ -92,6 +112,71 @@ fun MarScannerScreen(
                             Text("Grant Permission")
                         }
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text("Simulator/Manual Override: Enter Drug Barcode / Details", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = manualDrugCode,
+                onValueChange = { manualDrugCode = it },
+                label = { Text("e.g. Paracetamol 500mg PO") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (errorMsg.isNotEmpty()) {
+                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            }
+            if (successMsg.isNotEmpty()) {
+                Text(successMsg, color = Color(0xFF4CAF50))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        if (patientId.isEmpty()) {
+                            errorMsg = "Invalid patient ID. Please scan patient QR first."
+                            return@Button
+                        }
+                        if (manualDrugCode.isEmpty()) {
+                            errorMsg = "Please scan or enter medication details."
+                            return@Button
+                        }
+
+                        isLoading = true
+                        errorMsg = ""
+                        successMsg = ""
+                        scope.launch {
+                            try {
+                                val body = JSONObject().apply {
+                                    put("patientId", patientId)
+                                    put("drugId", java.util.UUID.randomUUID().toString()) // Mock drug ID since it's free text
+                                    put("dose", "1 Tablet")
+                                    put("route", "PO")
+                                    put("notes", manualDrugCode)
+                                }.toString()
+
+                                NetworkClient.post("$apiUrl/nursing/mar", body, token)
+                                successMsg = "Medication Administration Recorded!"
+                                manualDrugCode = ""
+                            } catch (e: Exception) {
+                                errorMsg = "Error: ${e.localizedMessage}"
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Administer Medication")
                 }
             }
         }
