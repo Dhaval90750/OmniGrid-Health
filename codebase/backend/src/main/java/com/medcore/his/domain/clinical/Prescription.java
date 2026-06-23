@@ -33,4 +33,7 @@ public class Prescription extends BaseEntity {
 
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PrescriptionLine> lines = new ArrayList<>();
+
+    @Column(length = 50)
+    private String status = "Draft"; // Draft, Dispensed
 }

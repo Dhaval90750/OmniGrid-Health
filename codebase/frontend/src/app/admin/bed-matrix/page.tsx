@@ -82,7 +82,7 @@ export default function BedMatrix() {
           <CardHeader className="bg-surface pb-3">
             <CardTitle className="text-lg flex justify-between items-center">
               {ward.wardName}
-              <Badge variant="secondary">{ward.occupied} / {ward.totalBeds} Occupied</Badge>
+              <Badge variant="default">{ward.occupied} / {ward.totalBeds} Occupied</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">

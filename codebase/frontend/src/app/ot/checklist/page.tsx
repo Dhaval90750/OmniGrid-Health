@@ -63,7 +63,7 @@ export default function WhoChecklist() {
             </label>
             <label className="flex items-center gap-3">
               <input type="checkbox" className="w-5 h-5 accent-info" checked={checked.bloodLossRisk} onChange={e => setChecked({...checked, bloodLossRisk: e.target.checked})} />
-              <span>Risk of >500ml blood loss?</span>
+              <span>Risk of &gt;500ml blood loss?</span>
             </label>
           </div>
 
