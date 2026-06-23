@@ -37,4 +37,7 @@ public class LabSample extends BaseEntity {
 
     @Column(name = "received_at")
     private LocalDateTime receivedAt;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
 }

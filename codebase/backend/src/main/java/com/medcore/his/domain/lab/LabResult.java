@@ -28,6 +28,12 @@ public class LabResult extends BaseEntity {
     @Column(name = "is_abnormal", nullable = false)
     private Boolean isAbnormal = false;
 
+    @Column(name = "is_critical", nullable = false)
+    private Boolean isCritical = false;
+
+    @Column(name = "delta_warning")
+    private String deltaWarning;
+
     @Column(columnDefinition = "TEXT")
     private String comments;
 

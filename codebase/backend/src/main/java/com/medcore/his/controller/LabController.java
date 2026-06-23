@@ -52,4 +52,16 @@ public class LabController {
         labService.authorizeResults(sampleId, results, null);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/samples/{sampleId}/receive")
+    public ResponseEntity<LabSample> receiveSample(@PathVariable UUID sampleId, @RequestBody java.util.Map<String, Object> payload) {
+        boolean accept = (Boolean) payload.getOrDefault("accept", true);
+        String reason = (String) payload.get("reason");
+        return ResponseEntity.ok(labService.receiveSample(sampleId, accept, reason));
+    }
+
+    @PostMapping("/samples/{sampleId}/results")
+    public ResponseEntity<List<LabResult>> enterResults(@PathVariable UUID sampleId, @RequestBody List<LabResult> results) {
+        return ResponseEntity.ok(labService.enterResults(sampleId, results, null));
+    }
 }
