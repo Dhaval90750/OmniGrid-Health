@@ -30,7 +30,7 @@ export default function TelemedicineRoom() {
           <>
             {/* Main Video (Doctor) */}
             <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-              <div className="text-gray-500 font-mono">Dr. Miller's Video Stream (WebRTC Mock)</div>
+              <div className="text-gray-500 font-mono">Dr. Miller&apos;s Video Stream (WebRTC Mock)</div>
             </div>
             
             {/* PIP Video (Patient) */}

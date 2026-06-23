@@ -81,7 +81,7 @@ export default function LabWorklist() {
       
       <div className="bg-info-light/20 border border-info border-l-4 p-4 rounded text-sm text-info-dark flex items-start">
         <span className="font-bold mr-2">Delta Warning Engine Active:</span> 
-        If these results deviate by \u003e25% from Alice Smith's last CBC, a Delta Warning will be generated upon saving.
+        If these results deviate by &gt;25% from Alice Smith&apos;s last CBC, a Delta Warning will be generated upon saving.
       </div>
     </div>
   );

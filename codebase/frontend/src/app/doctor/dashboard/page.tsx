@@ -85,7 +85,7 @@ export default function DoctorDashboard() {
         <Card className="md:col-span-1 shadow-sm">
           <CardHeader className="bg-surface py-4 border-b border-border">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-base font-semibold">Today's Queue</CardTitle>
+              <CardTitle className="text-base font-semibold">Today&apos;s Queue</CardTitle>
               {!activeVisit && queue.length > 0 && (
                 <Button size="sm" onClick={handleCallNext}>Call Next</Button>
               )}
