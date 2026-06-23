@@ -52,4 +52,14 @@ public class NursingController {
     public ResponseEntity<com.medcore.his.domain.nursing.ShiftHandover> saveHandover(@RequestBody com.medcore.his.domain.nursing.ShiftHandover handover) {
         return new ResponseEntity<>(nursingService.saveShiftHandover(handover), HttpStatus.CREATED);
     }
+
+    @GetMapping("/assessments/patient/{patientId}")
+    public ResponseEntity<List<com.medcore.his.domain.nursing.NursingAssessment>> getAssessments(@PathVariable UUID patientId) {
+        return ResponseEntity.ok(nursingService.getAssessmentsForPatient(patientId));
+    }
+
+    @PostMapping("/assessments")
+    public ResponseEntity<com.medcore.his.domain.nursing.NursingAssessment> saveAssessment(@RequestBody com.medcore.his.domain.nursing.NursingAssessment assessment) {
+        return new ResponseEntity<>(nursingService.saveAssessment(assessment), HttpStatus.CREATED);
+    }
 }

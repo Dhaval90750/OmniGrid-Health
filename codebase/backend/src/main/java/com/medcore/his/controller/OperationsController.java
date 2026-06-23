@@ -52,4 +52,14 @@ public class OperationsController {
     public ResponseEntity<TransportRequest> createTransportRequest(@RequestBody TransportRequest request) {
         return new ResponseEntity<>(operationsService.createTransportRequest(request), HttpStatus.CREATED);
     }
+
+    @GetMapping("/incidents")
+    public ResponseEntity<List<com.medcore.his.domain.operations.IncidentReport>> getAllIncidentReports() {
+        return ResponseEntity.ok(operationsService.getAllIncidentReports());
+    }
+
+    @PostMapping("/incidents")
+    public ResponseEntity<com.medcore.his.domain.operations.IncidentReport> createIncidentReport(@RequestBody com.medcore.his.domain.operations.IncidentReport report) {
+        return new ResponseEntity<>(operationsService.createIncidentReport(report), HttpStatus.CREATED);
+    }
 }

@@ -17,14 +17,17 @@ public class NursingService {
     private final PatientVitalRepository patientVitalRepository;
     private final MedAdministrationRepository medAdministrationRepository;
     private final com.medcore.his.repository.ShiftHandoverRepository shiftHandoverRepository;
+    private final com.medcore.his.repository.NursingAssessmentRepository nursingAssessmentRepository;
 
     @Autowired
     public NursingService(PatientVitalRepository patientVitalRepository, 
                           MedAdministrationRepository medAdministrationRepository,
-                          com.medcore.his.repository.ShiftHandoverRepository shiftHandoverRepository) {
+                          com.medcore.his.repository.ShiftHandoverRepository shiftHandoverRepository,
+                          com.medcore.his.repository.NursingAssessmentRepository nursingAssessmentRepository) {
         this.patientVitalRepository = patientVitalRepository;
         this.medAdministrationRepository = medAdministrationRepository;
         this.shiftHandoverRepository = shiftHandoverRepository;
+        this.nursingAssessmentRepository = nursingAssessmentRepository;
     }
 
     public List<PatientVital> getVitalsByPatient(UUID patientId) {
@@ -92,5 +95,14 @@ public class NursingService {
 
     public List<com.medcore.his.domain.nursing.ShiftHandover> getHandoversForPatient(UUID patientId) {
         return shiftHandoverRepository.findByPatientIdOrderByShiftDateTimeDesc(patientId);
+    }
+
+    public List<com.medcore.his.domain.nursing.NursingAssessment> getAssessmentsForPatient(UUID patientId) {
+        return nursingAssessmentRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+    }
+
+    @Transactional
+    public com.medcore.his.domain.nursing.NursingAssessment saveAssessment(com.medcore.his.domain.nursing.NursingAssessment assessment) {
+        return nursingAssessmentRepository.save(assessment);
     }
 }
