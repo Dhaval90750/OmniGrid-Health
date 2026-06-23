@@ -92,4 +92,38 @@ public class PharmacyService {
         record.setStatus("Dispensed");
         return dispensingRepository.save(record);
     }
+
+    @Transactional(readOnly = true)
+    public List<PharmacyStock> getLowStockAlerts() {
+        return stockRepository.findAll().stream()
+                .filter(s -> s.getQuantity() <= s.getDrug().getReorderLevel())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PharmacyStock> getExpiringStockAlerts() {
+        LocalDate cutoff = LocalDate.now().plusDays(30);
+        return stockRepository.findAll().stream()
+                .filter(s -> s.getQuantity() > 0 && s.getExpiryDate().isBefore(cutoff))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockMovement> getNarcoticRegister() {
+        return stockMovementRepository.findAll().stream()
+                .filter(m -> m.getStock().getDrug().getIsNarcotic())
+                .sorted((m1, m2) -> m2.getCreatedAt().compareTo(m1.getCreatedAt()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Long> getPharmacyStats() {
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("lowStockItems", (long) getLowStockAlerts().size());
+        stats.put("expiringItems", (long) getExpiringStockAlerts().size());
+        stats.put("pendingPrescriptions", prescriptionRepository.findAll().stream()
+                .filter(p -> "Draft".equals(p.getStatus()))
+                .count());
+        return stats;
+    }
 }

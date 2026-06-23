@@ -34,4 +34,24 @@ public class PharmacyController {
         DispensingRecord saved = pharmacyService.dispensePrescription(record, List.of());
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
+
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<java.util.Map<String, Long>> getStats() {
+        return ResponseEntity.ok(pharmacyService.getPharmacyStats());
+    }
+
+    @GetMapping("/stock/alerts/low")
+    public ResponseEntity<List<PharmacyStock>> getLowStockAlerts() {
+        return ResponseEntity.ok(pharmacyService.getLowStockAlerts());
+    }
+
+    @GetMapping("/stock/alerts/expiring")
+    public ResponseEntity<List<PharmacyStock>> getExpiringStockAlerts() {
+        return ResponseEntity.ok(pharmacyService.getExpiringStockAlerts());
+    }
+
+    @GetMapping("/narcotics/register")
+    public ResponseEntity<List<com.medcore.his.domain.pharmacy.StockMovement>> getNarcoticRegister() {
+        return ResponseEntity.ok(pharmacyService.getNarcoticRegister());
+    }
 }

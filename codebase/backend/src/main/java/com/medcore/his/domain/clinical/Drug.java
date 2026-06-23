@@ -24,4 +24,10 @@ public class Drug extends BaseEntity {
 
     @Column(nullable = false, length = 50)
     private String strength;
+
+    @Column(name = "is_narcotic", nullable = false)
+    private Boolean isNarcotic = false;
+
+    @Column(name = "reorder_level", nullable = false)
+    private Integer reorderLevel = 100;
 }
