@@ -29,6 +29,6 @@ public class StaffProfile extends BaseEntity {
     @Column(length = 100)
     private String email;
 
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 }
