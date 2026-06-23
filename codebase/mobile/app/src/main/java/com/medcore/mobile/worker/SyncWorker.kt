@@ -40,7 +40,7 @@ class SyncWorker @AssistedInject constructor(
                 }
                 
                 // Simulate network call
-                val response = NetworkClient.post("/api/v1/patients/${vital.patientUhid}/vitals", payload)
+                val response = NetworkClient.post("/api/v1/patients/${vital.patientUhid}/vitals", payload.toString(), null)
                 if (response != null) {
                     vitalDao.update(vital.copy(isSynced = true))
                 } else {
@@ -57,7 +57,7 @@ class SyncWorker @AssistedInject constructor(
                     put("details", assessment.details)
                 }
                 
-                val response = NetworkClient.post("/api/v1/patients/${assessment.patientUhid}/assessments", payload)
+                val response = NetworkClient.post("/api/v1/patients/${assessment.patientUhid}/assessments", payload.toString(), null)
                 if (response != null) {
                     assessmentDao.update(assessment.copy(isSynced = true))
                 } else {
@@ -73,7 +73,7 @@ class SyncWorker @AssistedInject constructor(
                     put("description", incident.description)
                 }
                 
-                val response = NetworkClient.post("/api/v1/incidents", payload)
+                val response = NetworkClient.post("/api/v1/incidents", payload.toString(), null)
                 if (response != null) {
                     incidentDao.update(incident.copy(isSynced = true))
                 } else {

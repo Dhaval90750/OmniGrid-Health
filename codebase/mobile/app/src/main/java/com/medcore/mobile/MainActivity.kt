@@ -13,6 +13,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFFF8F9FA)
                 ) {
-                    MedCoreApp()
+                    MedCoreAppContent()
                 }
             }
         }
@@ -117,7 +119,7 @@ object NetworkClient {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedCoreApp() {
+fun MedCoreAppContent() {
     var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
     var apiUrl by remember { mutableStateOf("https://medcore-his-backend-production.up.railway.app/api/v1") }
     var username by remember { mutableStateOf("admin") }
@@ -374,7 +376,7 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp)
-            .androidx.compose.foundation.verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .verticalScroll(rememberScrollState())
     ) {
         // Top Header
         Row(
