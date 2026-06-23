@@ -2,6 +2,8 @@
 codebase/backend/target/
 codebase/backend/.mvn/
 codebase/backend/.idea/
+codebase/backend/maven.zip
+codebase/backend/apache-maven-*/
 
 # Frontend
 codebase/frontend/node_modules/
