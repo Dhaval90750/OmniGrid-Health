@@ -42,4 +42,14 @@ public class NursingController {
     public ResponseEntity<MedAdministration> recordAdministration(@RequestBody MedAdministration admin) {
         return new ResponseEntity<>(nursingService.recordAdministration(admin), HttpStatus.CREATED);
     }
+
+    @GetMapping("/handovers/patient/{patientId}")
+    public ResponseEntity<List<com.medcore.his.domain.nursing.ShiftHandover>> getHandovers(@PathVariable UUID patientId) {
+        return ResponseEntity.ok(nursingService.getHandoversForPatient(patientId));
+    }
+
+    @PostMapping("/handovers")
+    public ResponseEntity<com.medcore.his.domain.nursing.ShiftHandover> saveHandover(@RequestBody com.medcore.his.domain.nursing.ShiftHandover handover) {
+        return new ResponseEntity<>(nursingService.saveShiftHandover(handover), HttpStatus.CREATED);
+    }
 }

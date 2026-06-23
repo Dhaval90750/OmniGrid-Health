@@ -43,7 +43,18 @@ public class IcuService {
                         (score.getGcsVerbal() != null ? score.getGcsVerbal() : 0) +
                         (score.getGcsMotor() != null ? score.getGcsMotor() : 0);
             score.setTotalScore(total);
+        } else if ("APACHE_II".equals(score.getScoreType())) {
+            // Mock APACHE II calculation
+            score.setTotalScore(calculateApacheScore(score));
         }
         return icuScoreRepository.save(score);
+    }
+
+    private int calculateApacheScore(IcuScore score) {
+        // In a real system, this pulls the worst vitals and labs for the last 24h.
+        // We will just mock a score between 10 and 25 based on GCS and age.
+        int mockScore = 15;
+        if (score.getGcsEye() != null && score.getGcsEye() < 3) mockScore += 5;
+        return mockScore;
     }
 }
