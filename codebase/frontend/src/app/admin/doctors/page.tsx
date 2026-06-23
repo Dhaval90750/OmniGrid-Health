@@ -58,7 +58,7 @@ export default function DoctorManagement() {
                   <td className="p-4">{doc.department}</td>
                   <td className="p-4 text-text-secondary">{doc.role}</td>
                   <td className="p-4">
-                    {doc.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
+                    {doc.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
                     <Button variant="secondary" size="sm" className="mr-2">Schedule</Button>

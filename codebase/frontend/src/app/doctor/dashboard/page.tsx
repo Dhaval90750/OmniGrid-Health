@@ -104,7 +104,7 @@ export default function DoctorDashboard() {
                       <span className="font-bold tabular-nums bg-surface border border-border px-2 py-0.5 rounded text-xs">#{visit.tokenNumber}</span>
                       <span className="font-semibold text-sm">{visit.patient.name}</span>
                     </div>
-                    {visit.status === "IN_CONSULTATION" ? <Badge variant="warning">In Room</Badge> : <Badge variant="secondary">Waiting</Badge>}
+                    {visit.status === "IN_CONSULTATION" ? <Badge variant="warning">In Room</Badge> : <Badge variant="default">Waiting</Badge>}
                   </div>
                   <div className="text-xs text-text-secondary mb-1">UHID: {visit.patient.uhid}</div>
                   <div className="text-xs text-text-secondary truncate"><span className="font-medium text-text-primary">CC:</span> {visit.chiefComplaint}</div>

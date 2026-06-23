@@ -10,15 +10,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import com.medcore.his.domain.billing.InvoiceItem;
+import com.medcore.his.domain.billing.Tariff;
+import com.medcore.his.repository.TariffRepository;
 
 @Service
 public class BillingService {
 
     private final InvoiceRepository invoiceRepository;
+    private final TariffRepository tariffRepository;
 
     @Autowired
-    public BillingService(InvoiceRepository invoiceRepository) {
+    public BillingService(InvoiceRepository invoiceRepository, TariffRepository tariffRepository) {
         this.invoiceRepository = invoiceRepository;
+        this.tariffRepository = tariffRepository;
     }
 
     @Transactional
@@ -50,5 +55,38 @@ public class BillingService {
     @Transactional(readOnly = true)
     public List<Invoice> getPendingInvoices() {
         return invoiceRepository.findByStatusOrderByCreatedAtDesc("PENDING");
+    }
+
+    @Transactional
+    public Invoice createInvoice(Invoice invoice) {
+        invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
+        return invoiceRepository.save(invoice);
+    }
+
+    @Transactional
+    public Invoice addInvoiceLine(UUID invoiceId, UUID tariffId, int quantity) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                
+        Tariff tariff = tariffRepository.findById(tariffId)
+                .orElseThrow(() -> new RuntimeException("Tariff not found"));
+
+        InvoiceItem item = new InvoiceItem();
+        item.setInvoice(invoice);
+        item.setDescription(tariff.getServiceName());
+        item.setUnitCost(tariff.getPrice());
+        item.setQuantity(quantity);
+        item.setTotalCost(tariff.getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+        invoice.getItems().add(item);
+        
+        // Recalculate totals
+        BigDecimal total = invoice.getItems().stream()
+                .map(InvoiceItem::getTotalCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        invoice.setTotalAmount(total);
+        invoice.setNetAmount(total.subtract(invoice.getDiscountAmount()));
+        
+        return invoiceRepository.save(invoice);
     }
 }

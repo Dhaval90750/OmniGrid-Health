@@ -71,7 +71,7 @@ export default function DepartmentManagement() {
                   <td className="p-4 font-semibold">{dept.name}</td>
                   <td className="p-4 text-text-secondary">{dept.description}</td>
                   <td className="p-4">
-                    {dept.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
+                    {dept.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
                     <Button variant="secondary" size="sm">Edit</Button>

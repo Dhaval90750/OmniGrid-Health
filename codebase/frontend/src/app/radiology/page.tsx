@@ -79,7 +79,7 @@ export default function RadiologyWorkspace() {
             >
               <div className="flex justify-between items-start mb-1">
                 <span className="font-semibold text-sm">{order.patientName}</span>
-                {order.urgency === 'Stat' ? <Badge variant="error">STAT</Badge> : <Badge variant="secondary">Routine</Badge>}
+                {order.urgency === 'Stat' ? <Badge variant="error">STAT</Badge> : <Badge variant="default">Routine</Badge>}
               </div>
               <div className="text-xs text-text-secondary">{order.modality} • {order.study}</div>
             </div>

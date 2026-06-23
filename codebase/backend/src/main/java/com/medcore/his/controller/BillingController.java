@@ -32,4 +32,18 @@ public class BillingController {
         Payment savedPayment = billingService.recordPayment(id, payment);
         return ResponseEntity.ok(savedPayment);
     }
+
+    @PostMapping("/invoices")
+    public ResponseEntity<Invoice> createInvoice(@RequestBody Invoice invoice) {
+        return ResponseEntity.ok(billingService.createInvoice(invoice));
+    }
+
+    @PostMapping("/invoices/{id}/lines")
+    public ResponseEntity<Invoice> addInvoiceLine(
+            @PathVariable UUID id, 
+            @RequestBody java.util.Map<String, String> payload) {
+        UUID tariffId = UUID.fromString(payload.get("tariffId"));
+        int quantity = Integer.parseInt(payload.getOrDefault("quantity", "1"));
+        return ResponseEntity.ok(billingService.addInvoiceLine(id, tariffId, quantity));
+    }
 }

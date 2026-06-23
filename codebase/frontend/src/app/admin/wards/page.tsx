@@ -71,7 +71,7 @@ export default function WardManagement() {
                   <td className="p-4 font-semibold">{ward.name}</td>
                   <td className="p-4 text-text-secondary">{ward.category}</td>
                   <td className="p-4">
-                    {ward.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
+                    {ward.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
                     <Button variant="secondary" size="sm" className="mr-2">Manage Beds</Button>
