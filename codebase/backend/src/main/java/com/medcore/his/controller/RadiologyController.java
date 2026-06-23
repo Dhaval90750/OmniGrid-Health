@@ -39,4 +39,14 @@ public class RadiologyController {
         RadiologyReport saved = radiologyService.saveReport(report);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
+
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<java.util.Map<String, Long>> getStats() {
+        return ResponseEntity.ok(radiologyService.getRadiologyStats());
+    }
+
+    @GetMapping("/dashboard/critical")
+    public ResponseEntity<List<RadiologyReport>> getCriticalReports() {
+        return ResponseEntity.ok(radiologyService.getCriticalReports());
+    }
 }

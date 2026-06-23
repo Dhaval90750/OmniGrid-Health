@@ -63,7 +63,7 @@ export default function LabReception() {
                       </div>
                     ) : (
                       <>
-                        <Button size="sm" variant="success" className="bg-success text-white hover:bg-success-dark" onClick={() => handleAction(sample.id, 'accept')}>Accept</Button>
+                        <Button size="sm" variant="primary" className="bg-success border-success text-white hover:bg-success-dark" onClick={() => handleAction(sample.id, 'accept')}>Accept</Button>
                         <Button size="sm" variant="danger" onClick={() => setSelectedSample(sample.id)}>Reject</Button>
                       </>
                     )}
