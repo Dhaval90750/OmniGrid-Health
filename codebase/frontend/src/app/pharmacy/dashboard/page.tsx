@@ -34,7 +34,7 @@ export default function PharmacyDashboard() {
         </Card>
         <Card className="bg-error/10 border-error">
           <CardContent className="p-6">
-            <div className="text-error-dark text-sm font-medium">Expiring (<30 Days)</div>
+            <div className="text-error-dark text-sm font-medium">Expiring (&lt;30 Days)</div>
             <div className="text-3xl font-bold text-error-dark mt-2">8</div>
           </CardContent>
         </Card>
