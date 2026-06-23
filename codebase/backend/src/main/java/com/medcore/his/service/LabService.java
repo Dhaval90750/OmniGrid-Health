@@ -97,3 +97,4 @@ public class LabService {
             labOrderRepository.save(order);
         }
     }
+}

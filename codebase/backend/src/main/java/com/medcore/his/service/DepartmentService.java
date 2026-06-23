@@ -37,7 +37,7 @@ public class DepartmentService {
         existing.setName(updateParams.getName());
         existing.setCode(updateParams.getCode());
         existing.setDescription(updateParams.getDescription());
-        existing.setIsActive(updateParams.isActive());
+        existing.setActive(updateParams.isActive());
         
         return departmentRepository.save(existing);
     }

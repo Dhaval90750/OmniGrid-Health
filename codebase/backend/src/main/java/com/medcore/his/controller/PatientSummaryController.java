@@ -46,9 +46,7 @@ public class PatientSummaryController {
                     summary.put("vitals", vitals.size() > 5 ? vitals.subList(0, 5) : vitals);
                     
                     // Fetch active allergies
-                    var allergies = allergyRepository.findByPatientId(id).stream()
-                            .filter(a -> "Active".equals(a.getStatus()))
-                            .toList();
+                    var allergies = allergyRepository.findByPatientIdAndStatus(id, "Active");
                     summary.put("allergies", allergies);
                     
                     // Fetch active diagnoses

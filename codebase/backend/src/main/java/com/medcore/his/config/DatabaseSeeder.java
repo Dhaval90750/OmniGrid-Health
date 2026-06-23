@@ -68,25 +68,25 @@ public class DatabaseSeeder {
                 s1.setRole("Consultant");
                 s1.setDepartment("Pulmonology");
                 s1.setContactNumber("+91-9800011122");
-                s1.setIsActive(true);
+                s1.setActive(true);
                 staffRepo.save(s1);
-
+                
                 StaffProfile s2 = new StaffProfile();
-                s2.setEmployeeCode("EMP-002");
-                s2.setFullName("Dr. Rahul Sharma");
-                s2.setRole("Resident");
-                s2.setDepartment("Cardiology");
-                s2.setContactNumber("+91-9800011133");
-                s2.setIsActive(true);
+                s2.setEmployeeCode("DR-102");
+                s2.setFullName("Dr. Gregory House");
+                s2.setRole("Consultant");
+                s2.setDepartment("Diagnostic Medicine");
+                s2.setContactNumber("+1-555-0102");
+                s2.setActive(true);
                 staffRepo.save(s2);
                 
                 StaffProfile s3 = new StaffProfile();
-                s3.setEmployeeCode("EMP-003");
-                s3.setFullName("Nurse Priya Patel");
-                s3.setRole("Nurse");
-                s3.setDepartment("ICU");
-                s3.setContactNumber("+91-9800011144");
-                s3.setIsActive(true);
+                s3.setEmployeeCode("NRS-101");
+                s3.setFullName("Nurse Joy");
+                s3.setRole("Head Nurse");
+                s3.setDepartment("General Medicine");
+                s3.setContactNumber("+1-555-0103");
+                s3.setActive(true);
                 staffRepo.save(s3);
             }
 

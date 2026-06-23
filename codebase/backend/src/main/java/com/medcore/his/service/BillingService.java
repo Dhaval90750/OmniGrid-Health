@@ -74,15 +74,15 @@ public class BillingService {
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(invoice);
         item.setDescription(tariff.getServiceName());
-        item.setUnitCost(tariff.getPrice());
+        item.setUnitPrice(tariff.getPrice());
         item.setQuantity(quantity);
-        item.setTotalCost(tariff.getPrice().multiply(BigDecimal.valueOf(quantity)));
+        item.setTotalPrice(tariff.getPrice().multiply(BigDecimal.valueOf(quantity)));
 
         invoice.getItems().add(item);
         
         // Recalculate totals
         BigDecimal total = invoice.getItems().stream()
-                .map(InvoiceItem::getTotalCost)
+                .map(InvoiceItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         invoice.setTotalAmount(total);
         invoice.setNetAmount(total.subtract(invoice.getDiscountAmount()));

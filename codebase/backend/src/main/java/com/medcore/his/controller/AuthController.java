@@ -144,7 +144,7 @@ public class AuthController {
         profile.setEmployeeCode("EMP-" + String.format("%03d", count));
         profile.setEmail(signUpRequest.getEmail());
         profile.setContactNumber("+91-9999988888");
-        profile.setIsActive(true);
+        profile.setActive(true);
         staffProfileRepository.save(profile);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully!"));
