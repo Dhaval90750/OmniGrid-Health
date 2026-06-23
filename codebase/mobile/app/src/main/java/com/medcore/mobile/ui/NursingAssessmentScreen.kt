@@ -6,17 +6,27 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import com.medcore.mobile.NetworkClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NursingAssessmentScreen(
     patientUhid: String,
+    patientId: String,
+    apiUrl: String,
+    token: String,
     onBack: () -> Unit,
-    onSubmit: (type: String, score: Int, details: String) -> Unit
+    onSubmitSuccess: () -> Unit
 ) {
-    var assessmentType by remember { mutableStateOf("MorseFalls") }
-    var score by remember { mutableStateOf(0) }
+    var assessmentType by remember { mutableStateOf("Morse Falls Scale") }
+    var score by remember { mutableStateOf("") }
     var details by remember { mutableStateOf("") }
+    
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -41,15 +51,15 @@ fun NursingAssessmentScreen(
             Text("Patient UHID: $patientUhid", color = Color.Gray)
 
             Row {
-                RadioButton(selected = assessmentType == "MorseFalls", onClick = { assessmentType = "MorseFalls" })
+                RadioButton(selected = assessmentType == "Morse Falls Scale", onClick = { assessmentType = "Morse Falls Scale" })
                 Text("Morse Falls Risk", modifier = Modifier.padding(top = 12.dp, end = 16.dp))
-                RadioButton(selected = assessmentType == "Braden", onClick = { assessmentType = "Braden" })
+                RadioButton(selected = assessmentType == "Braden Scale", onClick = { assessmentType = "Braden Scale" })
                 Text("Braden Scale", modifier = Modifier.padding(top = 12.dp))
             }
 
             OutlinedTextField(
-                value = score.toString(),
-                onValueChange = { score = it.toIntOrNull() ?: 0 },
+                value = score,
+                onValueChange = { score = it },
                 label = { Text("Calculated Score") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -62,11 +72,52 @@ fun NursingAssessmentScreen(
                 minLines = 4
             )
 
-            Button(
-                onClick = { onSubmit(assessmentType, score, details) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Assessment")
+            if (errorMsg.isNotEmpty()) {
+                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        val scoreInt = score.toIntOrNull()
+                        if (patientId.isEmpty()) {
+                            errorMsg = "No active patient selected."
+                            return@Button
+                        }
+                        if (scoreInt == null) {
+                            errorMsg = "Please enter a valid numeric score."
+                            return@Button
+                        }
+                        
+                        isLoading = true
+                        errorMsg = ""
+                        
+                        scope.launch {
+                            try {
+                                val body = JSONObject().apply {
+                                    put("patientId", patientId)
+                                    put("type", assessmentType)
+                                    put("score", scoreInt)
+                                    put("riskLevel", if (scoreInt > 45) "High Risk" else "Low Risk")
+                                    put("notes", details)
+                                    put("recordedBy", "Nurse (Mobile)")
+                                }.toString()
+                                
+                                NetworkClient.post("$apiUrl/nursing/assessments", body, token)
+                                onSubmitSuccess()
+                            } catch (e: Exception) {
+                                errorMsg = "Failed to submit assessment: ${e.localizedMessage}"
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save Assessment")
+                }
             }
         }
     }

@@ -218,14 +218,19 @@ fun MedCoreApp() {
         )
         
         Screen.NURSING_ASSESSMENT -> NursingAssessmentScreen(
-            patientUhid = activePatient?.optString("uhid") ?: "UHID-12345",
+            patientUhid = activePatient?.optString("uhid") ?: "UNKNOWN",
+            patientId = activePatient?.optString("id") ?: "",
+            apiUrl = apiUrl,
+            token = token,
             onBack = { currentScreen = Screen.DASHBOARD },
-            onSubmit = { _, _, _ -> currentScreen = Screen.DASHBOARD }
+            onSubmitSuccess = { currentScreen = Screen.DASHBOARD }
         )
         
         Screen.INCIDENT_REPORT -> IncidentReportScreen(
+            apiUrl = apiUrl,
+            token = token,
             onBack = { currentScreen = Screen.DASHBOARD },
-            onSubmit = { _, _ -> currentScreen = Screen.DASHBOARD }
+            onSubmitSuccess = { currentScreen = Screen.DASHBOARD }
         )
         
         Screen.TASK_TRACKER -> TaskTrackerScreen(

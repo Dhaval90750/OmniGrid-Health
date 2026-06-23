@@ -6,15 +6,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import com.medcore.mobile.NetworkClient
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncidentReportScreen(
+    apiUrl: String,
+    token: String,
     onBack: () -> Unit,
-    onSubmit: (type: String, description: String) -> Unit
+    onSubmitSuccess: () -> Unit
 ) {
     var type by remember { mutableStateOf("Patient Fall") }
     var description by remember { mutableStateOf("") }
+    
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -39,7 +50,7 @@ fun IncidentReportScreen(
             OutlinedTextField(
                 value = type,
                 onValueChange = { type = it },
-                label = { Text("Incident Type") },
+                label = { Text("Incident Category (e.g. Fall, Med Error)") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -51,12 +62,49 @@ fun IncidentReportScreen(
                 minLines = 6
             )
 
-            Button(
-                onClick = { onSubmit(type, description) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-            ) {
-                Text("Report Incident")
+            if (errorMsg.isNotEmpty()) {
+                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        if (description.isEmpty()) {
+                            errorMsg = "Please provide a description."
+                            return@Button
+                        }
+                        
+                        isLoading = true
+                        errorMsg = ""
+                        
+                        scope.launch {
+                            try {
+                                val body = JSONObject().apply {
+                                    put("title", "Mobile Incident Report")
+                                    put("category", type)
+                                    put("severity", "Medium")
+                                    put("description", description)
+                                    put("incidentTime", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                                    put("location", "Ward")
+                                    put("reportedBy", "Nurse (Mobile)")
+                                }.toString()
+                                
+                                NetworkClient.post("$apiUrl/operations/incidents", body, token)
+                                onSubmitSuccess()
+                            } catch (e: Exception) {
+                                errorMsg = "Failed to submit incident: ${e.localizedMessage}"
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                ) {
+                    Text("Report Incident")
+                }
             }
         }
     }
