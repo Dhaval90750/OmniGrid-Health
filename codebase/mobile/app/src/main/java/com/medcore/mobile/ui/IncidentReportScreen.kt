@@ -30,11 +30,12 @@ fun IncidentReportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log Incident", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFD32F2F)),
+            TopAppBar(
+                title = { Text("Log Incident", color = MaterialTheme.colorScheme.onPrimary) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.error),
                 navigationIcon = {
                     Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                        Text("Back", color = Color.White)
+                        Text("Back", color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )
@@ -44,6 +45,7 @@ fun IncidentReportScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -63,7 +65,13 @@ fun IncidentReportScreen(
             )
 
             if (errorMsg.isNotEmpty()) {
-                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(errorMsg, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
+                }
             }
 
             if (isLoading) {
@@ -100,10 +108,11 @@ fun IncidentReportScreen(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Report Incident")
+                    Text("Submit Incident", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

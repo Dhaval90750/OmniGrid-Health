@@ -1,7 +1,7 @@
 import React from "react";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "success" | "warning" | "error" | "info" | "default";
+  variant?: "success" | "warning" | "error" | "info" | "default" | "secondary";
 }
 
 export const Badge: React.FC<BadgeProps> = ({ 
@@ -16,6 +16,7 @@ export const Badge: React.FC<BadgeProps> = ({
     error: "bg-critical-bg text-error",
     info: "bg-info-bg text-info",
     default: "bg-surface-hover text-text-secondary",
+    secondary: "bg-primary-light text-primary-dark",
   };
 
   return (

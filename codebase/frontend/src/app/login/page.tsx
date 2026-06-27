@@ -27,10 +27,10 @@ export default function LoginPage() {
       // Real backend call
       const response = await api.post("/auth/login", { username, password });
       
-      // Backend returns JwtResponse: { token, id, username, email, roles }
-      const { token, id, username: uname, roles } = response.data;
+      // Backend returns JwtResponse: { token, id, username, email, roles, permissions }
+      const { token, id, username: uname, roles, permissions } = response.data;
       
-      login({ id, username: uname, roles }, token);
+      login({ id, username: uname, roles, permissions }, token);
       router.push("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid username or password.");
@@ -44,9 +44,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg border-none">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="OmniGrid Logo" className="w-12 h-12 object-contain" />
+            <img src="/logo.png" alt="MedCore Logo" className="w-12 h-12 object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold text-text-primary">OmniGrid Health</CardTitle>
+          <CardTitle className="text-2xl font-bold text-text-primary">MedCore HIS</CardTitle>
           <p className="text-sm text-text-secondary mt-1">Sign in to your account</p>
         </CardHeader>
         <CardContent>

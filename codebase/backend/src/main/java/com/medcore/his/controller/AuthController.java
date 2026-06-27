@@ -69,7 +69,8 @@ public class AuthController {
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getUsername(), // mapping email placeholder for now
-                roles));
+                roles,
+                userDetails.getPermissions()));
     }
 
     @PostMapping("/signup")

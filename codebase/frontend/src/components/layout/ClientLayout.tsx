@@ -6,7 +6,8 @@ import {
   Activity, ShieldAlert, HeartPulse, FileText, 
   Syringe, FlaskConical, Image, Pill, 
   Receipt, ClipboardList, Database, Truck, 
-  UserCheck, Droplet, Mic, BarChart3
+  UserCheck, Droplet, Mic, BarChart3,
+  Calendar, MonitorPlay
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
@@ -35,14 +36,20 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         : "text-text-secondary hover:bg-surface hover:text-text-primary"
     }`;
 
+  const hasAccess = (module: string) => {
+    if (user?.roles?.includes("ROLE_ADMIN")) return true;
+    const access = user?.permissions?.[module];
+    return access && access !== "NO_ACCESS";
+  };
+
   return (
     <>
       {/* Sidebar Navigation */}
       <aside className="w-[280px] bg-background border-r border-border hidden md:flex flex-col h-screen shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
-            <img src="/logo.png" alt="OmniGrid Logo" className="w-8 h-8 object-contain rounded-md" />
-            OmniGrid Health
+            <img src="/logo.png" alt="MedCore Logo" className="w-8 h-8 object-contain rounded-md" />
+            MedCore HIS
           </div>
         </div>
         
@@ -54,24 +61,46 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               <Link href="/" className={linkClass("/")}>
                 <LayoutDashboard size={14} /> Dashboard
               </Link>
-              <Link href="/patients" className={linkClass("/patients")}>
-                <Users size={14} /> Patients
-              </Link>
-              <Link href="/doctor/dashboard" className={linkClass("/doctor/dashboard")}>
-                <UserCheck size={14} /> Doctor Dashboard
-              </Link>
-              <Link href="/scribe" className={linkClass("/scribe")}>
-                <Mic size={14} /> AI Scribe
-              </Link>
-              <Link href="/icu" className={linkClass("/icu")}>
-                <HeartPulse size={14} /> ICU
-              </Link>
-              <Link href="/ot" className={linkClass("/ot")}>
-                <Activity size={14} /> Operating Theater (OT)
-              </Link>
-              <Link href="/nursing" className={linkClass("/nursing")}>
-                <Syringe size={14} /> Nursing Workflow
-              </Link>
+              {hasAccess("Patient Registration") && (
+                <Link href="/opd/book" className={linkClass("/opd/book")}>
+                  <Calendar size={14} /> Book OPD Visit
+                </Link>
+              )}
+              {hasAccess("Patient Registration") && (
+                <Link href="/opd/queue" className={linkClass("/opd/queue")}>
+                  <MonitorPlay size={14} /> Public Queue Board
+                </Link>
+              )}
+              {hasAccess("Patient Registration") && (
+                <Link href="/patients" className={linkClass("/patients")}>
+                  <Users size={14} /> Patients
+                </Link>
+              )}
+              {hasAccess("Clinical Notes") && (
+                <Link href="/doctor/dashboard" className={linkClass("/doctor/dashboard")}>
+                  <UserCheck size={14} /> Doctor Dashboard
+                </Link>
+              )}
+              {hasAccess("Clinical Notes") && (
+                <Link href="/scribe" className={linkClass("/scribe")}>
+                  <Mic size={14} /> AI Scribe
+                </Link>
+              )}
+              {hasAccess("Admission/ADT") && (
+                <Link href="/icu" className={linkClass("/icu")}>
+                  <HeartPulse size={14} /> ICU
+                </Link>
+              )}
+              {hasAccess("Operations") && (
+                <Link href="/ot" className={linkClass("/ot")}>
+                  <Activity size={14} /> Operating Theater (OT)
+                </Link>
+              )}
+              {hasAccess("Clinical Notes") && (
+                <Link href="/nursing" className={linkClass("/nursing")}>
+                  <Syringe size={14} /> Nursing Workflow
+                </Link>
+              )}
             </div>
           </div>
 
@@ -79,18 +108,26 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <div>
             <div className="px-3 mb-1 text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Departments</div>
             <div className="space-y-0.5">
-              <Link href="/lab" className={linkClass("/lab")}>
-                <FlaskConical size={14} /> Laboratory (LIS)
-              </Link>
-              <Link href="/radiology" className={linkClass("/radiology")}>
-                <Image size={14} /> Radiology (RIS)
-              </Link>
-              <Link href="/pharmacy" className={linkClass("/pharmacy")}>
-                <Pill size={14} /> Pharmacy
-              </Link>
-              <Link href="/auxiliary" className={linkClass("/auxiliary")}>
-                <Droplet size={14} /> Blood Bank
-              </Link>
+              {hasAccess("Lab Orders/Results") && (
+                <Link href="/lab" className={linkClass("/lab")}>
+                  <FlaskConical size={14} /> Laboratory (LIS)
+                </Link>
+              )}
+              {hasAccess("Radiology") && (
+                <Link href="/radiology" className={linkClass("/radiology")}>
+                  <Image size={14} /> Radiology (RIS)
+                </Link>
+              )}
+              {hasAccess("Pharmacy") && (
+                <Link href="/pharmacy" className={linkClass("/pharmacy")}>
+                  <Pill size={14} /> Pharmacy
+                </Link>
+              )}
+              {hasAccess("Inventory") && (
+                <Link href="/auxiliary" className={linkClass("/auxiliary")}>
+                  <Droplet size={14} /> Blood Bank
+                </Link>
+              )}
             </div>
           </div>
 
@@ -98,27 +135,51 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <div>
             <div className="px-3 mb-1 text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Administrative</div>
             <div className="space-y-0.5">
-              <Link href="/admissions" className={linkClass("/admissions")}>
-                <ShieldAlert size={14} /> Admissions / ADT
-              </Link>
-              <Link href="/discharge" className={linkClass("/discharge")}>
-                <FileText size={14} /> Discharge
-              </Link>
-              <Link href="/billing" className={linkClass("/billing")}>
-                <Receipt size={14} /> Billing & Revenue
-              </Link>
-              <Link href="/inventory" className={linkClass("/inventory")}>
-                <Database size={14} /> Inventory / Pharmacy Stock
-              </Link>
-              <Link href="/operations" className={linkClass("/operations")}>
-                <Truck size={14} /> Operations / Housekeeping
-              </Link>
-              <Link href="/staff" className={linkClass("/staff")}>
-                <ClipboardList size={14} /> Staff / Roster
-              </Link>
-              <Link href="/analytics" className={linkClass("/analytics")}>
-                <BarChart3 size={14} /> Reports & Analytics
-              </Link>
+              {hasAccess("Admission/ADT") && (
+                <Link href="/admissions" className={linkClass("/admissions")}>
+                  <ShieldAlert size={14} /> Admissions / ADT
+                </Link>
+              )}
+              {hasAccess("Admission/ADT") && (
+                <Link href="/discharge" className={linkClass("/discharge")}>
+                  <FileText size={14} /> Discharge
+                </Link>
+              )}
+              {hasAccess("Billing") && (
+                <Link href="/billing" className={linkClass("/billing")}>
+                  <Receipt size={14} /> Billing & Revenue
+                </Link>
+              )}
+              {hasAccess("Inventory") && (
+                <Link href="/inventory" className={linkClass("/inventory")}>
+                  <Database size={14} /> Inventory / Pharmacy Stock
+                </Link>
+              )}
+              {hasAccess("Operations") && (
+                <Link href="/operations" className={linkClass("/operations")}>
+                  <Truck size={14} /> Operations / Housekeeping
+                </Link>
+              )}
+              {hasAccess("System Config") && (
+                <Link href="/staff" className={linkClass("/staff")}>
+                  <ClipboardList size={14} /> Staff / Roster
+                </Link>
+              )}
+              {hasAccess("System Config") && (
+                <Link href="/admin/users" className={linkClass("/admin/users")}>
+                  <Users size={14} /> System Users
+                </Link>
+              )}
+              {hasAccess("System Config") && (
+                <Link href="/admin/access-control" className={linkClass("/admin/access-control")}>
+                  <ShieldAlert size={14} /> Access Control Matrix
+                </Link>
+              )}
+              {hasAccess("Dashboards") && (
+                <Link href="/analytics" className={linkClass("/analytics")}>
+                  <BarChart3 size={14} /> Reports & Analytics
+                </Link>
+              )}
             </div>
           </div>
         </nav>
@@ -142,7 +203,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-sm uppercase">
-              {user ? user.username.substring(0, 2) : "OG"}
+              {user ? user.username.substring(0, 2) : "MC"}
             </div>
           </div>
         </header>

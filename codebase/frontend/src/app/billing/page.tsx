@@ -1,20 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
-// Dummy data for OPD Billing
-const DUMMY_INVOICES = [
-  { id: "1", invoiceNo: "INV-2606-001", patientName: "Rahul Sharma", amount: "$150.00", status: "PENDING", date: "2026-06-21" },
-  { id: "2", invoiceNo: "INV-2606-002", patientName: "Priya Patel", amount: "$2,400.00", status: "PARTIAL", date: "2026-06-20" },
-  { id: "3", invoiceNo: "INV-2606-003", patientName: "Amit Kumar", amount: "$80.00", status: "PAID", date: "2026-06-21" },
-];
-
-// Dummy claims data
+// Dummy claims data (since we're focusing on Basic Billing first)
 const CLAIMS = [
   { id: "CLM-001", patient: "Rahul Verma", policy: "HDFC Ergo Optima", preAuth: 150000, status: "PreAuth_Approved", date: "2026-06-12" },
   { id: "CLM-002", patient: "Neha Joshi", policy: "Star Health Comprehensive", preAuth: 80000, status: "PreAuth_Pending", date: "2026-06-18" },
@@ -26,6 +21,71 @@ export default function BillingDashboard() {
   const [activeTab, setActiveTab] = useState("opd");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  
+  const user = useAuthStore((state) => state.user);
+  
+  // Pending Discharges for IPD Billing
+  const [pendingDischarges, setPendingDischarges] = useState<any[]>([]);
+  
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [revenueToday, setRevenueToday] = useState(0);
+  const [pendingReceivables, setPendingReceivables] = useState(0);
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMode, setPaymentMode] = useState("CASH");
+  const [paymentRef, setPaymentRef] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && (user.permissions['BILLING_MANAGE'] === 'true' || user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN'))) {
+      fetchInvoices();
+      fetchPendingDischarges();
+    }
+  }, [user]);
+
+  const fetchPendingDischarges = async () => {
+    try {
+      // In a real app this would call an endpoint for pending IPD bills
+      // We will mock it using the discharged state or dummy data for now
+      setPendingDischarges([
+        { id: 'a1', patientId: 'p1', name: 'Rahul Verma', dischargeType: 'Normal', duration: 12, dischargedAt: new Date().toISOString() }
+      ]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchInvoices = async () => {
+    try {
+      // In a real system, we'd query by date or status. Here we get pending from our backend.
+      const res = await api.get(`/billing/invoices/pending`);
+      const fetchedInvoices = res.data;
+      
+      // Calculate KPIs
+      let pending = 0;
+      let revenue = 0;
+      
+      fetchedInvoices.forEach((inv: any) => {
+        if (inv.status !== "PAID") {
+          pending += (inv.netAmount - inv.amountPaid);
+        }
+        // Assume anything collected today goes to revenue. For MVP, we just sum amountPaid.
+        revenue += inv.amountPaid; 
+      });
+      
+      setInvoices(fetchedInvoices);
+      setPendingReceivables(pending);
+      setRevenueToday(revenue);
+      
+    } catch (e) {
+      console.error(e);
+      // Fallback for UI if API not seeded
+      setInvoices([]);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -40,6 +100,75 @@ export default function BillingDashboard() {
     setSelectedPatient(patient);
     setActiveTab("masterBill");
   };
+
+  const openPaymentModal = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setPaymentAmount((invoice.netAmount - invoice.amountPaid).toString());
+    setShowPaymentModal(true);
+  };
+
+  const handleCollectPayment = async () => {
+    if (!selectedInvoice) return;
+    setLoading(true);
+    try {
+      await api.post(`/billing/invoices/${selectedInvoice.id}/pay`, {
+        amount: parseFloat(paymentAmount),
+        paymentMode: paymentMode,
+        referenceNumber: paymentRef
+      });
+      alert("Payment Collected Successfully!");
+      setShowPaymentModal(false);
+      fetchInvoices();
+    } catch (e) {
+      alert("Error collecting payment");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinalizeMasterBill = async () => {
+    try {
+      // Post a master invoice to the backend
+      const payload = {
+        patient: { id: "00000000-0000-0000-0000-000000000000" }, // Mock valid UUID
+        invoiceNumber: `MB-${Date.now()}`,
+        status: "PENDING",
+        totalAmount: 150800.00,
+        discountAmount: 140000.00, // Insurance
+        netAmount: 10800.00, // Advance deducted in real calc, but here just net
+        amountPaid: 5000.00
+      };
+      await api.post(`/billing/invoices`, payload);
+      alert("Bill Finalized & Sent to Patient!");
+      setActiveTab("opd");
+      fetchInvoices();
+      setPendingDischarges(pendingDischarges.filter(p => p.id !== selectedPatient.id));
+    } catch (e) {
+      alert("Failed to finalize bill");
+    }
+  };
+
+  if (!user) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
+
+  const hasAccess = user.permissions['BILLING_MANAGE'] === 'true' || user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN');
+  if (!hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[600px]">
+        <Card className="w-full max-w-md border-error">
+          <CardHeader className="bg-error/10">
+            <CardTitle className="text-error flex items-center gap-2">
+              <span>Access Denied</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 text-center text-text-secondary">
+            You do not have the required permissions (BILLING_MANAGE) to access the Financial Command Center.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -56,7 +185,7 @@ export default function BillingDashboard() {
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'opd' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
           onClick={() => setActiveTab('opd')}
         >
-          OPD Invoices
+          Invoices & Receivables
         </button>
         <button 
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'discharges' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
@@ -70,12 +199,6 @@ export default function BillingDashboard() {
         >
           Insurance Claims Tracker
         </button>
-        <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'masterBill' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('masterBill')}
-        >
-          IPD Master Bill Engine
-        </button>
       </div>
 
       {/* Content */}
@@ -84,20 +207,20 @@ export default function BillingDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-primary text-white border-none shadow-lg">
               <CardContent className="p-6">
-                <div className="text-sm opacity-80 mb-1">Revenue Today</div>
-                <div className="text-4xl font-bold">$4,520.00</div>
+                <div className="text-sm opacity-80 mb-1">Collections Today</div>
+                <div className="text-4xl font-bold">₹{revenueToday.toLocaleString()}</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6">
                 <div className="text-sm text-text-secondary mb-1">Pending Receivables</div>
-                <div className="text-4xl font-bold text-warning">$1,250.00</div>
+                <div className="text-4xl font-bold text-warning">₹{pendingReceivables.toLocaleString()}</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6">
-                <div className="text-sm text-text-secondary mb-1">Invoices Generated</div>
-                <div className="text-4xl font-bold text-text-primary">24</div>
+                <div className="text-sm text-text-secondary mb-1">Active Invoices</div>
+                <div className="text-4xl font-bold text-text-primary">{invoices.length}</div>
               </CardContent>
             </Card>
           </div>
@@ -105,7 +228,7 @@ export default function BillingDashboard() {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center w-full">
-                <CardTitle>Recent OPD Invoices</CardTitle>
+                <CardTitle>Invoices</CardTitle>
                 <div className="w-64">
                   <Input 
                     placeholder="Search Invoice No or Patient..." 
@@ -116,34 +239,84 @@ export default function BillingDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-surface text-text-secondary text-sm">
-                    <th className="p-4 font-medium">Invoice No.</th>
-                    <th className="p-4 font-medium">Patient</th>
-                    <th className="p-4 font-medium">Date</th>
-                    <th className="p-4 font-medium">Net Amount</th>
-                    <th className="p-4 font-medium">Status</th>
-                    <th className="p-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {DUMMY_INVOICES.map((inv) => (
-                    <tr key={inv.id} className="border-b border-surface-hover hover:bg-surface-hover transition-colors">
-                      <td className="p-4 font-medium text-primary">{inv.invoiceNo}</td>
-                      <td className="p-4">{inv.patientName}</td>
-                      <td className="p-4">{inv.date}</td>
-                      <td className="p-4 font-bold">{inv.amount}</td>
-                      <td className="p-4">{getStatusBadge(inv.status)}</td>
-                      <td className="p-4 text-right">
-                        <Button variant="secondary" size="sm" onClick={() => router.push(`/billing/invoice/${inv.id}`)}>
-                          {inv.status === "PAID" ? "View Receipt" : "Collect Payment"}
-                        </Button>
-                      </td>
+              {invoices.length === 0 ? (
+                <div className="text-center p-8 text-text-secondary italic">No invoices found. Generate one by completing an OPD visit.</div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-surface text-text-secondary text-sm">
+                      <th className="p-4 font-medium">Invoice No.</th>
+                      <th className="p-4 font-medium">Patient</th>
+                      <th className="p-4 font-medium">Date</th>
+                      <th className="p-4 font-medium">Net Amount</th>
+                      <th className="p-4 font-medium">Balance Due</th>
+                      <th className="p-4 font-medium">Status</th>
+                      <th className="p-4 font-medium text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {invoices.filter(i => (i.invoiceNumber + (i.patient?.firstName||"")).toLowerCase().includes(searchQuery.toLowerCase())).map((inv) => (
+                      <tr key={inv.id} className="border-b border-surface-hover hover:bg-surface-hover transition-colors">
+                        <td className="p-4 font-medium text-primary">{inv.invoiceNumber}</td>
+                        <td className="p-4">{inv.patient?.firstName} {inv.patient?.lastName}</td>
+                        <td className="p-4">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                        <td className="p-4 font-bold">₹{inv.netAmount.toLocaleString()}</td>
+                        <td className="p-4 font-bold text-error">₹{(inv.netAmount - inv.amountPaid).toLocaleString()}</td>
+                        <td className="p-4">{getStatusBadge(inv.status)}</td>
+                        <td className="p-4 text-right">
+                          <Button variant="secondary" size="sm" onClick={() => {
+                            if(inv.status === "PAID") alert("Receipt preview would open here.");
+                            else openPaymentModal(inv);
+                          }}>
+                            {inv.status === "PAID" ? "View Receipt" : "Collect Payment"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md bg-white">
+            <CardHeader>
+              <CardTitle>Collect Payment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-sm text-text-secondary">Invoice: <span className="font-bold text-text-primary">{selectedInvoice.invoiceNumber}</span></div>
+                <div className="text-sm text-text-secondary">Patient: <span className="font-bold text-text-primary">{selectedInvoice.patient?.firstName} {selectedInvoice.patient?.lastName}</span></div>
+                <div className="text-sm text-text-secondary">Balance Due: <span className="font-bold text-error">₹{(selectedInvoice.netAmount - selectedInvoice.amountPaid).toLocaleString()}</span></div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-1 block">Payment Amount (₹)</label>
+                <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Payment Mode</label>
+                <select className="w-full h-10 px-3 py-2 border border-border rounded-md text-sm bg-white" value={paymentMode} onChange={e => setPaymentMode(e.target.value)}>
+                  <option>CASH</option>
+                  <option>CARD</option>
+                  <option>UPI</option>
+                  <option>INSURANCE</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Reference Number (if applicable)</label>
+                <Input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+                <Button variant="secondary" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+                <Button variant="primary" onClick={handleCollectPayment} disabled={loading || !paymentAmount}>Confirm Payment</Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -199,14 +372,20 @@ export default function BillingDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="p-4 border border-border rounded-md hover:bg-surface transition-colors cursor-pointer" onClick={() => handleGenerateBill({ name: 'Rahul Verma', id: 'MED-2026-00089', dischargeType: 'Normal', duration: 12 })}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold">Rahul Verma</div>
-                  <Badge variant="warning">Billing Pending</Badge>
-                </div>
-                <div className="text-sm text-text-secondary mb-4">Discharged 2 hours ago. Total IPD duration: 12 days.</div>
-                <Button variant="primary" className="w-full">Generate Master Bill</Button>
-              </div>
+              {pendingDischarges.length === 0 ? (
+                <div className="col-span-3 py-12 text-center text-text-secondary">No pending IPD bills.</div>
+              ) : (
+                pendingDischarges.map(pd => (
+                  <div key={pd.id} className="p-4 border border-border rounded-md hover:bg-surface transition-colors cursor-pointer" onClick={() => handleGenerateBill(pd)}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-bold">{pd.name}</div>
+                      <Badge variant="warning">Billing Pending</Badge>
+                    </div>
+                    <div className="text-sm text-text-secondary mb-4">Discharged. Total IPD duration: {pd.duration} days.</div>
+                    <Button variant="primary" className="w-full">Generate Master Bill</Button>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -216,7 +395,7 @@ export default function BillingDashboard() {
         <Card>
           <CardHeader className="flex justify-between items-center border-b border-border pb-4">
             <CardTitle>IPD Master Bill</CardTitle>
-            {selectedPatient && <Badge variant="info">{selectedPatient.name} | {selectedPatient.id}</Badge>}
+            {selectedPatient && <Badge variant="info">{selectedPatient.name}</Badge>}
           </CardHeader>
           <CardContent className="pt-4">
             {selectedPatient ? (
@@ -293,7 +472,7 @@ export default function BillingDashboard() {
 
                 <div className="flex justify-end gap-3 border-t border-border pt-6">
                   <Button variant="secondary">Save as Draft</Button>
-                  <Button variant="primary" onClick={() => alert("Bill Finalized & Sent to Patient!")}>Finalize Bill & Generate Receipt</Button>
+                  <Button variant="primary" onClick={handleFinalizeMasterBill}>Finalize Bill & Generate Receipt</Button>
                 </div>
 
               </div>

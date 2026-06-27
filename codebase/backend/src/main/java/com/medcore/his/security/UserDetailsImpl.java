@@ -19,8 +19,9 @@ public class UserDetailsImpl implements UserDetails {
     private final String lastName;
     private final boolean isActive;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final java.util.Map<String, String> permissions;
 
-    public UserDetailsImpl(UUID id, String username, String password, String firstName, String lastName, boolean isActive, Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(UUID id, String username, String password, String firstName, String lastName, boolean isActive, Collection<? extends GrantedAuthority> authorities, java.util.Map<String, String> permissions) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -28,6 +29,11 @@ public class UserDetailsImpl implements UserDetails {
         this.lastName = lastName;
         this.isActive = isActive;
         this.authorities = authorities;
+        this.permissions = permissions;
+    }
+
+    public java.util.Map<String, String> getPermissions() {
+        return permissions;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -41,6 +47,17 @@ public class UserDetailsImpl implements UserDetails {
                 })
                 .collect(Collectors.toList());
 
+        java.util.Map<String, String> permissions = new java.util.HashMap<>();
+        for (com.medcore.his.domain.auth.Role role : user.getRoles()) {
+            if (role.getPermissions() != null) {
+                for (com.medcore.his.domain.auth.Permission p : role.getPermissions()) {
+                    if (p.getModule() != null && p.getAccessLevel() != null) {
+                        permissions.put(p.getModule(), p.getAccessLevel()); // This will overwrite if a user has multiple roles, which is fine for now
+                    }
+                }
+            }
+        }
+
         return new UserDetailsImpl(
                 user.getId(),
                 user.getUsername(),
@@ -48,7 +65,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getFirstName(),
                 user.getLastName(),
                 user.isActive(),
-                authorities);
+                authorities,
+                permissions);
     }
 
     public UUID getId() {

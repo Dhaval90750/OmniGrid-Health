@@ -23,6 +23,8 @@ class SyncWorker @AssistedInject constructor(
     private val incidentDao: IncidentDao
 ) : CoroutineWorker(appContext, workerParams) {
 
+    private val BASE_URL = "https://medcore-his-backend-production.up.railway.app/api/v1"
+
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             var allSynced = true
@@ -40,10 +42,10 @@ class SyncWorker @AssistedInject constructor(
                 }
                 
                 // Simulate network call
-                val response = NetworkClient.post("/api/v1/patients/${vital.patientUhid}/vitals", payload.toString(), null)
-                if (response != null) {
+                try {
+                    NetworkClient.post("$BASE_URL/patients/${vital.patientUhid}/vitals", payload.toString(), null)
                     vitalDao.update(vital.copy(isSynced = true))
-                } else {
+                } catch (e: Exception) {
                     allSynced = false
                 }
             }
@@ -57,10 +59,10 @@ class SyncWorker @AssistedInject constructor(
                     put("details", assessment.details)
                 }
                 
-                val response = NetworkClient.post("/api/v1/patients/${assessment.patientUhid}/assessments", payload.toString(), null)
-                if (response != null) {
+                try {
+                    NetworkClient.post("$BASE_URL/patients/${assessment.patientUhid}/assessments", payload.toString(), null)
                     assessmentDao.update(assessment.copy(isSynced = true))
-                } else {
+                } catch (e: Exception) {
                     allSynced = false
                 }
             }
@@ -73,10 +75,10 @@ class SyncWorker @AssistedInject constructor(
                     put("description", incident.description)
                 }
                 
-                val response = NetworkClient.post("/api/v1/incidents", payload.toString(), null)
-                if (response != null) {
+                try {
+                    NetworkClient.post("$BASE_URL/incidents", payload.toString(), null)
                     incidentDao.update(incident.copy(isSynced = true))
-                } else {
+                } catch (e: Exception) {
                     allSynced = false
                 }
             }

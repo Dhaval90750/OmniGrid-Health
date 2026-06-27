@@ -1,24 +1,16 @@
 package com.medcore.mobile
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,16 +26,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import org.json.JSONObject
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
 
 import dagger.hilt.android.AndroidEntryPoint
 import com.medcore.mobile.ui.VitalsEntryScreen
@@ -50,16 +35,25 @@ import com.medcore.mobile.ui.NursingAssessmentScreen
 import com.medcore.mobile.ui.IncidentReportScreen
 import com.medcore.mobile.ui.TaskTrackerScreen
 import com.medcore.mobile.ui.MarScannerScreen
+import com.medcore.mobile.ui.QrScannerScreen
+import com.medcore.mobile.ui.PatientSummaryScreen
+import com.medcore.mobile.ui.AiScribeScreen
+import com.medcore.mobile.ui.AnalyticsScreen
+import com.medcore.mobile.ui.TelemedicineScreen
+import com.medcore.mobile.ui.InventoryScreen
+import com.medcore.mobile.ui.BillingScreen
+
+import com.medcore.mobile.ui.theme.MedCoreTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            MedCoreTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFF8F9FA)
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     MedCoreAppContent()
                 }
@@ -70,51 +64,8 @@ class MainActivity : ComponentActivity() {
 
 enum class Screen {
     LOGIN, DASHBOARD, QR_SCANNER, PATIENT_SUMMARY, AI_SCRIBE,
-    VITALS_ENTRY, NURSING_ASSESSMENT, INCIDENT_REPORT, TASK_TRACKER, MAR_SCANNER
-}
-
-// Network Helpers using standard HttpURLConnection (Zero Dependencies)
-object NetworkClient {
-    suspend fun get(urlString: String, token: String?): String = withContext(Dispatchers.IO) {
-        val url = URL(urlString)
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        if (!token.isNullOrEmpty()) {
-            conn.setRequestProperty("Authorization", "Bearer $token")
-        }
-        conn.connectTimeout = 5000
-        conn.readTimeout = 5000
-        val code = conn.responseCode
-        if (code == HttpURLConnection.HTTP_OK) {
-            conn.inputStream.bufferedReader().use { it.readText() }
-        } else {
-            val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            throw Exception("HTTP $code: $err")
-        }
-    }
-
-    suspend fun post(urlString: String, jsonBody: String, token: String?): String = withContext(Dispatchers.IO) {
-        val url = URL(urlString)
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "POST"
-        conn.setRequestProperty("Content-Type", "application/json")
-        if (!token.isNullOrEmpty()) {
-            conn.setRequestProperty("Authorization", "Bearer $token")
-        }
-        conn.doOutput = true
-        conn.connectTimeout = 5000
-        conn.readTimeout = 5000
-        
-        OutputStreamWriter(conn.outputStream).use { it.write(jsonBody) }
-        
-        val code = conn.responseCode
-        if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_CREATED) {
-            conn.inputStream.bufferedReader().use { it.readText() }
-        } else {
-            val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            throw Exception("HTTP $code: $err")
-        }
-    }
+    VITALS_ENTRY, NURSING_ASSESSMENT, INCIDENT_REPORT, TASK_TRACKER, MAR_SCANNER,
+    ANALYTICS, TELEMEDICINE, INVENTORY, BILLING, ORDER_ENTRY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +76,8 @@ fun MedCoreAppContent() {
     var username by remember { mutableStateOf("admin") }
     var password by remember { mutableStateOf("admin123") }
     var token by remember { mutableStateOf("") }
-    var loggedInUser by remember { mutableStateOf("Dr. Anjali Desai") }
+    var loggedInUser by remember { mutableStateOf("") }
+    var permissions by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     
     var errorMsg by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -133,9 +85,17 @@ fun MedCoreAppContent() {
 
     // Active Patient Context
     var activePatient by remember { mutableStateOf<JSONObject?>(null) }
-    
-    // AI Scribe State
-    var aiResult by remember { mutableStateOf<JSONObject?>(null) }
+    var pendingScreen by remember { mutableStateOf<Screen?>(null) }
+
+    // Helper to enforce QR Scan
+    fun requirePatient(destination: Screen) {
+        if (activePatient == null) {
+            pendingScreen = destination
+            currentScreen = Screen.QR_SCANNER
+        } else {
+            currentScreen = destination
+        }
+    }
 
     when (currentScreen) {
         Screen.LOGIN -> LoginScreen(
@@ -158,7 +118,21 @@ fun MedCoreAppContent() {
                         }.toString()
                         val res = NetworkClient.post("$apiUrl/auth/login", body, null)
                         val json = JSONObject(res)
-                        token = json.getString("accessToken")
+                        token = json.getString("token")
+                        loggedInUser = json.optString("username", "User")
+                        
+                        // Parse permissions
+                        val permsObj = json.optJSONObject("permissions")
+                        val newPerms = mutableMapOf<String, String>()
+                        if (permsObj != null) {
+                            val keys = permsObj.keys()
+                            while (keys.hasNext()) {
+                                val k = keys.next()
+                                newPerms[k] = permsObj.getString(k)
+                            }
+                        }
+                        permissions = newPerms
+                        
                         currentScreen = Screen.DASHBOARD
                     } catch (e: Exception) {
                         errorMsg = "Login Failed: ${e.localizedMessage}"
@@ -170,21 +144,40 @@ fun MedCoreAppContent() {
             onSimulateBiometric = {
                 // Secure Bypass in Developer Mode
                 token = "simulated_token"
+                loggedInUser = "Dr. Anjali Desai"
+                permissions = mapOf(
+                    "Patient Registration" to "FULL_ACCESS",
+                    "Clinical Notes" to "FULL_ACCESS",
+                    "Operations" to "FULL_ACCESS",
+                    "Pharmacy" to "FULL_ACCESS",
+                    "Dashboards" to "FULL_ACCESS",
+                    "Inventory" to "FULL_ACCESS",
+                    "Billing" to "FULL_ACCESS"
+                )
                 currentScreen = Screen.DASHBOARD
             }
         )
         
         Screen.DASHBOARD -> DashboardScreen(
             user = loggedInUser,
-            onScanClick = { currentScreen = Screen.QR_SCANNER },
-            onScribeClick = { currentScreen = Screen.AI_SCRIBE },
-            onVitalsClick = { currentScreen = Screen.VITALS_ENTRY },
-            onAssessClick = { currentScreen = Screen.NURSING_ASSESSMENT },
+            permissions = permissions,
+            onScanClick = { requirePatient(Screen.PATIENT_SUMMARY) },
+            onScribeClick = { requirePatient(Screen.AI_SCRIBE) },
+            onVitalsClick = { requirePatient(Screen.VITALS_ENTRY) },
+            onAssessClick = { requirePatient(Screen.NURSING_ASSESSMENT) },
+            onOrderClick = { requirePatient(Screen.ORDER_ENTRY) },
             onIncidentClick = { currentScreen = Screen.INCIDENT_REPORT },
             onTasksClick = { currentScreen = Screen.TASK_TRACKER },
-            onMarClick = { currentScreen = Screen.MAR_SCANNER },
+            onMarClick = { requirePatient(Screen.MAR_SCANNER) },
+            onAnalyticsClick = { currentScreen = Screen.ANALYTICS },
+            onTelemedicineClick = { currentScreen = Screen.TELEMEDICINE },
+            onInventoryClick = { currentScreen = Screen.INVENTORY },
+            onBillingClick = { currentScreen = Screen.BILLING },
             onLogout = {
                 token = ""
+                permissions = emptyMap()
+                activePatient = null
+                pendingScreen = null
                 currentScreen = Screen.LOGIN
             }
         )
@@ -192,16 +185,28 @@ fun MedCoreAppContent() {
         Screen.QR_SCANNER -> QrScannerScreen(
             apiUrl = apiUrl,
             token = token,
-            onBack = { currentScreen = Screen.DASHBOARD },
+            onBack = { 
+                pendingScreen = null
+                currentScreen = Screen.DASHBOARD 
+            },
             onPatientDetected = { patientJson ->
                 activePatient = patientJson
-                currentScreen = Screen.PATIENT_SUMMARY
+                if (pendingScreen != null) {
+                    currentScreen = pendingScreen!!
+                    pendingScreen = null
+                } else {
+                    currentScreen = Screen.PATIENT_SUMMARY
+                }
             }
         )
         
         Screen.PATIENT_SUMMARY -> PatientSummaryScreen(
             patient = activePatient!!,
-            onBack = { currentScreen = Screen.DASHBOARD }
+            onBack = { currentScreen = Screen.DASHBOARD },
+            onClearPatient = {
+                activePatient = null
+                currentScreen = Screen.DASHBOARD
+            }
         )
         
         Screen.AI_SCRIBE -> AiScribeScreen(
@@ -217,6 +222,14 @@ fun MedCoreAppContent() {
             token = token,
             onBack = { currentScreen = Screen.DASHBOARD },
             onSubmit = { _, _, _, _, _ -> currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.ORDER_ENTRY -> OrderEntryScreen(
+            patientUhid = activePatient?.optString("uhid") ?: "UNKNOWN",
+            patientId = activePatient?.optString("id") ?: "",
+            apiUrl = apiUrl,
+            token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
         )
         
         Screen.NURSING_ASSESSMENT -> NursingAssessmentScreen(
@@ -247,6 +260,30 @@ fun MedCoreAppContent() {
             patientId = activePatient?.optString("id") ?: "",
             onBack = { currentScreen = Screen.DASHBOARD }
         )
+        
+        Screen.ANALYTICS -> AnalyticsScreen(
+            apiUrl = apiUrl,
+            token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.TELEMEDICINE -> TelemedicineScreen(
+            apiUrl = apiUrl,
+            token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.INVENTORY -> InventoryScreen(
+            apiUrl = apiUrl,
+            token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
+        
+        Screen.BILLING -> BillingScreen(
+            apiUrl = apiUrl,
+            token = token,
+            onBack = { currentScreen = Screen.DASHBOARD }
+        )
     }
 }
 
@@ -267,6 +304,11 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFFE3F2FD), Color.White)
+                )
+            )
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -276,43 +318,41 @@ fun LoginScreen(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(96.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFDADCE0), RoundedCornerShape(12.dp))
+                .size(110.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .border(2.dp, Color.White, RoundedCornerShape(24.dp))
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         Text(
             text = "MedCore Mobile",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A73E8)
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF1565C0)
         )
         Text(
-            text = "Clinical Physician Portal",
-            fontSize = 14.sp,
-            color = Color(0xFF5F6368)
+            text = "Unified Hospital System",
+            fontSize = 16.sp,
+            color = Color(0xFF546E7A),
+            fontWeight = FontWeight.Medium
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = apiUrl,
-            onValueChange = onApiUrlChange,
-            label = { Text("Server API Base URL") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
             value = username,
             onValueChange = onUsernameChange,
             label = { Text("Username") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true,
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                containerColor = Color.White,
+                focusedBorderColor = Color(0xFF1565C0),
+                unfocusedBorderColor = Color(0xFFE0E0E0)
+            )
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = password,
@@ -320,42 +360,101 @@ fun LoginScreen(
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true,
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                containerColor = Color.White,
+                focusedBorderColor = Color(0xFF1565C0),
+                unfocusedBorderColor = Color(0xFFE0E0E0)
+            )
         )
         
         if (errorMsg.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = errorMsg,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center
-            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Surface(
+                color = Color(0xFFFFEBEE),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = errorMsg,
+                    color = Color(0xFFD32F2F),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         if (isLoading) {
-            CircularProgressIndicator(color = Color(0xFF1A73E8))
+            CircularProgressIndicator(color = Color(0xFF1565C0))
         } else {
             Button(
                 onClick = onLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
+                    .height(60.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
             ) {
-                Text("Secure Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Secure Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = onSimulateBiometric,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1565C0)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1565C0))
             ) {
-                Text("Simulate Biometrics / PIN Bypass", fontSize = 15.sp)
+                Text("Use Biometric Unlock", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
+        }
+    }
+}
+
+@Composable
+fun DashboardActionCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = iconColor.copy(alpha = 0.12f),
+                modifier = Modifier.size(64.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = title, tint = iconColor, modifier = Modifier.size(32.dp))
+                }
+            }
+            Spacer(modifier = Modifier.width(20.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(subtitle, fontSize = 14.sp, color = Color(0xFF78909C))
+            }
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Go", tint = Color(0xFFB0BEC5))
         }
     }
 }
@@ -363,19 +462,31 @@ fun LoginScreen(
 @Composable
 fun DashboardScreen(
     user: String,
+    permissions: Map<String, String>,
     onScanClick: () -> Unit,
     onScribeClick: () -> Unit,
     onVitalsClick: () -> Unit,
     onAssessClick: () -> Unit,
+    onOrderClick: () -> Unit,
     onIncidentClick: () -> Unit,
     onTasksClick: () -> Unit,
     onMarClick: () -> Unit,
+    onAnalyticsClick: () -> Unit,
+    onTelemedicineClick: () -> Unit,
+    onInventoryClick: () -> Unit,
+    onBillingClick: () -> Unit,
     onLogout: () -> Unit
 ) {
+    // Helper function to check access
+    fun hasAccess(module: String): Boolean {
+        return permissions[module] != null && permissions[module] != "NO_ACCESS"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .background(Color(0xFFF8F9FA))
+            .padding(horizontal = 24.dp, vertical = 32.dp)
             .verticalScroll(rememberScrollState())
     ) {
         // Top Header
@@ -385,485 +496,106 @@ fun DashboardScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Welcome Back,", fontSize = 14.sp, color = Color(0xFF5F6368))
-                Text(user, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202124))
+                Text("Welcome Back,", fontSize = 16.sp, color = Color(0xFF78909C))
+                Text(user, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF263238))
             }
-            IconButton(onClick = onLogout) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFFFFEBEE),
+                modifier = Modifier.clickable { onLogout() }
+            ) {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
                     contentDescription = "Logout",
-                    tint = Color(0xFFEA4335)
+                    tint = Color(0xFFD32F2F),
+                    modifier = Modifier.padding(12.dp)
                 )
             }
         }
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        // System Status Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F0FE)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Active Ward Duty", fontWeight = FontWeight.Bold, color = Color(0xFF1557B0))
-                Text("Location: ICU / General Wards", fontSize = 13.sp, color = Color(0xFF1A73E8))
-                Text("Shift: Morning (08:00 - 16:00)", fontSize = 13.sp, color = Color(0xFF1A73E8))
+        // Dynamic Hero Card based on Role
+        if (hasAccess("Dashboards")) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier.fillMaxWidth().clickable { onAnalyticsClick() }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Brush.horizontalGradient(listOf(Color(0xFF3F51B5), Color(0xFF283593))))
+                        .padding(24.dp)
+                ) {
+                    Column {
+                        Text("Executive Overview", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Tap to view live revenue & KPIs", fontSize = 15.sp, color = Color.White.copy(alpha=0.9f))
+                    }
+                }
+            }
+        } else {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Brush.horizontalGradient(listOf(Color(0xFF1E88E5), Color(0xFF1565C0))))
+                        .padding(24.dp)
+                ) {
+                    Column {
+                        Text("Active Shift Details", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("📍 Location: Main Hospital", fontSize = 15.sp, color = Color.White.copy(alpha=0.9f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("⏰ Time: Logged in securely", fontSize = 15.sp, color = Color.White.copy(alpha=0.9f))
+                    }
+                }
             }
         }
+        
+        Spacer(modifier = Modifier.height(36.dp))
+        
+        Text("Quick Actions", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // ABAC Logic from Backend Mapping
+        if (hasAccess("Patient Registration") || hasAccess("Clinical Notes") || hasAccess("Operations")) {
+            DashboardActionCard("Scan Patient QR", "Access 360° Profile dynamically", Icons.Default.Menu, Color(0xFF2196F3), onScanClick)
+        }
+        
+        if (hasAccess("Clinical Notes")) {
+            DashboardActionCard("Telemedicine Room", "Join live video consultations", Icons.Default.Call, Color(0xFFE91E63), onTelemedicineClick)
+            DashboardActionCard("Voice AI Scribe", "Dictate SOAP notes on the go", Icons.Default.PlayArrow, Color(0xFF4CAF50), onScribeClick)
+            DashboardActionCard("Bedside Vitals", "Enter offline vitals (Room DB)", Icons.Default.AddCircle, Color(0xFFFF9800), onVitalsClick)
+            DashboardActionCard("Nursing Assessments", "Morse & Braden scales", Icons.Default.List, Color(0xFF9C27B0), onAssessClick)
+        }
+
+        if (hasAccess("Lab Orders/Results") || hasAccess("Radiology") || hasAccess("Clinical Notes")) {
+            DashboardActionCard("Order Entry (CPOE)", "Order Labs & Radiology bedside", Icons.Default.AddCircle, Color(0xFF673AB7), onOrderClick)
+        }
+        
+        if (hasAccess("Pharmacy") || hasAccess("Clinical Notes")) {
+            DashboardActionCard("MAR Scanner", "5-Rights Medication verification", Icons.Default.Search, Color(0xFF3F51B5), onMarClick)
+        }
+
+        if (hasAccess("Operations")) {
+            DashboardActionCard("Task Tracker", "Porter & Maintenance jobs", Icons.Default.CheckCircle, Color(0xFF009688), onTasksClick)
+        }
+        
+        if (hasAccess("Inventory")) {
+            DashboardActionCard("Inventory Management", "Approve POs & Check Stock", Icons.Default.ShoppingCart, Color(0xFF795548), onInventoryClick)
+        }
+        
+        if (hasAccess("Billing")) {
+            DashboardActionCard("Quick Billing", "View interim IPD & OPD bills", Icons.Default.DateRange, Color(0xFF607D8B), onBillingClick)
+        }
+
+        // Available to mostly everyone (with a valid session) for Safety
+        DashboardActionCard("Report Incident", "Log adverse events securely", Icons.Default.Warning, Color(0xFFF44336), onIncidentClick)
         
         Spacer(modifier = Modifier.height(32.dp))
-        
-        // Action Buttons
-        Text("Clinical Actions", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202124))
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onScanClick() }
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Menu, contentDescription = "Scan QR", tint = Color(0xFF1A73E8), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("Scan Patient QR Code", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("Access 360 Patient Summary dynamically", fontSize = 12.sp, color = Color.Gray)
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onScribeClick() }
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "AI Scribe", tint = Color(0xFF34A853), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("Launch AI Voice Scribe", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("Dictate SOAP notes on the go", fontSize = 12.sp, color = Color.Gray)
-                }
-            }
-        }
-        
-        Card(modifier = Modifier.fillMaxWidth().clickable { onVitalsClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AddCircle, contentDescription = "Vitals", tint = Color(0xFFE67C73), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column { Text("Bedside Vitals", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Enter offline vitals (Room DB)", fontSize = 12.sp, color = Color.Gray) }
-            }
-        }
-        
-        Card(modifier = Modifier.fillMaxWidth().clickable { onAssessClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.List, contentDescription = "Assessments", tint = Color(0xFFF2A600), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column { Text("Nursing Assessments", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Morse & Braden scales", fontSize = 12.sp, color = Color.Gray) }
-            }
-        }
-        
-        Card(modifier = Modifier.fillMaxWidth().clickable { onIncidentClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Warning, contentDescription = "Incidents", tint = Color(0xFFD32F2F), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column { Text("Report Incident", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Log adverse events securely", fontSize = 12.sp, color = Color.Gray) }
-            }
-        }
-        
-        Card(modifier = Modifier.fillMaxWidth().clickable { onTasksClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CheckCircle, contentDescription = "Tasks", tint = Color(0xFF1E8E3E), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column { Text("Operations Tasks", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("Turnaround & Porter tracker", fontSize = 12.sp, color = Color.Gray) }
-            }
-        }
-        
-        Card(modifier = Modifier.fillMaxWidth().clickable { onMarClick() }.padding(vertical = 6.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Search, contentDescription = "MAR", tint = Color(0xFF5E35B1), modifier = Modifier.size(36.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Column { Text("MAR Bedside Scan", fontWeight = FontWeight.Bold, fontSize = 16.sp); Text("5-Rights Medication verification", fontSize = 12.sp, color = Color.Gray) }
-            }
-        }
-    }
-}
-
-@Composable
-fun QrScannerScreen(
-    apiUrl: String,
-    token: String,
-    onBack: () -> Unit,
-    onPatientDetected: (JSONObject) -> Unit
-) {
-    var manualUhid by remember { mutableStateOf("") }
-    var isScanningSimulated by remember { mutableStateOf(false) }
-    var isFetching by remember { mutableStateOf(false) }
-    var errorMsg by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-
-    val context = LocalContext.current
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasCameraPermission = isGranted
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
-            launcher.launch(Manifest.permission.CAMERA)
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-            }
-            Text("QR Barcode Scanner", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Real Camera Viewfinder
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // Takes up remaining space
-                .background(Color.Black, RoundedCornerShape(12.dp))
-                .border(2.dp, if (hasCameraPermission) Color(0xFF1A73E8) else Color.Red, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (hasCameraPermission) {
-                com.medcore.mobile.ui.components.QrCameraPreview(
-                    onBarcodeScanned = { scannedValue ->
-                        if (!isFetching) {
-                            isFetching = true
-                            errorMsg = ""
-                            scope.launch {
-                                try {
-                                    val res = NetworkClient.get("$apiUrl/patients/search?q=$scannedValue", token)
-                                    val jsonArray = JSONArray(res)
-                                    if (jsonArray.length() > 0) {
-                                        val patient = jsonArray.getJSONObject(0)
-                                        onPatientDetected(patient)
-                                    } else {
-                                        errorMsg = "Patient not found for: $scannedValue"
-                                        isFetching = false
-                                    }
-                                } catch (e: Exception) {
-                                    errorMsg = "Error fetching patient: ${e.localizedMessage}"
-                                    isFetching = false
-                                }
-                            }
-                        }
-                    }
-                )
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Permission Denied",
-                        tint = Color.Red,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Camera permission is required to scan QR codes.", color = Color.White, textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
-                        Text("Grant Permission")
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        if (errorMsg.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(errorMsg, color = Color.Red, fontSize = 13.sp, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (isFetching) {
-            CircularProgressIndicator()
-        }
-    }
-}
-
-@Composable
-fun PatientSummaryScreen(
-    patient: JSONObject,
-    onBack: () -> Unit
-) {
-    val firstName = patient.optString("firstName", "Unknown")
-    val lastName = patient.optString("lastName", "")
-    val name = "$firstName $lastName"
-    val uhid = patient.optString("uhid", "UNKNOWN-UHID")
-    val dob = patient.optString("dateOfBirth", "Unknown")
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-            }
-            Text("Patient 360° Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Patient Header Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202124))
-                Text("UHID: $uhid", fontSize = 14.sp, color = Color(0xFF1A73E8), fontWeight = FontWeight.SemiBold)
-                Text("DOB: $dob", fontSize = 13.sp, color = Color(0xFF5F6368))
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text("Clinical Metrics Summary", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // Vitals
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Blood Pressure", color = Color.Gray)
-                    Text("120/80 mmHg", fontWeight = FontWeight.Bold)
-                }
-                Divider()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("SpO2 (Oxygen)", color = Color.Gray)
-                    Text("99%", fontWeight = FontWeight.Bold, color = Color(0xFF34A853))
-                }
-                Divider()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Heart Rate", color = Color.Gray)
-                    Text("72 bpm", fontWeight = FontWeight.Bold)
-                }
-                Divider()
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Allergies", color = Color.Gray)
-                    Text("Penicillin (High)", fontWeight = FontWeight.Bold, color = Color(0xFFEA4335))
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Button(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F6368))
-        ) {
-            Text("Done")
-        }
-    }
-}
-
-@Composable
-fun AiScribeScreen(
-    apiUrl: String,
-    token: String,
-    onBack: () -> Unit
-) {
-    var isRecording by remember { mutableStateOf(false) }
-    var transcript by remember { mutableStateOf("") }
-    var isProcessing by remember { mutableStateOf(false) }
-    var soapResult by remember { mutableStateOf<JSONObject?>(null) }
-    var errorMsg by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-    
-    val context = LocalContext.current
-    var hasAudioPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasAudioPermission = isGranted
-        if (isGranted) {
-            isRecording = true
-            transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
-            isRecording = false
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-            }
-            Text("AI Voice Scribe Portal", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F3F4))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = if (transcript.isEmpty()) "Tap simulate to dictate clinical notes..." else transcript,
-                    fontSize = 14.sp,
-                    color = if (transcript.isEmpty()) Color.Gray else Color.Black
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = {
-                    if (hasAudioPermission) {
-                        isRecording = true
-                        transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
-                        isRecording = false
-                    } else {
-                        launcher.launch(Manifest.permission.RECORD_AUDIO)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335))
-            ) {
-                Text("🎙 Record Voice")
-            }
-            
-            Button(
-                onClick = {
-                    isProcessing = true
-                    scope.launch {
-                        try {
-                            errorMsg = ""
-                            soapResult = null
-                            val body = JSONObject().apply {
-                                put("transcript", transcript)
-                            }.toString()
-                            val res = NetworkClient.post("$apiUrl/ai/extract", body, token)
-                            soapResult = JSONObject(res)
-                        } catch (e: Exception) {
-                            errorMsg = "Failed to connect to AI Server: ${e.localizedMessage}"
-                        } finally {
-                            isProcessing = false
-                        }
-                    }
-                },
-                enabled = transcript.isNotEmpty() && !isProcessing,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
-            ) {
-                Text(if (isProcessing) "Processing..." else "Process SOAP")
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (errorMsg.isNotEmpty()) {
-            Text(errorMsg, color = Color.Red, fontSize = 14.sp)
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        if (soapResult != null) {
-            Text("AI Extracted SOAP Note Summary", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            val soapObj = soapResult!!.optJSONObject("generated_soap_note")
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (soapObj != null) {
-                    item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Subjective", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Subjective", "N/A"), fontSize = 13.sp)
-                            }
-                        }
-                    }
-                    item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Objective", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Objective", "N/A"), fontSize = 13.sp)
-                            }
-                        }
-                    }
-                    item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Assessment", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Assessment", "N/A"), fontSize = 13.sp)
-                            }
-                        }
-                    }
-                    item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Plan", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Plan", "N/A"), fontSize = 13.sp)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

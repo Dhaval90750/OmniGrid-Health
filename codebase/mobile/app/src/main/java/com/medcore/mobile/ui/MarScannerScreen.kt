@@ -59,11 +59,11 @@ fun MarScannerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("MAR 5-Rights Scanner", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A73E8)),
+                title = { Text("MAR 5-Rights Scanner", color = MaterialTheme.colorScheme.onPrimary) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
                 navigationIcon = {
                     Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                        Text("Back", color = Color.White)
+                        Text("Back", color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             )
@@ -73,18 +73,19 @@ fun MarScannerScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Scan Patient Wristband & Medication Barcode", textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 16.dp))
+            Text("Scan Patient Wristband & Medication Barcode", textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 16.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
                     .background(Color.Black, RoundedCornerShape(12.dp))
-                    .border(2.dp, if (hasCameraPermission) Color(0xFF4CAF50) else Color.Red, RoundedCornerShape(12.dp)),
+                    .border(2.dp, if (hasCameraPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (hasCameraPermission) {
@@ -102,7 +103,7 @@ fun MarScannerScreen(
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = "Permission Denied",
-                            tint = Color.Red,
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(48.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -117,7 +118,7 @@ fun MarScannerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Simulator/Manual Override: Enter Drug Barcode / Details", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text("Simulator/Manual Override: Enter Drug Barcode / Details", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = manualDrugCode,
@@ -129,16 +130,28 @@ fun MarScannerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (errorMsg.isNotEmpty()) {
-                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(errorMsg, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
+                }
             }
             if (successMsg.isNotEmpty()) {
-                Text(successMsg, color = Color(0xFF4CAF50))
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(successMsg, color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isLoading) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             } else {
                 Button(
                     onClick = {
@@ -158,25 +171,26 @@ fun MarScannerScreen(
                             try {
                                 val body = JSONObject().apply {
                                     put("patientId", patientId)
-                                    put("drugId", java.util.UUID.randomUUID().toString()) // Mock drug ID since it's free text
-                                    put("dose", "1 Tablet")
-                                    put("route", "PO")
-                                    put("notes", manualDrugCode)
+                                    put("medicationScanned", manualDrugCode)
+                                    put("timestamp", java.time.Instant.now().toString())
+                                    put("administeredBy", "Nurse (Mobile)")
                                 }.toString()
-
-                                NetworkClient.post("$apiUrl/nursing/mar", body, token)
-                                successMsg = "Medication Administration Recorded!"
+                                
+                                NetworkClient.post("$apiUrl/nursing/mar/administer", body, token)
+                                successMsg = "Medication successfully verified and logged."
                                 manualDrugCode = ""
                             } catch (e: Exception) {
-                                errorMsg = "Error: ${e.localizedMessage}"
+                                errorMsg = "Verification failed: ${e.localizedMessage}"
                             } finally {
                                 isLoading = false
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Administer Medication")
+                    Text("Administer Medication", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

@@ -18,4 +18,10 @@ public class Permission extends BaseEntity {
 
     @Column(length = 255)
     private String description;
+
+    @Column(length = 100)
+    private String module;
+
+    @Column(length = 50)
+    private String accessLevel;
 }

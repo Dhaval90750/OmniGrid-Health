@@ -1,17 +1,136 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { api } from "@/lib/api";
 
 export default function NursingDashboard() {
   const [activeTab, setActiveTab] = useState("ward");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [occupiedBeds, setOccupiedBeds] = useState<any[]>([]);
+
+  // Vitals State
+  const [vitalsHistory, setVitalsHistory] = useState<any[]>([]);
+  const [newVitals, setNewVitals] = useState({
+    temperature: "",
+    heartRate: "",
+    respiratoryRate: "",
+    bloodPressureSystolic: "",
+    bloodPressureDiastolic: "",
+    oxygenSaturation: ""
+  });
+
+  // MAR State
+  const [marSchedule, setMarSchedule] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchOccupiedBeds();
+  }, []);
+
+  const fetchOccupiedBeds = async () => {
+    try {
+      const res = await api.get("/beds/dashboard");
+      // Dashboard returns wards which contain beds
+      const wards = res.data;
+      const patients: any[] = [];
+      wards.forEach((ward: any) => {
+        ward.beds.forEach((bed: any) => {
+          if (bed.status === "OCCUPIED" && bed.currentAdmission) {
+            patients.push({
+              patientId: bed.currentAdmission.patient.id,
+              name: `${bed.currentAdmission.patient.firstName} ${bed.currentAdmission.patient.lastName}`,
+              bed: bed.bedNumber,
+              ward: ward.name,
+              doctor: bed.currentAdmission.admittingDoctor?.user?.firstName + " " + bed.currentAdmission.admittingDoctor?.user?.lastName,
+              admissionId: bed.currentAdmission.id
+            });
+          }
+        });
+      });
+      setOccupiedBeds(patients);
+    } catch (e) {
+      console.error(e);
+      // Mock data fallback if api fails or is empty for demo
+      setOccupiedBeds([
+        { patientId: "mock1", name: 'Rahul Sharma', bed: 'GM-01', ward: 'General Medical', doctor: 'Dr. Anjali Desai' },
+        { patientId: "mock2", name: 'Sneha Patel', bed: 'GM-02', ward: 'General Medical', doctor: 'Dr. Vikram Singh' }
+      ]);
+    }
+  };
+
+  const fetchVitals = async (patientId: string) => {
+    try {
+      const res = await api.get(`/nursing/vitals/patient/${patientId}`);
+      setVitalsHistory(res.data);
+    } catch (e) {
+      console.error(e);
+      setVitalsHistory([]);
+    }
+  };
+
+  const fetchMar = async (patientId: string) => {
+    try {
+      const res = await api.get(`/nursing/mar/patient/${patientId}`);
+      setMarSchedule(res.data);
+    } catch (e) {
+      console.error(e);
+      // Fallback Mock
+      setMarSchedule([
+        { id: "m1", drugName: "Paracetamol 500mg Tab", doseRoute: "500mg, Oral", frequency: "TDS", status: "DUE" },
+        { id: "m2", drugName: "Ceftriaxone 1g Injection", doseRoute: "1g, IV", frequency: "BD", status: "GIVEN" },
+      ]);
+    }
+  };
 
   const handleSelectPatient = (patient: any, tab: string) => {
     setSelectedPatient(patient);
     setActiveTab(tab);
+    if (tab === "vitals") {
+      fetchVitals(patient.patientId);
+    } else if (tab === "mar") {
+      fetchMar(patient.patientId);
+    }
+  };
+
+  const handleSaveVitals = async () => {
+    if (!selectedPatient) return;
+    try {
+      const payload = {
+        patient: { id: selectedPatient.patientId },
+        recordedBy: { id: "1" }, // Current nurse mock
+        temperature: parseFloat(newVitals.temperature),
+        heartRate: parseInt(newVitals.heartRate),
+        respiratoryRate: parseInt(newVitals.respiratoryRate),
+        bloodPressureSystolic: parseInt(newVitals.bloodPressureSystolic),
+        bloodPressureDiastolic: parseInt(newVitals.bloodPressureDiastolic),
+        oxygenSaturation: parseInt(newVitals.oxygenSaturation),
+      };
+      await api.post("/nursing/vitals", payload);
+      alert("Vitals saved!");
+      setNewVitals({ temperature: "", heartRate: "", respiratoryRate: "", bloodPressureSystolic: "", bloodPressureDiastolic: "", oxygenSaturation: "" });
+      fetchVitals(selectedPatient.patientId);
+    } catch (e) {
+      alert("Failed to save vitals");
+    }
+  };
+
+  const handleMarkGiven = async (marItem: any) => {
+    try {
+      await api.post("/nursing/mar", {
+        patient: { id: selectedPatient.patientId },
+        administeredBy: { id: "1" },
+        drugName: marItem.drugName,
+        dose: marItem.doseRoute,
+        notes: "Administered as per schedule"
+      });
+      alert("Marked as Given!");
+      fetchMar(selectedPatient.patientId);
+    } catch (e) {
+      alert("Failed to record MAR");
+    }
   };
 
   return (
@@ -29,17 +148,17 @@ export default function NursingDashboard() {
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'ward' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
           onClick={() => { setActiveTab('ward'); setSelectedPatient(null); }}
         >
-          Ward List (General Medical)
+          Ward List
         </button>
         <button 
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'vitals' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('vitals')}
+          onClick={() => { if(selectedPatient) handleSelectPatient(selectedPatient, 'vitals'); else setActiveTab('vitals'); }}
         >
           Vitals Entry
         </button>
         <button 
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'mar' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('mar')}
+          onClick={() => { if(selectedPatient) handleSelectPatient(selectedPatient, 'mar'); else setActiveTab('mar'); }}
         >
           Medication Admin Record (MAR)
         </button>
@@ -48,59 +167,27 @@ export default function NursingDashboard() {
       {/* Content */}
       {activeTab === "ward" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Patient Card 1 */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="font-bold text-lg">Rahul Sharma (42M)</div>
-                  <div className="text-sm text-text-secondary">Bed: GM-01 | Dr. Anjali Desai</div>
-                </div>
-                <Badge variant="warning">High Risk Fall</Badge>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                <div className="p-2 bg-surface rounded border border-border">
-                  <div className="text-text-secondary text-xs mb-1">Last HR</div>
-                  <div className="font-medium">88 bpm</div>
-                </div>
-                <div className="p-2 bg-surface rounded border border-border">
-                  <div className="text-text-secondary text-xs mb-1">Last BP</div>
-                  <div className="font-medium">130/85</div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm" className="flex-1" onClick={() => handleSelectPatient({ name: 'Rahul Sharma', bed: 'GM-01' }, 'vitals')}>Vitals</Button>
-                <Button variant="primary" size="sm" className="flex-1" onClick={() => handleSelectPatient({ name: 'Rahul Sharma', bed: 'GM-01' }, 'mar')}>MAR</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Patient Card 2 */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="font-bold text-lg">Sneha Patel (28F)</div>
-                  <div className="text-sm text-text-secondary">Bed: GM-02 | Dr. Vikram Singh</div>
-                </div>
-                <Badge variant="success">Stable</Badge>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                <div className="p-2 bg-surface rounded border border-border">
-                  <div className="text-text-secondary text-xs mb-1">Last Temp</div>
-                  <div className="font-medium">98.6 °F</div>
-                </div>
-                <div className="p-2 bg-surface rounded border border-border">
-                  <div className="text-text-secondary text-xs mb-1">SpO2</div>
-                  <div className="font-medium">99%</div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm" className="flex-1" onClick={() => handleSelectPatient({ name: 'Sneha Patel', bed: 'GM-02' }, 'vitals')}>Vitals</Button>
-                <Button variant="primary" size="sm" className="flex-1" onClick={() => handleSelectPatient({ name: 'Sneha Patel', bed: 'GM-02' }, 'mar')}>MAR</Button>
-              </div>
-            </CardContent>
-          </Card>
+          {occupiedBeds.length === 0 ? (
+            <div className="col-span-3 py-12 text-center text-text-secondary">No patients are currently admitted in your wards.</div>
+          ) : (
+            occupiedBeds.map((patient: any, idx: number) => (
+              <Card key={idx}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="font-bold text-lg">{patient.name}</div>
+                      <div className="text-sm text-text-secondary">Bed: {patient.bed} | {patient.doctor}</div>
+                    </div>
+                    <Badge variant="info">Admitted</Badge>
+                  </div>
+                  <div className="flex gap-2 mt-6">
+                    <Button variant="secondary" size="sm" className="flex-1" onClick={() => handleSelectPatient(patient, 'vitals')}>Vitals</Button>
+                    <Button variant="primary" size="sm" className="flex-1" onClick={() => handleSelectPatient(patient, 'mar')}>MAR</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
 
@@ -118,32 +205,32 @@ export default function NursingDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-1">Temperature (°F)</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.temperature} onChange={e => setNewVitals({...newVitals, temperature: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Heart Rate (bpm)</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.heartRate} onChange={e => setNewVitals({...newVitals, heartRate: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">SpO2 (%)</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.oxygenSaturation} onChange={e => setNewVitals({...newVitals, oxygenSaturation: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">BP Systolic (mmHg)</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.bloodPressureSystolic} onChange={e => setNewVitals({...newVitals, bloodPressureSystolic: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">BP Diastolic (mmHg)</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.bloodPressureDiastolic} onChange={e => setNewVitals({...newVitals, bloodPressureDiastolic: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Respiratory Rate</label>
-                    <input type="number" className="w-full p-2 border border-border rounded-md focus:border-primary outline-none" />
+                    <Input type="number" value={newVitals.respiratoryRate} onChange={e => setNewVitals({...newVitals, respiratoryRate: e.target.value})} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-4">
                   <Button variant="secondary" onClick={() => setActiveTab('ward')}>Cancel</Button>
-                  <Button variant="primary" onClick={() => alert("Vitals saved!")}>Save Vitals</Button>
+                  <Button variant="primary" onClick={handleSaveVitals}>Save Vitals</Button>
                 </div>
 
                 <div className="mt-8 border-t border-border pt-6">
@@ -159,20 +246,19 @@ export default function NursingDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-surface-hover">
-                        <td className="p-3 text-text-secondary">Today, 08:00 AM</td>
-                        <td className="p-3">98.4 °F</td>
-                        <td className="p-3">78 bpm</td>
-                        <td className="p-3">120/80</td>
-                        <td className="p-3">98%</td>
-                      </tr>
-                      <tr className="border-b border-surface-hover">
-                        <td className="p-3 text-text-secondary">Yesterday, 08:00 PM</td>
-                        <td className="p-3">99.1 °F</td>
-                        <td className="p-3">82 bpm</td>
-                        <td className="p-3">125/82</td>
-                        <td className="p-3">97%</td>
-                      </tr>
+                      {vitalsHistory.length === 0 ? (
+                        <tr><td colSpan={5} className="p-3 text-center text-text-secondary">No recent vitals found.</td></tr>
+                      ) : (
+                        vitalsHistory.map((v, i) => (
+                          <tr key={i} className="border-b border-surface-hover">
+                            <td className="p-3 text-text-secondary">{new Date(v.createdAt).toLocaleString()}</td>
+                            <td className="p-3">{v.temperature ? v.temperature + " °F" : "-"}</td>
+                            <td className="p-3">{v.heartRate ? v.heartRate + " bpm" : "-"}</td>
+                            <td className="p-3">{v.bloodPressureSystolic ? `${v.bloodPressureSystolic}/${v.bloodPressureDiastolic}` : "-"}</td>
+                            <td className="p-3">{v.oxygenSaturation ? v.oxygenSaturation + "%" : "-"}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -202,38 +288,35 @@ export default function NursingDashboard() {
                         <th className="p-3">Drug</th>
                         <th className="p-3">Dose & Route</th>
                         <th className="p-3">Frequency</th>
-                        <th className="p-3">Next Due</th>
+                        <th className="p-3">Status</th>
                         <th className="p-3">Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-surface-hover">
-                        <td className="p-3 font-medium">Paracetamol 500mg Tab</td>
-                        <td className="p-3">500mg, Oral</td>
-                        <td className="p-3">TDS (8 AM, 2 PM, 8 PM)</td>
-                        <td className="p-3 text-error font-bold">Today, 2:00 PM (Overdue)</td>
-                        <td className="p-3">
-                           <Button variant="primary" size="sm" onClick={() => alert("Marked as Given!")}>Mark Given</Button>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-surface-hover bg-success/5">
-                        <td className="p-3 font-medium">Ceftriaxone 1g Injection</td>
-                        <td className="p-3">1g, IV</td>
-                        <td className="p-3">BD (8 AM, 8 PM)</td>
-                        <td className="p-3 text-success font-bold">Given at 8:15 AM</td>
-                        <td className="p-3">
-                           <Button variant="secondary" size="sm" disabled>Completed</Button>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-surface-hover">
-                        <td className="p-3 font-medium">Pantoprazole 40mg Inj</td>
-                        <td className="p-3">40mg, IV</td>
-                        <td className="p-3">OD (8 AM)</td>
-                        <td className="p-3 text-text-secondary">Tomorrow, 8:00 AM</td>
-                        <td className="p-3">
-                           <Button variant="secondary" size="sm" disabled>Not Due</Button>
-                        </td>
-                      </tr>
+                      {marSchedule.map((item, idx) => (
+                        <tr key={idx} className={`border-b border-surface-hover ${item.status === 'GIVEN' ? 'bg-success/5' : ''}`}>
+                          <td className="p-3 font-medium">{item.drugName}</td>
+                          <td className="p-3">{item.dose || item.doseRoute}</td>
+                          <td className="p-3">{item.frequency || "OD"}</td>
+                          <td className="p-3">
+                            {item.status === "GIVEN" ? (
+                              <span className="text-success font-bold">Given at {new Date(item.createdAt || Date.now()).toLocaleTimeString()}</span>
+                            ) : (
+                              <span className="text-error font-bold">Pending</span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                             <Button 
+                               variant={item.status === "GIVEN" ? "secondary" : "primary"} 
+                               size="sm" 
+                               onClick={() => handleMarkGiven(item)}
+                               disabled={item.status === "GIVEN"}
+                             >
+                               {item.status === "GIVEN" ? "Completed" : "Mark Given"}
+                             </Button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

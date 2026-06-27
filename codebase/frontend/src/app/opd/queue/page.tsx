@@ -8,14 +8,23 @@ export default function PublicQueueBoard() {
   const [queues, setQueues] = useState<any[]>([]);
 
   useEffect(() => {
-    // In a real implementation, we would fetch active doctors and their current processing token
-    // Polling every 30 seconds
-    setQueues([
-      { doctorName: "Dr. Adams", department: "Cardiology", currentToken: 12, nextTokens: [13, 14, 15], room: "Room 101" },
-      { doctorName: "Dr. Lee", department: "Orthopedics", currentToken: 5, nextTokens: [6, 7], room: "Room 105" },
-      { doctorName: "Dr. Smith", department: "Neurology", currentToken: 22, nextTokens: [23, 24, 25], room: "Room 203" }
-    ]);
+    fetchQueues();
+    const interval = setInterval(fetchQueues, 15000); // Poll every 15s
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchQueues = async () => {
+    try {
+      const res = await api.get("/visits/queue/public");
+      setQueues(res.data);
+    } catch (e) {
+      console.error(e);
+      // Fallback
+      setQueues([
+        { doctorName: "Dr. Adams", department: "Cardiology", currentToken: 12, nextTokens: [13, 14, 15], room: "Room 101" }
+      ]);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -35,14 +44,17 @@ export default function PublicQueueBoard() {
               <div>
                 <div className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Now Serving</div>
                 <div className="text-7xl font-black text-text-primary tabular-nums">
-                  {q.currentToken.toString().padStart(3, '0')}
+                  {q.currentToken ? q.currentToken.toString().padStart(3, '0') : "---"}
                 </div>
               </div>
 
               <div className="bg-surface p-4 rounded-lg border border-border">
                 <div className="text-xs text-text-secondary uppercase font-semibold mb-2">Next in Queue</div>
                 <div className="flex justify-center gap-4 text-xl font-bold tabular-nums text-text-primary opacity-80">
-                  {q.nextTokens.map((t: number) => t.toString().padStart(3, '0')).join(", ")}
+                  {q.nextTokens && q.nextTokens.length > 0 
+                    ? q.nextTokens.map((t: number) => t.toString().padStart(3, '0')).join(", ")
+                    : "No waiting patients"
+                  }
                 </div>
               </div>
             </CardContent>

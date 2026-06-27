@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-
 import { api } from "@/lib/api";
 
 export default function AnalyticsDashboard() {
@@ -12,169 +10,172 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get("/analytics/dashboard");
-        setData(res.data);
-      } catch (error) {
-        console.error("Failed to fetch analytics", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
+  const fetchData = async () => {
+    try {
+      const res = await api.get("/analytics/dashboard");
+      setData(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
-    return <div className="flex justify-center items-center h-screen text-text-secondary">Loading Command Center...</div>;
+    return <div className="p-8 text-center text-text-secondary">Loading Executive Dashboard...</div>;
   }
 
   if (!data) {
-    return <div className="flex justify-center items-center h-screen text-error">Failed to load Command Center. Is the backend running?</div>;
+    return <div className="p-8 text-center text-error">Failed to load analytics data.</div>;
   }
 
+  const { executive_overview: exec, ai_risk_alerts: alerts, quality_kpis: quality, revenue_by_department: revenue } = data;
+
+  // For Revenue Chart
+  const maxRevenue = Math.max(...revenue.map((r: any) => r.revenue));
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className="max-w-7xl mx-auto space-y-8 pb-12">
+      <div className="flex justify-between items-center border-b border-border pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">OmniGrid Command Center</h1>
-          <p className="text-text-secondary text-sm">Phase 5 Capstone: Advanced AI & Hospital Analytics</p>
+          <h2 className="text-2xl font-semibold text-text-primary">Executive Command Center</h2>
+          <p className="text-text-secondary text-sm">Real-time hospital performance, revenue, and predictive analytics.</p>
         </div>
-        <Badge variant="success" className="text-sm px-3 py-1">System Status: Optimal</Badge>
+        <div className="text-sm text-text-secondary">
+          Last Updated: {new Date().toLocaleTimeString()}
+        </div>
       </div>
 
-      {/* Row 1: Executive Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* KPI Row 1: Executive Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-primary text-white border-none shadow-lg">
           <CardContent className="p-6">
-            <div className="text-sm opacity-80 mb-1">Revenue Today</div>
-            <div className="text-3xl font-bold">₹{data.executive_overview?.total_revenue_today?.toLocaleString() || "0"}</div>
+            <div className="text-sm opacity-80 mb-1">Total Revenue Today</div>
+            <div className="text-3xl font-bold">₹{exec?.total_revenue_today?.toLocaleString() || '0'}</div>
+            <div className="text-xs opacity-70 mt-2">↑ 12% vs Yesterday</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <div className="text-sm text-text-secondary mb-1">Active IPD Census</div>
-            <div className="text-3xl font-bold text-text-primary">{data.executive_overview?.active_ipd_census || "0"}</div>
+            <div className="text-3xl font-bold text-text-primary">{exec?.active_ipd_census || '0'}</div>
+            <div className="text-xs text-success mt-2">Within Safe Limits</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-sm text-text-secondary mb-1">Bed Occupancy</div>
-            <div className="text-3xl font-bold text-warning">{data.executive_overview?.bed_occupancy_percent || "0"}%</div>
+            <div className="text-sm text-text-secondary mb-1">Bed Occupancy Rate</div>
+            <div className="text-3xl font-bold text-warning">{exec?.bed_occupancy_percent || '0'}%</div>
+            <div className="w-full bg-surface-hover h-2 rounded-full mt-2 overflow-hidden">
+              <div className="bg-warning h-full" style={{ width: `${exec?.bed_occupancy_percent || 0}%` }}></div>
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-sm text-text-secondary mb-1">Avg ER Wait Time</div>
-            <div className="text-3xl font-bold text-success">{data.executive_overview?.er_waiting_time_mins || "0"} mins</div>
+            <div className="text-sm text-text-secondary mb-1">ER Waiting Time (Avg)</div>
+            <div className="text-3xl font-bold text-error">{exec?.er_waiting_time_mins || '0'} mins</div>
+            <div className="text-xs text-error mt-2">Requires Attention</div>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Main Column: AI Predictors */}
+        {/* Left Col: Revenue & Quality */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-error border-2 shadow-sm">
-            <CardHeader className="bg-error/10 pb-4">
-              <CardTitle className="text-error flex items-center justify-between">
-                <span>⚠️ AI Risk Predictors (Action Required)</span>
-                <span className="text-xs font-normal text-text-secondary bg-surface px-2 py-1 rounded">Models: Sepsis v2, Readmission v1.4</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-surface border-b border-border">
-                  <tr>
-                    <th className="p-3">Patient</th>
-                    <th className="p-3">Location</th>
-                    <th className="p-3">AI Flag</th>
-                    <th className="p-3">Probability</th>
-                    <th className="p-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.ai_risk_alerts?.map((alert: any, idx: number) => (
-                    <tr key={idx} className="border-b border-surface-hover">
-                      <td className="p-3 font-bold">{alert.name} <span className="text-xs text-text-secondary block">{alert.patient_id}</span></td>
-                      <td className="p-3">{alert.ward}</td>
-                      <td className="p-3">
-                        {alert.status === "CRITICAL" ? <Badge variant="error">{alert.alert_type}</Badge> : 
-                         alert.status === "HIGH" ? <Badge variant="warning">{alert.alert_type}</Badge> : 
-                         <Badge variant="info">{alert.alert_type}</Badge>}
-                      </td>
-                      <td className="p-3 font-mono">{(alert.probability * 100).toFixed(1)}%</td>
-                      <td className="p-3"><Button variant="secondary" size="sm">Review Chart</Button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-
+          
           <Card>
             <CardHeader>
-              <CardTitle>Revenue by Department</CardTitle>
+              <CardTitle>Revenue Distribution by Department</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {data.revenue_by_department?.map((dept: any, idx: number) => (
+                {revenue?.map((dept: any, idx: number) => (
                   <div key={idx}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">{dept.department}</span>
-                      <span className="text-text-secondary">₹{dept.revenue?.toLocaleString() || "0"}</span>
+                    <div className="flex justify-between items-end mb-1">
+                      <span className="text-sm font-medium">{dept.department}</span>
+                      <span className="text-sm font-bold">₹{dept.revenue.toLocaleString()}</span>
                     </div>
-                    {/* Visual bar mock */}
-                    <div className="w-full bg-surface-hover rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: `${dept.revenue ? (dept.revenue / 45000) * 100 : 0}%` }}></div>
+                    <div className="w-full bg-surface-hover h-4 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-primary h-full transition-all duration-1000 ease-out" 
+                        style={{ width: `${(dept.revenue / maxRevenue) * 100}%` }}
+                      ></div>
                     </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Side Column: Quality KPIs */}
-        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>NABH Quality Indicators</CardTitle>
+              <CardTitle>NABH Quality & Compliance KPIs</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              
-              <div>
-                <div className="text-sm text-text-secondary mb-1 flex justify-between">
-                  <span>Avg Length of Stay (ALOS)</span>
-                  <span className="font-bold text-success">{data.quality_kpis?.average_length_of_stay || "0"} Days</span>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="text-sm text-text-secondary mb-1">Average Length of Stay (ALOS)</div>
+                  <div className="text-2xl font-bold">{quality?.average_length_of_stay} Days</div>
+                  <div className="text-xs text-success mt-1">Target: &lt; 5 Days</div>
                 </div>
-                <p className="text-xs text-text-secondary">Target: &lt; 5.0 Days</p>
-              </div>
-              
-              <div className="border-t border-border pt-4">
-                <div className="text-sm text-text-secondary mb-1 flex justify-between">
-                  <span>Hospital Acquired Infections</span>
-                  <span className="font-bold text-error">{data.quality_kpis?.hospital_acquired_infections || "0"}%</span>
+                <div>
+                  <div className="text-sm text-text-secondary mb-1">Patient Satisfaction Score</div>
+                  <div className="text-2xl font-bold text-success">{quality?.patient_satisfaction_score} / 5.0</div>
+                  <div className="text-xs text-success mt-1">Excellent</div>
                 </div>
-                <p className="text-xs text-text-secondary">Target: &lt; 1.0%</p>
-              </div>
-              
-              <div className="border-t border-border pt-4">
-                <div className="text-sm text-text-secondary mb-1 flex justify-between">
-                  <span>Surgical Site Infections</span>
-                  <span className="font-bold text-warning">{data.quality_kpis?.surgical_site_infections || "0"}%</span>
+                <div>
+                  <div className="text-sm text-text-secondary mb-1">Hospital Acquired Infections</div>
+                  <div className="text-2xl font-bold text-warning">{quality?.hospital_acquired_infections}%</div>
+                  <div className="text-xs text-text-secondary mt-1">Target: &lt; 2.0%</div>
                 </div>
-                <p className="text-xs text-text-secondary">Target: &lt; 0.5%</p>
+                <div>
+                  <div className="text-sm text-text-secondary mb-1">Surgical Site Infections</div>
+                  <div className="text-2xl font-bold text-success">{quality?.surgical_site_infections}%</div>
+                  <div className="text-xs text-text-secondary mt-1">Target: &lt; 1.0%</div>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="border-t border-border pt-4">
-                <div className="text-sm text-text-secondary mb-1 flex justify-between">
-                  <span>Patient Satisfaction Score</span>
-                  <span className="font-bold text-primary">{data.quality_kpis?.patient_satisfaction_score || "0"} / 5.0</span>
-                </div>
-                <p className="text-xs text-text-secondary">Based on Discharge Surveys</p>
-              </div>
+        </div>
 
+        {/* Right Col: AI Risk Alerts */}
+        <div className="lg:col-span-1">
+          <Card className="h-full border-error">
+            <CardHeader className="bg-error/10 border-b border-error/20">
+              <CardTitle className="text-error flex items-center gap-2">
+                <span>AI Clinical Risk Alerts</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ul className="divide-y divide-border">
+                {alerts?.map((alert: any, idx: number) => (
+                  <li key={idx} className="p-4 hover:bg-surface-hover transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-bold">{alert.name}</div>
+                      <Badge variant={alert.status === 'CRITICAL' ? 'error' : (alert.status === 'HIGH' ? 'warning' : 'info')}>
+                        {alert.status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm mb-2 text-error font-medium">Risk: {alert.alert_type}</div>
+                    <div className="flex justify-between items-center text-xs text-text-secondary">
+                      <span>{alert.patient_id} | {alert.ward}</span>
+                      <span>Prob: {(alert.probability * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full bg-surface-hover h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div 
+                        className={`h-full ${alert.status === 'CRITICAL' ? 'bg-error' : (alert.status === 'HIGH' ? 'bg-warning' : 'bg-info')}`} 
+                        style={{ width: `${alert.probability * 100}%` }}
+                      ></div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </div>

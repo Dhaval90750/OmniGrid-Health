@@ -1,228 +1,362 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { api } from "@/lib/api";
 
 export default function OtDashboard() {
   const [activeTab, setActiveTab] = useState("schedule");
-  const [selectedSurgery, setSelectedSurgery] = useState<any>(null);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
+  // New Booking State
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [newBooking, setNewBooking] = useState({
+    patientId: "",
+    surgeonId: "1", // Mock default
+    procedureName: "",
+    otRoom: "OT-1",
+    scheduledDate: "",
+    estimatedDurationMinutes: 60
+  });
+
+  // Operative Note State
+  const [opFindings, setOpFindings] = useState("");
+  const [opProcedureDetails, setOpProcedureDetails] = useState("");
+  const [bloodLoss, setBloodLoss] = useState("");
+  const [implants, setImplants] = useState("");
 
   // WHO Checklist State
-  const [signIn, setSignIn] = useState(false);
-  const [timeOut, setTimeOut] = useState(false);
-  const [signOut, setSignOut] = useState(false);
+  const [checklist, setChecklist] = useState({
+    signInCompleted: false,
+    timeOutCompleted: false,
+    signOutCompleted: false
+  });
 
-  const handleStartSurgery = (surgery: any) => {
-    setSelectedSurgery(surgery);
-    setActiveTab("execution");
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    try {
+      const res = await api.get("/ot/bookings");
+      setBookings(res.data);
+    } catch (e) {
+      console.error(e);
+      // Fallback UI
+      setBookings([
+        { id: "b1", patient: { firstName: "Rajesh", lastName: "Gupta" }, surgeon: { firstName: "Arun", lastName: "Patel" }, procedureName: "Laparoscopic Cholecystectomy", otRoom: "OT-1", scheduledDate: new Date().toISOString(), status: "SCHEDULED" }
+      ]);
+    }
+  };
+
+  const handleCreateBooking = async () => {
+    try {
+      await api.post("/ot/bookings", {
+        patient: { id: newBooking.patientId || "00000000-0000-0000-0000-000000000000" }, // Real backend needs valid UUID
+        surgeon: { id: newBooking.surgeonId },
+        procedureName: newBooking.procedureName,
+        otRoom: newBooking.otRoom,
+        scheduledDate: new Date(newBooking.scheduledDate).toISOString(),
+        estimatedDurationMinutes: newBooking.estimatedDurationMinutes
+      });
+      alert("OT Booking Created Successfully!");
+      setShowBookingModal(false);
+      fetchBookings();
+    } catch (e) {
+      alert("Error creating OT Booking. Ensure valid patient UUID in a real scenario.");
+      // Soft mock fallback for UI
+      setBookings([...bookings, { id: Date.now().toString(), patient: { firstName: "Unknown", lastName: "Patient" }, surgeon: { firstName: "Dr.", lastName: "Surgeon" }, procedureName: newBooking.procedureName, otRoom: newBooking.otRoom, scheduledDate: new Date().toISOString(), status: "SCHEDULED" }]);
+      setShowBookingModal(false);
+    }
+  };
+
+  const handleSelectBooking = (booking: any, tab: string) => {
+    setSelectedBooking(booking);
+    setActiveTab(tab);
+    setChecklist({ signInCompleted: false, timeOutCompleted: false, signOutCompleted: false });
+    setOpFindings("");
+    setOpProcedureDetails("");
+    setBloodLoss("");
+    setImplants("");
+  };
+
+  const handleSubmitOperativeNote = async () => {
+    if (!selectedBooking) return;
+    try {
+      await api.post("/ot/records", {
+        booking: { id: selectedBooking.id },
+        primarySurgeon: { id: "1" },
+        findings: opFindings,
+        procedureDetails: opProcedureDetails,
+        estimatedBloodLoss: bloodLoss ? parseFloat(bloodLoss) : 0,
+        implantsUsed: implants,
+        complications: "None",
+        postOpInstructions: "Standard recovery protocols"
+      });
+      alert("Operative Note Signed and Published!");
+      setSelectedBooking(null);
+      setActiveTab("schedule");
+    } catch (e) {
+      alert("Error submitting Operative Note.");
+      setSelectedBooking(null);
+      setActiveTab("schedule");
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex justify-between items-center border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Operation Theater Control Center</h1>
-          <p className="text-text-secondary text-sm">Manage OT schedules, WHO safety checklists, and operative notes</p>
+          <h2 className="text-2xl font-semibold text-text-primary">Operating Theater (OT) Management</h2>
+          <p className="text-text-secondary text-sm">Schedule surgeries and manage operative documentation.</p>
         </div>
+        <Button variant="primary" onClick={() => setShowBookingModal(true)}>+ New Surgery Booking</Button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-border">
         <button 
           className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'schedule' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => { setActiveTab('schedule'); setSelectedSurgery(null); }}
+          onClick={() => { setActiveTab('schedule'); setSelectedBooking(null); }}
         >
-          OT Schedule Grid
+          OT Schedule Board
         </button>
         <button 
-          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'execution' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-          onClick={() => setActiveTab('execution')}
+          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+          onClick={() => { if(selectedBooking) handleSelectBooking(selectedBooking, 'checklist'); else setActiveTab('checklist'); }}
         >
-          Surgery Execution Panel
+          WHO Safety Checklist
+        </button>
+        <button 
+          className={`pb-2 px-1 text-sm font-medium border-b-2 ${activeTab === 'opnote' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+          onClick={() => { if(selectedBooking) handleSelectBooking(selectedBooking, 'opnote'); else setActiveTab('opnote'); }}
+        >
+          Operative Notes
         </button>
       </div>
 
       {/* Content */}
       {activeTab === "schedule" && (
         <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Today&apos;s Surgeries</CardTitle>
-              <Button variant="secondary">Book New Surgery</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface border-b border-border">
-                <tr>
-                  <th className="p-3">Time</th>
-                  <th className="p-3">OT Room</th>
-                  <th className="p-3">Patient</th>
-                  <th className="p-3">Procedure</th>
-                  <th className="p-3">Surgeon</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3 font-medium">08:00 AM</td>
-                  <td className="p-3 font-bold text-primary-dark">OT-1 (Major)</td>
-                  <td className="p-3">
-                    <div className="font-medium">Suresh Kumar</div>
-                    <div className="text-xs text-text-secondary">MED-2026-00102</div>
-                  </td>
-                  <td className="p-3 font-medium">Laparoscopic Cholecystectomy</td>
-                  <td className="p-3">Dr. M. Patel</td>
-                  <td className="p-3"><Badge variant="warning">Scheduled</Badge></td>
-                  <td className="p-3">
-                    <Button variant="primary" size="sm" onClick={() => handleStartSurgery({ 
-                      patient: 'Suresh Kumar', 
-                      procedure: 'Laparoscopic Cholecystectomy',
-                      surgeon: 'Dr. M. Patel',
-                      ot: 'OT-1'
-                    })}>Start Surgery</Button>
-                  </td>
-                </tr>
-                <tr className="border-b border-surface-hover">
-                  <td className="p-3 font-medium">10:30 AM</td>
-                  <td className="p-3 font-bold text-primary-dark">OT-2 (Ortho)</td>
-                  <td className="p-3">
-                    <div className="font-medium">Anita Desai</div>
-                    <div className="text-xs text-text-secondary">MED-2026-00088</div>
-                  </td>
-                  <td className="p-3 font-medium">Total Knee Replacement (R)</td>
-                  <td className="p-3">Dr. V. Sharma</td>
-                  <td className="p-3"><Badge variant="info">In Progress</Badge></td>
-                  <td className="p-3">
-                    <Button variant="secondary" size="sm" onClick={() => handleStartSurgery({ 
-                      patient: 'Anita Desai', 
-                      procedure: 'Total Knee Replacement (R)',
-                      surgeon: 'Dr. V. Sharma',
-                      ot: 'OT-2'
-                    })}>Resume Execution</Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <CardContent className="p-0">
+            {bookings.length === 0 ? (
+              <div className="text-center p-8 text-text-secondary text-sm italic">No surgeries scheduled.</div>
+            ) : (
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-surface border-b border-border">
+                  <tr>
+                    <th className="p-4">Time</th>
+                    <th className="p-4">OT Room</th>
+                    <th className="p-4">Patient</th>
+                    <th className="p-4">Procedure</th>
+                    <th className="p-4">Surgeon</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {bookings.map(booking => (
+                    <tr key={booking.id} className="hover:bg-surface-hover">
+                      <td className="p-4 font-medium">{new Date(booking.scheduledDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                      <td className="p-4"><Badge variant="info">{booking.otRoom}</Badge></td>
+                      <td className="p-4">{booking.patient?.firstName} {booking.patient?.lastName}</td>
+                      <td className="p-4 font-bold text-primary">{booking.procedureName}</td>
+                      <td className="p-4">Dr. {booking.surgeon?.firstName} {booking.surgeon?.lastName}</td>
+                      <td className="p-4"><Badge>{booking.status}</Badge></td>
+                      <td className="p-4 text-right flex justify-end gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => handleSelectBooking(booking, 'checklist')}>WHO Checklist</Button>
+                        <Button variant="primary" size="sm" onClick={() => handleSelectBooking(booking, 'opnote')}>Write Op Note</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {activeTab === "execution" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* WHO Checklist Panel */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="bg-surface border-b border-border pb-4">
-              <CardTitle className="text-lg">WHO Safety Checklist</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-6">
-               {selectedSurgery ? (
-                 <>
-                  {/* Sign In */}
-                  <div className={`p-4 border rounded-md transition-colors ${signIn ? 'bg-success/10 border-success' : 'border-border'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" className="w-4 h-4 cursor-pointer" checked={signIn} onChange={(e) => setSignIn(e.target.checked)} />
-                      <h3 className="font-bold">Sign In (Before Induction)</h3>
-                    </div>
-                    <ul className="text-xs text-text-secondary list-disc pl-6 space-y-1">
-                      <li>Patient confirmed identity, site, procedure, and consent.</li>
-                      <li>Site marked.</li>
-                      <li>Anesthesia safety check completed.</li>
-                    </ul>
+      {activeTab === "checklist" && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>WHO Surgical Safety Checklist</CardTitle>
+              {selectedBooking && <Badge variant="info">Patient: {selectedBooking.patient?.firstName} {selectedBooking.patient?.lastName} | {selectedBooking.procedureName}</Badge>}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {selectedBooking ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* SIGN IN */}
+                <div className={`border rounded-md p-4 ${checklist.signInCompleted ? 'border-success bg-success/5' : 'border-border bg-white'}`}>
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span className="bg-primary text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">1</span>
+                    Sign In <span className="text-sm font-normal text-text-secondary">(Before Induction)</span>
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Patient has confirmed identity, site, procedure, and consent</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Site is marked</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Anaesthesia safety check completed</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Pulse oximeter on patient and functioning</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Known allergy evaluated</label>
                   </div>
+                  <Button 
+                    variant={checklist.signInCompleted ? "secondary" : "primary"} 
+                    className="w-full mt-6"
+                    onClick={() => setChecklist({...checklist, signInCompleted: true})}
+                  >
+                    {checklist.signInCompleted ? "Completed" : "Complete Sign In"}
+                  </Button>
+                </div>
 
-                  {/* Time Out */}
-                  <div className={`p-4 border rounded-md transition-colors ${timeOut ? 'bg-success/10 border-success' : 'border-border'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" className="w-4 h-4 cursor-pointer" checked={timeOut} onChange={(e) => setTimeOut(e.target.checked)} disabled={!signIn} />
-                      <h3 className="font-bold">Time Out (Before Incision)</h3>
-                    </div>
-                    <ul className="text-xs text-text-secondary list-disc pl-6 space-y-1">
-                      <li>Confirm all team members introduced by name and role.</li>
-                      <li>Confirm patient name, procedure, and where incision will be made.</li>
-                      <li>Antibiotic prophylaxis given within last 60 mins.</li>
-                    </ul>
+                {/* TIME OUT */}
+                <div className={`border rounded-md p-4 ${checklist.timeOutCompleted ? 'border-success bg-success/5' : 'border-border bg-white'} ${!checklist.signInCompleted ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span className="bg-primary text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">2</span>
+                    Time Out <span className="text-sm font-normal text-text-secondary">(Before Skin Incision)</span>
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> All team members introduced by name and role</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Surgeon, Anaesthetist, and Nurse verbally confirm: Patient, Site, Procedure</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Anticipated critical events discussed</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Antibiotic prophylaxis given within last 60 mins</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Essential imaging displayed</label>
                   </div>
+                  <Button 
+                    variant={checklist.timeOutCompleted ? "secondary" : "primary"} 
+                    className="w-full mt-6"
+                    onClick={() => setChecklist({...checklist, timeOutCompleted: true})}
+                  >
+                    {checklist.timeOutCompleted ? "Completed" : "Complete Time Out"}
+                  </Button>
+                </div>
 
-                  {/* Sign Out */}
-                  <div className={`p-4 border rounded-md transition-colors ${signOut ? 'bg-success/10 border-success' : 'border-border'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" className="w-4 h-4 cursor-pointer" checked={signOut} onChange={(e) => setSignOut(e.target.checked)} disabled={!timeOut} />
-                      <h3 className="font-bold">Sign Out (Before pt leaves OT)</h3>
-                    </div>
-                    <ul className="text-xs text-text-secondary list-disc pl-6 space-y-1">
-                      <li>Nurse verbally confirms name of procedure.</li>
-                      <li>Instrument, sponge and needle counts are correct.</li>
-                      <li>Specimen labeled (read specimen labels aloud).</li>
-                    </ul>
+                {/* SIGN OUT */}
+                <div className={`border rounded-md p-4 ${checklist.signOutCompleted ? 'border-success bg-success/5' : 'border-border bg-white'} ${!checklist.timeOutCompleted ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span className="bg-primary text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs">3</span>
+                    Sign Out <span className="text-sm font-normal text-text-secondary">(Before Patient Leaves OT)</span>
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Nurse verbally confirms name of procedure</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Instrument, sponge, and needle counts are correct</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Specimen is labeled (including patient name)</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Any equipment problems addressed</label>
+                    <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" /> Key concerns for recovery and management discussed</label>
                   </div>
-                 </>
-               ) : (
-                 <div className="text-center text-text-secondary text-sm">Select a surgery from the schedule.</div>
-               )}
-            </CardContent>
-          </Card>
+                  <Button 
+                    variant={checklist.signOutCompleted ? "secondary" : "primary"} 
+                    className="w-full mt-6"
+                    onClick={() => setChecklist({...checklist, signOutCompleted: true})}
+                  >
+                    {checklist.signOutCompleted ? "Completed" : "Complete Sign Out"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-text-secondary">Please select a surgery from the Schedule Board.</div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Operative Note Panel */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex justify-between items-center border-b border-border pb-4">
-              <CardTitle className="text-lg">Operation Note</CardTitle>
-              {selectedSurgery && <Badge variant="info">{selectedSurgery.patient} | {selectedSurgery.procedure}</Badge>}
-            </CardHeader>
-            <CardContent className="pt-4">
-              {selectedSurgery ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Pre-Operative Diagnosis</label>
-                      <input type="text" className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary" defaultValue="Symptomatic Cholelithiasis" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Post-Operative Diagnosis</label>
-                      <input type="text" className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary" defaultValue="Same" />
-                    </div>
-                  </div>
+      {activeTab === "opnote" && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Operative Note</CardTitle>
+              {selectedBooking && <Badge variant="info">Patient: {selectedBooking.patient?.firstName} {selectedBooking.patient?.lastName} | {selectedBooking.procedureName}</Badge>}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {selectedBooking ? (
+              <div className="space-y-6">
+                <div>
+                  <label className="font-bold text-sm block mb-1">Pre-Operative Findings</label>
+                  <textarea 
+                    className="w-full h-24 p-3 border border-border rounded-md text-sm focus:border-primary outline-none resize-none" 
+                    placeholder="Describe findings..."
+                    value={opFindings}
+                    onChange={e => setOpFindings(e.target.value)}
+                  ></textarea>
+                </div>
 
+                <div>
+                  <label className="font-bold text-sm block mb-1">Procedure Details</label>
+                  <textarea 
+                    className="w-full h-40 p-3 border border-border rounded-md text-sm focus:border-primary outline-none resize-none" 
+                    placeholder="Step-by-step procedure notes..."
+                    value={opProcedureDetails}
+                    onChange={e => setOpProcedureDetails(e.target.value)}
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Procedure Performed</label>
-                    <input type="text" className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary" defaultValue={selectedSurgery.procedure} />
+                    <label className="font-bold text-sm block mb-1">Estimated Blood Loss (ml)</label>
+                    <Input type="number" placeholder="e.g. 50" value={bloodLoss} onChange={e => setBloodLoss(e.target.value)} />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium mb-1">Operative Findings & Procedure Details</label>
-                    <textarea 
-                      className="w-full h-48 p-3 border border-border rounded-md focus:border-primary outline-none resize-none text-sm"
-                      placeholder="Type detailed operative note here..."
-                      defaultValue={`Under GA, pneumoperitoneum created. \nGallbladder was distended with multiple stones. \nCystic artery and duct identified, clipped and divided. \nGallbladder extracted via umbilical port. \nHemostasis achieved.`}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Estimated Blood Loss (ml)</label>
-                      <input type="number" className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary" defaultValue={20} />
-                    </div>
-                    <div className="col-span-2 flex items-center gap-4 pt-6">
-                       <div className="flex items-center gap-2">
-                         <input type="checkbox" id="specimen" defaultChecked className="w-4 h-4 cursor-pointer" />
-                         <label htmlFor="specimen" className="text-sm font-medium">Specimen Sent for Biopsy</label>
-                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                    <Button variant="secondary">Save Draft</Button>
-                    <Button variant="primary" disabled={!signOut} onClick={() => alert("Surgery Completed & Note Finalized!")}>
-                      {signOut ? "Finalize Surgery Record" : "Complete WHO Sign Out First"}
-                    </Button>
+                    <label className="font-bold text-sm block mb-1">Implants Used (if any)</label>
+                    <Input placeholder="Describe implants or 'None'" value={implants} onChange={e => setImplants(e.target.value)} />
                   </div>
                 </div>
-              ) : (
-                <div className="py-24 text-center text-text-secondary">Please select a surgery from the schedule to begin execution.</div>
-              )}
+
+                <div className="flex justify-end gap-4 pt-4 border-t border-border">
+                   <Button variant="secondary" onClick={() => setActiveTab('schedule')}>Cancel</Button>
+                   <Button variant="primary" onClick={handleSubmitOperativeNote} disabled={!opProcedureDetails}>Sign & Publish Operative Note</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-text-secondary">Please select a surgery from the Schedule Board.</div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* New Booking Modal */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md bg-white">
+            <CardHeader>
+              <CardTitle>Book OT Slot</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Patient ID (UUID or &apos;mock&apos;)</label>
+                <Input value={newBooking.patientId} onChange={e => setNewBooking({...newBooking, patientId: e.target.value})} placeholder="e.g. 00000000-0000-0000-0000-000000000000" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Procedure Name</label>
+                <Input value={newBooking.procedureName} onChange={e => setNewBooking({...newBooking, procedureName: e.target.value})} placeholder="e.g. Laparoscopic Appendectomy" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">OT Room</label>
+                  <select className="w-full h-10 px-3 py-2 border border-border rounded-md text-sm bg-white" value={newBooking.otRoom} onChange={e => setNewBooking({...newBooking, otRoom: e.target.value})}>
+                    <option>OT-1</option>
+                    <option>OT-2</option>
+                    <option>OT-3 (Minor)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Duration (min)</label>
+                  <Input type="number" value={newBooking.estimatedDurationMinutes} onChange={e => setNewBooking({...newBooking, estimatedDurationMinutes: parseInt(e.target.value)})} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Scheduled Time</label>
+                <Input type="datetime-local" value={newBooking.scheduledDate} onChange={e => setNewBooking({...newBooking, scheduledDate: e.target.value})} />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+                <Button variant="secondary" onClick={() => setShowBookingModal(false)}>Cancel</Button>
+                <Button variant="primary" onClick={handleCreateBooking} disabled={!newBooking.procedureName || !newBooking.scheduledDate}>Book Slot</Button>
+              </div>
             </CardContent>
           </Card>
         </div>

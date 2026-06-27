@@ -1,13 +1,21 @@
 package com.medcore.mobile.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -37,73 +45,117 @@ fun VitalsEntryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Bedside Vitals", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A73E8)),
+                title = { Text("Bedside Vitals", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF8F9FA),
+                    titleContentColor = Color(0xFF263238),
+                    navigationIconContentColor = Color(0xFF263238)
+                ),
                 navigationIcon = {
-                    Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                        Text("Back", color = Color.White)
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        }
+        },
+        containerColor = Color(0xFFF8F9FA)
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text("Patient UHID: $patientUhid", fontSize = 16.sp, color = Color.Gray)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Patient UHID:", fontSize = 14.sp, color = Color(0xFF546E7A))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(patientUhid, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+                }
+            }
             
             if (errorMsg.isNotEmpty()) {
-                Text(errorMsg, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
+                Surface(
+                    color = Color(0xFFFFEBEE),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        errorMsg, 
+                        color = Color(0xFFD32F2F), 
+                        style = MaterialTheme.typography.bodyMedium, 
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
+
+            Text("Clinical Measurements", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF263238))
 
             OutlinedTextField(
                 value = temp,
                 onValueChange = { temp = it },
                 label = { Text("Temperature (°F)") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
             OutlinedTextField(
                 value = pulse,
                 onValueChange = { pulse = it },
                 label = { Text("Pulse (BPM)") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
             OutlinedTextField(
                 value = bp,
                 onValueChange = { bp = it },
                 label = { Text("Blood Pressure (mmHg)") },
-                modifier = Modifier.fillMaxWidth()
+                placeholder = { Text("e.g. 120/80") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
             OutlinedTextField(
                 value = spo2,
                 onValueChange = { spo2 = it },
                 label = { Text("SpO2 (%)") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
             OutlinedTextField(
                 value = pain,
                 onValueChange = { pain = it },
                 label = { Text("Pain Level (1-10)") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFF1565C0))
+                }
             } else {
                 Button(
                     onClick = {
-                        if (patientId.isEmpty()) {
-                            errorMsg = "Invalid patient ID. Cannot save vitals."
+                        if (temp.isBlank() || pulse.isBlank() || bp.isBlank()) {
+                            errorMsg = "Temperature, Pulse, and BP are required fields."
                             return@Button
                         }
                         isLoading = true
@@ -111,28 +163,39 @@ fun VitalsEntryScreen(
                         scope.launch {
                             try {
                                 val body = JSONObject().apply {
-                                    put("patientId", patientId)
-                                    put("temperature", temp.toDoubleOrNull() ?: 98.6)
-                                    put("bloodPressure", if (bp.isEmpty()) "120/80" else bp)
-                                    put("heartRate", pulse.toIntOrNull() ?: 72)
-                                    put("respiratoryRate", 16) // Default/mock for now as there's no UI field
-                                    put("oxygenSaturation", spo2.toDoubleOrNull() ?: 99.0)
+                                    put("temperatureFahrenheit", temp.toDoubleOrNull() ?: 98.6)
+                                    put("pulseBpm", pulse.toIntOrNull() ?: 80)
+                                    put("bloodPressure", bp)
+                                    put("spo2Percent", spo2.toIntOrNull() ?: 98)
+                                    put("painLevel", pain.toIntOrNull() ?: 0)
                                 }.toString()
                                 
-                                NetworkClient.post("$apiUrl/nursing/vitals", body, token)
-                                onSubmit(temp, pulse, bp, spo2, pain)
+                                val res = NetworkClient.post("$apiUrl/patients/$patientId/vitals", body, token)
+                                val json = JSONObject(res)
+                                val savedId = json.optString("id")
+                                if (savedId.isNotEmpty()) {
+                                    onSubmit(temp, pulse, bp, spo2, pain)
+                                } else {
+                                    errorMsg = "Failed to synchronize vitals with EMR."
+                                }
                             } catch (e: Exception) {
-                                errorMsg = "Failed to sync vitals: ${e.localizedMessage}"
+                                errorMsg = "Error: ${e.localizedMessage}"
                             } finally {
                                 isLoading = false
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                 ) {
-                    Text("Save & Sync Vitals")
+                    Text("Save to Electronic Record", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

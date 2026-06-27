@@ -19,11 +19,26 @@ export default function PatientProfile() {
   const [newSeverity, setNewSeverity] = useState("Mild");
   const [newReaction, setNewReaction] = useState("");
   const [isAddingAllergy, setIsAddingAllergy] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState("DEMOGRAPHICS");
+  const [diagnoses, setDiagnoses] = useState<any[]>([]);
+  const [clinicalNotes, setClinicalNotes] = useState<any[]>([]);
 
   const fetchPatientDetails = useCallback(async () => {
     try {
       const response = await api.get(`/patients/${id}`);
       setPatient(response.data);
+      
+      try {
+        const diagRes = await api.get(`/patients/${id}/diagnoses`);
+        setDiagnoses(diagRes.data);
+        
+        const notesRes = await api.get(`/clinical-notes/patient/${id}`);
+        setClinicalNotes(notesRes.data);
+      } catch (e) {
+        console.error("Failed to fetch clinical data", e);
+      }
+      
     } catch (error) {
       console.error("Failed to fetch patient", error);
     } finally {
@@ -156,75 +171,171 @@ export default function PatientProfile() {
 
         {/* Details Sections */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader><CardTitle>Demographics & Contact</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Mobile Number</div>
-                  <div className="font-medium text-text-primary">{patient.mobileNumber}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Email</div>
-                  <div className="font-medium text-text-primary">{patient.email || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Blood Group</div>
-                  <div className="font-medium text-text-primary">
-                    {patient.bloodGroup ? <Badge variant="error">{patient.bloodGroup}</Badge> : "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Marital Status</div>
-                  <div className="font-medium text-text-primary">{patient.maritalStatus || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Nationality</div>
-                  <div className="font-medium text-text-primary">{patient.nationality || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Language</div>
-                  <div className="font-medium text-text-primary">{patient.primaryLanguage || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Aadhaar (National ID)</div>
-                  <div className="font-medium text-text-primary">{patient.nationalId || "—"}</div>
-                </div>
-                <div className="col-span-2 md:col-span-3">
-                  <div className="text-xs text-text-secondary mb-1">Address</div>
-                  <div className="font-medium text-text-primary">
-                    {patient.addressLine1}
-                    {patient.addressLine2 ? `, ${patient.addressLine2}` : ""}
-                    {`, ${patient.city}, ${patient.state}`}
-                    {patient.country ? `, ${patient.country}` : ""}
-                    {patient.zipCode ? ` - ${patient.zipCode}` : ""}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex border-b border-border bg-surface rounded-t-lg px-2 pt-2">
+            <button className={`px-4 py-3 text-sm font-medium border-b-2 ${activeTab === 'DEMOGRAPHICS' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`} onClick={() => setActiveTab('DEMOGRAPHICS')}>
+              Demographics
+            </button>
+            <button className={`px-4 py-3 text-sm font-medium border-b-2 ${activeTab === 'DIAGNOSES' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`} onClick={() => setActiveTab('DIAGNOSES')}>
+              Diagnoses & Conditions
+            </button>
+            <button className={`px-4 py-3 text-sm font-medium border-b-2 ${activeTab === 'NOTES' ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`} onClick={() => setActiveTab('NOTES')}>
+              Clinical Notes
+            </button>
+          </div>
 
-          <Card>
-            <CardHeader className="flex justify-between items-center flex-row">
-              <CardTitle>Emergency Contact</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Name</div>
-                  <div className="font-medium text-text-primary">{patient.emergencyContactName || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Relationship</div>
-                  <div className="font-medium text-text-primary">{patient.emergencyContactRelation || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary mb-1">Phone</div>
-                  <div className="font-medium text-text-primary">{patient.emergencyContactPhone || "—"}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {activeTab === 'DEMOGRAPHICS' && (
+            <>
+              <Card>
+                <CardHeader><CardTitle>Demographics & Contact</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Mobile Number</div>
+                      <div className="font-medium text-text-primary">{patient.mobileNumber}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Email</div>
+                      <div className="font-medium text-text-primary">{patient.email || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Blood Group</div>
+                      <div className="font-medium text-text-primary">
+                        {patient.bloodGroup ? <Badge variant="error">{patient.bloodGroup}</Badge> : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Marital Status</div>
+                      <div className="font-medium text-text-primary">{patient.maritalStatus || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Nationality</div>
+                      <div className="font-medium text-text-primary">{patient.nationality || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Language</div>
+                      <div className="font-medium text-text-primary">{patient.primaryLanguage || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Aadhaar (National ID)</div>
+                      <div className="font-medium text-text-primary">{patient.nationalId || "—"}</div>
+                    </div>
+                    <div className="col-span-2 md:col-span-3">
+                      <div className="text-xs text-text-secondary mb-1">Address</div>
+                      <div className="font-medium text-text-primary">
+                        {patient.addressLine1}
+                        {patient.addressLine2 ? `, ${patient.addressLine2}` : ""}
+                        {`, ${patient.city}, ${patient.state}`}
+                        {patient.country ? `, ${patient.country}` : ""}
+                        {patient.zipCode ? ` - ${patient.zipCode}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex justify-between items-center flex-row">
+                  <CardTitle>Emergency Contact</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Name</div>
+                      <div className="font-medium text-text-primary">{patient.emergencyContactName || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Relationship</div>
+                      <div className="font-medium text-text-primary">{patient.emergencyContactRelation || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Phone</div>
+                      <div className="font-medium text-text-primary">{patient.emergencyContactPhone || "—"}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === 'DIAGNOSES' && (
+            <Card>
+              <CardHeader><CardTitle>Problem List & Diagnoses</CardTitle></CardHeader>
+              <CardContent>
+                {diagnoses.length === 0 ? (
+                  <div className="p-8 text-center text-text-secondary bg-surface rounded-md border border-dashed border-border">
+                    No diagnoses recorded for this patient.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {diagnoses.map((d: any) => (
+                      <div key={d.id} className="p-4 border border-border rounded-md hover:bg-surface transition-colors flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold text-lg text-text-primary flex items-center gap-2">
+                            {d.diagnosisName} <Badge variant="secondary">{d.icd10Code}</Badge>
+                          </div>
+                          <div className="text-sm text-text-secondary mt-1">
+                            Diagnosed on {new Date(d.diagnosedDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant={d.status === "Active" ? "error" : "default"}>{d.status}</Badge>
+                          <div className="text-xs text-text-secondary mt-1">{d.type}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'NOTES' && (
+            <Card>
+              <CardHeader><CardTitle>Clinical Notes History</CardTitle></CardHeader>
+              <CardContent>
+                {clinicalNotes.length === 0 ? (
+                  <div className="p-8 text-center text-text-secondary bg-surface rounded-md border border-dashed border-border">
+                    No clinical notes recorded for this patient.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {clinicalNotes.map((note: any) => (
+                      <div key={note.id} className="p-5 border border-border rounded-md bg-surface space-y-4">
+                        <div className="flex justify-between items-center border-b border-border pb-3">
+                          <div>
+                            <div className="font-semibold">Visit Note</div>
+                            <div className="text-xs text-text-secondary">{new Date(note.createdAt).toLocaleString()}</div>
+                          </div>
+                          {note.finalized ? <Badge variant="success">Signed</Badge> : <Badge variant="warning">Draft</Badge>}
+                        </div>
+                        
+                        {note.historyOfPresentIllness && (
+                          <div>
+                            <div className="text-xs font-semibold uppercase text-text-secondary mb-1">History of Present Illness</div>
+                            <div className="text-sm text-text-primary whitespace-pre-wrap">{note.historyOfPresentIllness}</div>
+                          </div>
+                        )}
+                        
+                        {note.physicalExamination && (
+                          <div>
+                            <div className="text-xs font-semibold uppercase text-text-secondary mb-1">Physical Examination</div>
+                            <div className="text-sm text-text-primary whitespace-pre-wrap">{note.physicalExamination}</div>
+                          </div>
+                        )}
+                        
+                        {note.treatmentPlan && (
+                          <div>
+                            <div className="text-xs font-semibold uppercase text-text-secondary mb-1">Treatment Plan</div>
+                            <div className="text-sm text-text-primary whitespace-pre-wrap">{note.treatmentPlan}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -9,6 +9,10 @@ import com.medcore.his.repository.ClinicalNoteRepository;
 import com.medcore.his.repository.UserRepository;
 import com.medcore.his.repository.PatientRepository;
 import com.medcore.his.security.UserDetailsImpl;
+import com.medcore.his.dto.PublicQueueResponseDTO;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -75,6 +79,41 @@ public class VisitController {
         visitRepository.save(visit);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(visit);
+    }
+
+    @GetMapping("/queue/public")
+    public ResponseEntity<List<PublicQueueResponseDTO>> getPublicQueue() {
+        List<Visit> activeVisits = visitRepository.findAllActiveQueuesByDate(LocalDateTime.now());
+        
+        Map<UUID, PublicQueueResponseDTO> doctorQueues = new HashMap<>();
+        
+        for (Visit visit : activeVisits) {
+            if (visit.getDoctor() == null) continue;
+            
+            UUID doctorId = visit.getDoctor().getId();
+            PublicQueueResponseDTO dto = doctorQueues.computeIfAbsent(doctorId, k -> {
+                PublicQueueResponseDTO d = new PublicQueueResponseDTO();
+                d.setDoctorId(doctorId);
+                d.setDoctorName(visit.getDoctor().getFirstName() + " " + visit.getDoctor().getLastName());
+                d.setDepartment("OPD"); // Could be fetched from a doctor-department mapping
+                d.setRoom("Consultation Room");
+                d.setNextTokens(new ArrayList<>());
+                return d;
+            });
+            
+            if ("IN_CONSULTATION".equals(visit.getStatus())) {
+                dto.setCurrentToken(visit.getTokenNumber());
+            } else if ("WAITING".equals(visit.getStatus()) || "WAITING".equals(visit.getQueueStatus())) {
+                if (dto.getCurrentToken() == null) {
+                    // Set current token to the first waiting if no one is in consultation yet
+                    dto.setCurrentToken(visit.getTokenNumber());
+                } else {
+                    dto.getNextTokens().add(visit.getTokenNumber());
+                }
+            }
+        }
+        
+        return ResponseEntity.ok(new ArrayList<>(doctorQueues.values()));
     }
 
     @GetMapping("/doctor/{doctorId}")

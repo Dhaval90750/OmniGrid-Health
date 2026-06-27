@@ -17,4 +17,7 @@ public interface VisitRepository extends JpaRepository<Visit, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT v FROM Visit v WHERE v.doctor.id = :doctorId AND CAST(v.visitDate AS date) = CAST(:date AS date) AND v.status != 'COMPLETED' ORDER BY v.tokenNumber ASC")
     List<Visit> findActiveQueueByDoctorAndDate(@org.springframework.data.repository.query.Param("doctorId") UUID doctorId, @org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date);
+
+    @org.springframework.data.jpa.repository.Query("SELECT v FROM Visit v WHERE CAST(v.visitDate AS date) = CAST(:date AS date) AND v.status != 'COMPLETED' ORDER BY v.tokenNumber ASC")
+    List<Visit> findAllActiveQueuesByDate(@org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date);
 }
