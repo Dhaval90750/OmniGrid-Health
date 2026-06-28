@@ -6,9 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,18 +36,16 @@ fun PatientSummaryScreen(
             TopAppBar(
                 title = { Text("Patient 360° Profile", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFF8F9FA),
-                    titleContentColor = Color(0xFF263238),
-                    navigationIconContentColor = Color(0xFF263238)
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = Color(0xFFF8F9FA)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -58,132 +54,122 @@ fun PatientSummaryScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            
             // Premium Patient Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier.padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Avatar Placeholder
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
-                            .clip(RoundedCornerShape(36.dp))
-                            .background(Color(0xFFE3F2FD)),
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(40.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "${firstName.firstOrNull() ?: 'U'}${lastName.firstOrNull() ?: ""}",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1565C0)
+                            fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary
                         )
                     }
                     
-                    Spacer(modifier = Modifier.width(20.dp))
+                    Spacer(modifier = Modifier.width(24.dp))
                     
                     Column {
-                        Text(name, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF263238))
+                        Text(name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("UHID: $uhid", fontSize = 15.sp, color = Color(0xFF1565C0), fontWeight = FontWeight.SemiBold)
+                        Text("UHID: $uhid", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text("DOB: $dob", fontSize = 14.sp, color = Color(0xFF78909C))
+                        Text("DOB: $dob", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            Text("Clinical Metrics Summary", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF263238))
+            Text("Clinical Overview", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(16.dp))
             
             // Vitals Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    MetricRow("Blood Pressure", "120/80 mmHg", Color(0xFF263238))
-                    Divider(color = Color(0xFFECEFF1))
-                    MetricRow("SpO2 (Oxygen)", "99%", Color(0xFF4CAF50))
-                    Divider(color = Color(0xFFECEFF1))
-                    MetricRow("Heart Rate", "72 bpm", Color(0xFF263238))
-                    Divider(color = Color(0xFFECEFF1))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Warning, contentDescription = "Alert", tint = Color(0xFFF44336), modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Allergies", color = Color(0xFF78909C), fontSize = 15.sp)
-                        }
-                        Text("Penicillin (High)", fontWeight = FontWeight.Bold, color = Color(0xFFF44336), fontSize = 15.sp)
-                    }
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    MetricRow("Blood Pressure", "120/80 mmHg", MaterialTheme.colorScheme.onSurface)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    MetricRow("SpO2 (Oxygen)", "99%", MaterialTheme.colorScheme.tertiary)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    MetricRow("Heart Rate", "72 bpm", MaterialTheme.colorScheme.onSurface)
                 }
             }
             
             Spacer(modifier = Modifier.height(32.dp))
-            
-            // Active Issues Card
+
+            // Phase 3: Auxiliary & Operations Integration
+            Text("Phase 3: Auxiliary Care & Nutrition", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Antibiogram / Infection Control
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFD54F))
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Info, contentDescription = "Active Issues", tint = Color(0xFFFF8F00), modifier = Modifier.size(32.dp))
+                Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = "Infection Alert", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(32.dp))
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Active Diagnosis", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Type 2 Diabetes Mellitus, Essential Hypertension", fontSize = 14.sp, color = Color(0xFFEF6C00))
+                        Text("Active Antibiogram", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                        Text("Organism: MRSA", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha=0.8f))
+                        Text("Resistant to: Methicillin, Oxacillin", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
-            
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Nutrition & Dietary
+            Card(
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            ) {
+                Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = "Diet", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(32.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Nutrition Plan", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text("Target: 2200 kcal/day, 90g Protein", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.8f))
+                        Text("Diet Order: Diabetic, Low Sodium", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(40.dp))
             
             Button(
                 onClick = onBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF263238))
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Return to Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Return to Dashboard", style = MaterialTheme.typography.titleMedium)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedButton(
                 onClick = onClearPatient,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD32F2F)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F))
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("Clear Active Patient", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Clear Active Patient", style = MaterialTheme.typography.titleMedium)
             }
         }
     }
@@ -196,7 +182,7 @@ fun MetricRow(label: String, value: String, valueColor: Color) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color(0xFF78909C), fontSize = 15.sp)
-        Text(value, fontWeight = FontWeight.Bold, color = valueColor, fontSize = 16.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+        Text(value, fontWeight = FontWeight.Bold, color = valueColor, style = MaterialTheme.typography.titleMedium)
     }
 }
