@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
+@Entity(name = "InventoryStockMovement")
 @Table(name = "inventory_stock_movements")
 @Getter
 @Setter
