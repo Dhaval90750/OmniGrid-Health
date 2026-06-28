@@ -22,8 +22,8 @@ public class PaymentGatewayService {
     @Value("${stripe.secret.key:}")
     private String stripeSecretKey;
 
-    public PaymentGatewayService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public PaymentGatewayService() {
+        this.restTemplate = new RestTemplate();
     }
 
     /**

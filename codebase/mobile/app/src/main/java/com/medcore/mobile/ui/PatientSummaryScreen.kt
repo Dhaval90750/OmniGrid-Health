@@ -104,9 +104,9 @@ fun PatientSummaryScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     MetricRow("Blood Pressure", "120/80 mmHg", MaterialTheme.colorScheme.onSurface)
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     MetricRow("SpO2 (Oxygen)", "99%", MaterialTheme.colorScheme.tertiary)
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     MetricRow("Heart Rate", "72 bpm", MaterialTheme.colorScheme.onSurface)
                 }
             }

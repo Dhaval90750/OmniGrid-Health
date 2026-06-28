@@ -428,190 +428,190 @@
 # PHASE 2 — Full Clinical Expansion (Months 7–12)
 
 ## Laboratory Information System
-- [ ] Design lab schema (lab_sections, test_catalog, test_panels, test_parameters, reference_ranges, lab_orders, lab_samples, lab_results, lab_qc)
-- [ ] Import test catalog with reference ranges
-- [ ] Lab order API (create, cancel, view by patient/doctor/date)
-- [ ] Order set management API
-- [ ] Sample collection API (barcode generation, collection timestamp)
-- [ ] Sample reception API (accept/reject with reason)
-- [ ] Result entry API (manual + auto from analyzer)
-- [ ] Abnormal flagging engine (compare with age/gender-specific reference ranges)
-- [ ] Delta check engine (compare with previous results)
-- [ ] Critical value detection + auto-alert
-- [ ] Report authorization API (pathologist review + sign)
-- [ ] TAT tracking engine (timestamps at each stage)
-- [ ] Reflex testing rules engine (e.g., abnormal TSH → auto-order FT3/FT4)
-- [ ] Lab worklist screen (by section, priority, status)
-- [ ] Sample collection screen with barcode print
-- [ ] Sample reception screen (accept/reject)
-- [ ] Result entry grid (with ref ranges, flags, delta)
-- [ ] Report preview and authorization screen
-- [ ] Critical value alert notification + acknowledge
-- [ ] Lab dashboard (volume, TAT, pending, critical)
-- [ ] Lab order screen for doctors (test search, order sets, favorites)
-- [ ] Lab report view in patient profile
-- [ ] Analyzer integration interface (ASTM/HL7 framework)
+- [x] Design lab schema (lab_sections, test_catalog, test_panels, test_parameters, reference_ranges, lab_orders, lab_samples, lab_results, lab_qc)
+- [x] Import test catalog with reference ranges
+- [x] Lab order API (create, cancel, view by patient/doctor/date)
+- [x] Order set management API
+- [x] Sample collection API (barcode generation, collection timestamp)
+- [x] Sample reception API (accept/reject with reason)
+- [x] Result entry API (manual + auto from analyzer)
+- [x] Abnormal flagging engine (compare with age/gender-specific reference ranges)
+- [x] Delta check engine (compare with previous results)
+- [x] Critical value detection + auto-alert
+- [x] Report authorization API (pathologist review + sign)
+- [x] TAT tracking engine (timestamps at each stage)
+- [x] Reflex testing rules engine (e.g., abnormal TSH → auto-order FT3/FT4)
+- [x] Lab worklist screen (by section, priority, status)
+- [x] Sample collection screen with barcode print
+- [x] Sample reception screen (accept/reject)
+- [x] Result entry grid (with ref ranges, flags, delta)
+- [x] Report preview and authorization screen
+- [x] Critical value alert notification + acknowledge
+- [x] Lab dashboard (volume, TAT, pending, critical)
+- [x] Lab order screen for doctors (test search, order sets, favorites)
+- [x] Lab report view in patient profile
+- [x] Analyzer integration interface (ASTM/HL7 framework)
 
 ## Radiology Module
-- [ ] Design radiology schema (radiology_orders, radiology_reports, radiology_templates)
-- [ ] Radiology order API
-- [ ] Study scheduling API
-- [ ] Report creation API (structured + free text)
-- [ ] Critical finding alert API
-- [ ] DICOM integration framework (dcm4che setup)
-- [ ] PACS storage configuration (S3/MinIO)
-- [ ] Radiology order screen (modality → study → indication)
-- [ ] Radiology worklist screen
-- [ ] Report creation screen with templates
-- [ ] DICOM web viewer integration (Cornerstone.js)
-- [ ] Radiology dashboard
+- [x] Design radiology schema (radiology_orders, radiology_reports, radiology_templates)
+- [x] Radiology order API
+- [x] Study scheduling API
+- [x] Report creation API (structured + free text)
+- [x] Critical finding alert API
+- [x] DICOM integration framework (dcm4che setup)
+- [x] PACS storage configuration (S3/MinIO)
+- [x] Radiology order screen (modality → study → indication)
+- [x] Radiology worklist screen
+- [x] Report creation screen with templates
+- [x] DICOM web viewer integration (Cornerstone.js)
+- [x] Radiology dashboard
 
 ## Pharmacy Module
-- [ ] Design pharmacy schema (pharmacy_stock, stock_movements, dispensing, narcotic_register)
-- [ ] Stock management API (receipt, issue, transfer, return, adjustment)
-- [ ] Dispensing API (receive Rx → verify → dispense → bill)
-- [ ] Batch/expiry tracking
-- [ ] FEFO enforcement
-- [ ] Reorder alert engine
-- [ ] Controlled substance tracking API
-- [ ] Pharmacy queue screen (incoming prescriptions)
-- [ ] Dispensing screen (Rx view, pick, dispense, barcode)
-- [ ] Stock dashboard (levels, expiry, reorder)
-- [ ] Narcotic register screen
-- [ ] Pharmacy reports (stock, consumption, expiry)
+- [x] Design pharmacy schema (pharmacy_stock, stock_movements, dispensing, narcotic_register)
+- [x] Stock management API (receipt, issue, transfer, return, adjustment)
+- [x] Dispensing API (receive Rx → verify → dispense → bill)
+- [x] Batch/expiry tracking
+- [x] FEFO enforcement
+- [x] Reorder alert engine
+- [x] Controlled substance tracking API
+- [x] Pharmacy queue screen (incoming prescriptions)
+- [x] Dispensing screen (Rx view, pick, dispense, barcode)
+- [x] Stock dashboard (levels, expiry, reorder)
+- [x] Narcotic register screen
+- [x] Pharmacy reports (stock, consumption, expiry)
 
 ## Nursing Module
-- [ ] Design nursing schema (vitals, mar, nursing_assessments, shift_handovers, incidents)
-- [ ] Vitals API (record, trends, NEWS auto-calculation)
-- [ ] MAR API (scheduled meds, administration recording)
-- [ ] Nursing assessment APIs (falls, pressure ulcer, pain, wound)
-- [ ] Shift handover API (SBAR format)
-- [ ] Incident reporting API
-- [ ] Ward dashboard screen
-- [ ] Vital entry screen + trend charts
-- [ ] MAR screen (schedule grid, status buttons)
-- [ ] Assessment forms (structured scoring)
-- [ ] Shift handover screen
-- [ ] Incident report form
+- [x] Design nursing schema (vitals, mar, nursing_assessments, shift_handovers, incidents)
+- [x] Vitals API (record, trends, NEWS auto-calculation)
+- [x] MAR API (scheduled meds, administration recording)
+- [x] Nursing assessment APIs (falls, pressure ulcer, pain, wound)
+- [x] Shift handover API (SBAR format)
+- [x] Incident reporting API
+- [x] Ward dashboard screen
+- [x] Vital entry screen + trend charts
+- [x] MAR screen (schedule grid, status buttons)
+- [x] Assessment forms (structured scoring)
+- [x] Shift handover screen
+- [x] Incident report form
 
 ## ICU Management
-- [ ] ICU charting API (hourly, ventilator, infusions, fluid balance)
-- [ ] ICU scoring APIs (APACHE II, SOFA, GCS)
-- [ ] ICU daily checklist API
-- [ ] ICU dashboard (bed-level view with vitals, ventilator, alerts)
-- [ ] ICU hourly charting screen
-- [ ] ICU scoring display
+- [x] ICU charting API (hourly, ventilator, infusions, fluid balance)
+- [x] ICU scoring APIs (APACHE II, SOFA, GCS)
+- [x] ICU daily checklist API
+- [x] ICU dashboard (bed-level view with vitals, ventilator, alerts)
+- [x] ICU hourly charting screen
+- [x] ICU scoring display
 
 ## OT Management
-- [ ] OT scheduling API (book surgery, assign OT/surgeon/anesthesiologist)
-- [ ] WHO checklist API (sign-in, time-out, sign-out)
-- [ ] Operation note API (findings, procedure, specimens, implants)
-- [ ] Implant tracking API
-- [ ] OT schedule screen (Gantt view)
-- [ ] OT booking form
-- [ ] WHO checklist screen
-- [ ] Operation note screen
-- [ ] Implant register screen
-- [ ] OT utilization dashboard
+- [x] OT scheduling API (book surgery, assign OT/surgeon/anesthesiologist)
+- [x] WHO checklist API (sign-in, time-out, sign-out)
+- [x] Operation note API (findings, procedure, specimens, implants)
+- [x] Implant tracking API
+- [x] OT schedule screen (Gantt view)
+- [x] OT booking form
+- [x] WHO checklist screen
+- [x] Operation note screen
+- [x] Implant register screen
+- [x] OT utilization dashboard
 
 ## Discharge Module
-- [ ] Discharge API (initiate, types: normal/DAMA/LAMA/death)
-- [ ] Discharge summary auto-generation engine
-- [ ] Discharge package generation (summary + Rx + labs + radiology + bill + follow-up)
-- [ ] Follow-up scheduling API
-- [ ] Discharge screen (summary review, sign-off)
-- [ ] Discharge summary PDF generation
-- [ ] Discharge package (bundled PDFs)
-- [ ] Follow-up appointment scheduling
+- [x] Discharge API (initiate, types: normal/DAMA/LAMA/death)
+- [x] Discharge summary auto-generation engine
+- [x] Discharge package generation (summary + Rx + labs + radiology + bill + follow-up)
+- [x] Follow-up scheduling API
+- [x] Discharge screen (summary review, sign-off)
+- [x] Discharge summary PDF generation
+- [x] Discharge package (bundled PDFs)
+- [x] Follow-up appointment scheduling
 
 ## Insurance & Full Billing
-- [ ] Insurance master API (companies, TPA, policies)
-- [ ] Pre-authorization API
-- [ ] Claim management API
-- [ ] Enhancement request API
-- [ ] Full IPD billing API (room charges, multi-tariff, packages, discounts)
-- [ ] Advance/deposit management
-- [ ] Insurance verification screen
-- [ ] Pre-auth submission screen
-- [ ] Claim tracking dashboard
-- [ ] Full IPD billing screen
-- [ ] Financial reports (collection, outstanding, revenue, aging)
-- [ ] Phase 2 integration testing (full IPD lifecycle)
-- [ ] Phase 2 UAT + go-live
+- [x] Insurance master API (companies, TPA, policies)
+- [x] Pre-authorization API
+- [x] Claim management API
+- [x] Enhancement request API
+- [x] Full IPD billing API (room charges, multi-tariff, packages, discounts)
+- [x] Advance/deposit management
+- [x] Insurance verification screen
+- [x] Pre-auth submission screen
+- [x] Claim tracking dashboard
+- [x] Full IPD billing screen
+- [x] Financial reports (collection, outstanding, revenue, aging)
+- [x] Phase 2 integration testing (full IPD lifecycle)
+- [x] Phase 2 UAT + go-live
 
 ---
 
 # PHASE 3 — Hospital Operations (Months 13–17)
 
 ## Inventory Management
-- [ ] Design inventory schema (items, categories, stores, purchase_indents, purchase_orders, grn, stock, stock_movements, vendors, assets, amc_contracts)
-- [ ] Item master API + classification engine (ABC, VED, FSN)
-- [ ] Vendor master API + performance scoring
-- [ ] Purchase indent API + multi-level approval
-- [ ] Purchase order API + approval workflow
-- [ ] GRN API + quality check + 3-way matching
-- [ ] Stock issue API (to departments, patient-level)
-- [ ] Inter-store transfer API
-- [ ] Stock adjustment/write-off API
-- [ ] Fixed asset API (register, depreciation, maintenance)
-- [ ] AMC/CMC contract tracking API
-- [ ] Implant tracking API (serial number, patient linkage, recall)
-- [ ] CSSD tracking API (instrument sets, sterilization cycles)
-- [ ] Linen management API (issue, soiled collection, laundry)
-- [ ] Auto-indent on reorder level
-- [ ] Item master screen + classification display
-- [ ] Purchase workflow screens (indent → approval → PO → GRN)
-- [ ] Stock dashboard (real-time levels, alerts)
-- [ ] Stock issue screen (barcode scan, patient linkage)
-- [ ] Asset register screen
-- [ ] Vendor management screen
-- [ ] Inventory reports (consumption, variance, expiry, ABC/VED)
+- [x] Design inventory schema (items, categories, stores, purchase_indents, purchase_orders, grn, stock, stock_movements, vendors, assets, amc_contracts)
+- [x] Item master API + classification engine (ABC, VED, FSN)
+- [x] Vendor master API + performance scoring
+- [x] Purchase indent API + multi-level approval
+- [x] Purchase order API + approval workflow
+- [x] GRN API + quality check + 3-way matching
+- [x] Stock issue API (to departments, patient-level)
+- [x] Inter-store transfer API
+- [x] Stock adjustment/write-off API
+- [x] Fixed asset API (register, depreciation, maintenance)
+- [x] AMC/CMC contract tracking API
+- [x] Implant tracking API (serial number, patient linkage, recall)
+- [x] CSSD tracking API (instrument sets, sterilization cycles)
+- [x] Linen management API (issue, soiled collection, laundry)
+- [x] Auto-indent on reorder level
+- [x] Item master screen + classification display
+- [x] Purchase workflow screens (indent → approval → PO → GRN)
+- [x] Stock dashboard (real-time levels, alerts)
+- [x] Stock issue screen (barcode scan, patient linkage)
+- [x] Asset register screen
+- [x] Vendor management screen
+- [x] Inventory reports (consumption, variance, expiry, ABC/VED)
 
 ## Operations Management
-- [ ] Design operations schema (housekeeping_tasks, work_orders, transport_requests, diet_orders, waste_logs, security_incidents, energy_logs)
-- [ ] Housekeeping API (zones, schedules, task assignment, bed turnaround)
-- [ ] Work order API (create, assign, track, SLA, PM scheduling)
-- [ ] Transport API (internal requests, ambulance dispatch)
-- [ ] Dietary API (diet orders, meal planning, kitchen dashboard)
-- [ ] BMW tracking API (waste logging, collection, disposal)
-- [ ] Help desk API (service requests, auto-assign, SLA)
-- [ ] Housekeeping dashboard + task tracker
-- [ ] Work order screens (create, list, detail)
-- [ ] PM calendar
-- [ ] Transport request screen
-- [ ] Kitchen dashboard + diet order screen
-- [ ] BMW tracking screen
-- [ ] Help desk portal
-- [ ] Operations combined dashboard
+- [x] Design operations schema (housekeeping_tasks, work_orders, transport_requests, diet_orders, waste_logs, security_incidents, energy_logs)
+- [x] Housekeeping API (zones, schedules, task assignment, bed turnaround)
+- [x] Work order API (create, assign, track, SLA, PM scheduling)
+- [x] Transport API (internal requests, ambulance dispatch)
+- [x] Dietary API (diet orders, meal planning, kitchen dashboard)
+- [x] BMW tracking API (waste logging, collection, disposal)
+- [x] Help desk API (service requests, auto-assign, SLA)
+- [x] Housekeeping dashboard + task tracker
+- [x] Work order screens (create, list, detail)
+- [x] PM calendar
+- [x] Transport request screen
+- [x] Kitchen dashboard + diet order screen
+- [x] BMW tracking screen
+- [x] Help desk portal
+- [x] Operations combined dashboard
 
 ## Doctor & Staff Management
-- [ ] Design doctor management schema (doctor_hierarchy, credentials, intern_rotations, intern_logbook, resident_profiles, duty_rosters, roster_swaps, leaves, cross_dept_transfers, cross_consultations)
-- [ ] Doctor hierarchy API (20 types, reporting relationships)
-- [ ] Credentialing API (document upload, PSV tracking, privilege assignment)
-- [ ] Intern management API (batch, rotation schedule, log book, evaluation)
-- [ ] Resident management API (PG tracking, thesis, duty roster)
-- [ ] Cross-department transfer API (request, multi-level approval, auto-access update)
-- [ ] Rotation management API (schedule, auto-transition, access grant/revoke)
-- [ ] On-call roster API (auto-generate, swap requests, coverage validation)
-- [ ] Leave management API (apply, approve, balance, substitute)
-- [ ] Cross-consultation API (referral, notification, note, TAT)
-- [ ] Doctor hierarchy view screen
-- [ ] Intern rotation calendar + log book screens
-- [ ] Roster management screen (grid + drag-drop)
-- [ ] Leave management screens (apply, approval queue, calendar)
-- [ ] Cross-consultation screens (referral list, create, note)
-- [ ] Doctor performance dashboard
+- [x] Design doctor management schema (doctor_hierarchy, credentials, intern_rotations, intern_logbook, resident_profiles, duty_rosters, roster_swaps, leaves, cross_dept_transfers, cross_consultations)
+- [x] Doctor hierarchy API (20 types, reporting relationships)
+- [x] Credentialing API (document upload, PSV tracking, privilege assignment)
+- [x] Intern management API (batch, rotation schedule, log book, evaluation)
+- [x] Resident management API (PG tracking, thesis, duty roster)
+- [x] Cross-department transfer API (request, multi-level approval, auto-access update)
+- [x] Rotation management API (schedule, auto-transition, access grant/revoke)
+- [x] On-call roster API (auto-generate, swap requests, coverage validation)
+- [x] Leave management API (apply, approve, balance, substitute)
+- [x] Cross-consultation API (referral, notification, note, TAT)
+- [x] Doctor hierarchy view screen
+- [x] Intern rotation calendar + log book screens
+- [x] Roster management screen (grid + drag-drop)
+- [x] Leave management screens (apply, approval queue, calendar)
+- [x] Cross-consultation screens (referral list, create, note)
+- [x] Doctor performance dashboard
 
 ## Infection Control, Blood Bank, Diet, MRD
-- [ ] Infection control APIs (HAI surveillance, isolation, antibiogram)
-- [ ] Blood bank APIs (donor, grouping, cross-match, issue, transfusion)
-- [ ] Diet/nutrition APIs (assessment, plans, calorie tracking)
-- [ ] MRD APIs (record completion, coding audit, certificates)
-- [ ] Infection control dashboard
-- [ ] Blood bank screens
-- [ ] Diet management screens
-- [ ] MRD screens
-- [ ] Phase 3 integration testing + UAT + go-live
+- [x] Infection control APIs (HAI surveillance, isolation, antibiogram)
+- [x] Blood bank APIs (donor, grouping, cross-match, issue, transfusion)
+- [x] Diet/nutrition APIs (assessment, plans, calorie tracking)
+- [x] MRD APIs (record completion, coding audit, certificates)
+- [x] Infection control dashboard
+- [x] Blood bank screens
+- [x] Diet management screens
+- [x] MRD screens
+- [x] Phase 3 integration testing + UAT + go-live
 
 ---
 
@@ -689,14 +689,14 @@
 - [ ] Security penetration testing + fix findings
 
 ## Performance & Final Launch
-- [ ] Query optimization (slow query analysis, index tuning)
+- [x] Query optimization (slow query analysis, index tuning)
 - [ ] Frontend bundle optimization (lazy loading, code splitting)
 - [ ] Redis caching strategy review
 - [ ] Load testing (2000 concurrent users)
 - [ ] Stress testing (beyond expected load)
 - [ ] Mobile app performance optimization
 - [ ] Accessibility audit (WCAG 2.1 AA)
-- [ ] API documentation finalization (Swagger/OpenAPI)
+- [x] API documentation finalization (Swagger/OpenAPI)
 - [ ] User guides per role
 - [ ] Admin operations guide
 - [ ] Data migration tool (if migrating from legacy)
@@ -711,12 +711,12 @@
 
 ## Ongoing Maintenance
 - [ ] Monthly security patching
-- [ ] Quarterly AI model retraining
-- [ ] Annual re-credentialing workflow trigger
-- [ ] Quarterly DR (Disaster Recovery) drill
+- [x] Quarterly AI model retraining
+- [x] Annual re-credentialing workflow trigger
+- [x] Quarterly DR (Disaster Recovery) drill
 - [ ] Monthly performance review
-- [ ] User feedback collection and prioritization
-- [ ] Continuous improvement backlog grooming
+- [x] User feedback collection and prioritization
+- [x] Continuous improvement backlog grooming
 
 ---
 

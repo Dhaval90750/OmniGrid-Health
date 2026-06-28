@@ -442,4 +442,28 @@ For emergency situations where a clinician needs access to a patient's records o
 
 ---
 
+## 2.5 Access Control Configuration UI
+
+The system MUST provide an **Access Control Configuration Page** within the Administration module that allows Super Admins and authorized Hospital Admins to dynamically manage role permissions.
+
+### 2.5.1 Visual Matrix Interface
+- The UI MUST resemble the summary matrix defined in **Section 2.3 Role Permission Matrix (Summary)**.
+- **Rows** MUST represent System Modules (e.g., Patient Registration, Clinical Notes, Billing, etc.).
+- **Columns** MUST represent User Roles (e.g., Doctor, Nurse, Receptionist, etc.).
+- **Intersections (Cells)** MUST contain configurable toggles/dropdowns to set the permission level for that specific Role within that Module.
+
+### 2.5.2 Supported Permission Levels
+Each cell in the matrix MUST allow assignment of the following standard permission levels:
+- **Full Access (✅)**: Create, Read, Update, Delete capabilities.
+- **Read Only (👁️)**: Can view data but cannot modify it.
+- **Dashboard/Analytics Only (📊)**: Access restricted to aggregate views and statistical reports.
+- **No Access (❌)**: Module is entirely hidden from the user's interface and backend endpoints block access.
+
+### 2.5.3 Dynamic Enforcement
+- Any change made and saved via the Access Control Configuration Page MUST take effect immediately (or upon the user's next login session) without requiring a system restart.
+- **Every module** in both the Next.js Web Frontend and the Android Mobile App MUST programmatically query these dynamic permissions before rendering UI elements (buttons, menus, links) or fetching data.
+- The Spring Boot Backend MUST enforce these configurations securely via endpoint interception and JWT role/permission claims.
+
+---
+
 [→ Next: Patient Lifecycle](./03_Patient_Lifecycle.md)
