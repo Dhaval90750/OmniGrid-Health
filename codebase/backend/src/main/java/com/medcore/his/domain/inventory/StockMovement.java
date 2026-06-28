@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "stock_movements")
+@Table(name = "inventory_stock_movements")
 @Getter
 @Setter
 public class StockMovement extends BaseEntity {
