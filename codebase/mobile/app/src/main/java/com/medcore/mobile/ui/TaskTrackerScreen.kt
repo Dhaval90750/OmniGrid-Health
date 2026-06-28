@@ -100,7 +100,7 @@ fun TaskTrackerScreen(
                 containerColor = Color(0xFFF8F9FA),
                 contentColor = Color(0xFF1565C0),
                 indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
+                    TabRowDefaults.Indicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                         color = Color(0xFF1565C0)
                     )

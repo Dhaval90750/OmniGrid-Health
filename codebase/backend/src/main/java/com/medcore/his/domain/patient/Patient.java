@@ -80,4 +80,7 @@ public class Patient extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+
+    @Column(name = "abha_address", length = 100)
+    private String abhaAddress;
 }

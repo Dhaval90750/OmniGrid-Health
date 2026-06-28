@@ -1,5 +1,6 @@
 package com.medcore.mobile.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +30,6 @@ fun IncidentReportScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
             TopAppBar(
                 title = { Text("Log Incident", color = MaterialTheme.colorScheme.onPrimary) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.error),

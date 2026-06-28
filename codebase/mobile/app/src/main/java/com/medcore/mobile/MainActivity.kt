@@ -42,6 +42,7 @@ import com.medcore.mobile.ui.AnalyticsScreen
 import com.medcore.mobile.ui.TelemedicineScreen
 import com.medcore.mobile.ui.InventoryScreen
 import com.medcore.mobile.ui.BillingScreen
+import com.medcore.mobile.ui.OrderEntryScreen
 
 import com.medcore.mobile.ui.theme.MedCoreTheme
 

@@ -24,4 +24,16 @@ public class AiController {
         String transcript = request.getOrDefault("transcript", "");
         return ResponseEntity.ok(aiService.extractMedicalEntities(transcript));
     }
+
+    @PostMapping("/discharge-summary")
+    public ResponseEntity<Map<String, Object>> generateDischargeSummary(@RequestBody Map<String, String> request) {
+        String clinicalContext = request.getOrDefault("context", "");
+        return ResponseEntity.ok(aiService.generateDischargeSummary(clinicalContext));
+    }
+
+    @PostMapping("/patient-oneliner")
+    public ResponseEntity<Map<String, Object>> generatePatientOneLiner(@RequestBody Map<String, String> request) {
+        String history = request.getOrDefault("history", "");
+        return ResponseEntity.ok(aiService.generatePatientOneLiner(history));
+    }
 }

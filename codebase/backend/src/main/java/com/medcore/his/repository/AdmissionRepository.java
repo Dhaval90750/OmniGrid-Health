@@ -7,7 +7,13 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.Query;
+
 @Repository
 public interface AdmissionRepository extends JpaRepository<Admission, UUID> {
     List<Admission> findByStatusOrderByAdmissionDateDesc(String status);
+
+    long countByStatus(String status);
+    @Query("SELECT a.admissionDate, a.dischargeDate FROM Admission a WHERE a.status = 'DISCHARGED' AND a.dischargeDate IS NOT NULL")
+    List<Object[]> findDischargedAdmissionsForAlos();
 }

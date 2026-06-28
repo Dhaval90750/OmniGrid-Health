@@ -52,4 +52,29 @@ public class InventoryController {
     public ResponseEntity<PurchaseOrder> createPurchaseOrder(@RequestBody PurchaseOrder po) {
         return new ResponseEntity<>(inventoryService.createPurchaseOrder(po), HttpStatus.CREATED);
     }
+    
+    @GetMapping("/indents")
+    public ResponseEntity<List<com.medcore.his.domain.inventory.PurchaseIndent>> getAllIndents() {
+        return ResponseEntity.ok(inventoryService.getAllPurchaseIndents());
+    }
+    
+    @PostMapping("/indents")
+    public ResponseEntity<com.medcore.his.domain.inventory.PurchaseIndent> createIndent(@RequestBody com.medcore.his.domain.inventory.PurchaseIndent indent) {
+        return new ResponseEntity<>(inventoryService.createPurchaseIndent(indent), HttpStatus.CREATED);
+    }
+    
+    @PostMapping("/indents/{id}/approve")
+    public ResponseEntity<com.medcore.his.domain.inventory.PurchaseIndent> approveIndent(@PathVariable java.util.UUID id, @RequestParam String level) {
+        return ResponseEntity.ok(inventoryService.approveIndent(id, level));
+    }
+    
+    @GetMapping("/grns")
+    public ResponseEntity<List<com.medcore.his.domain.inventory.GoodsReceiptNote>> getAllGrns() {
+        return ResponseEntity.ok(inventoryService.getAllGrns());
+    }
+    
+    @PostMapping("/grns")
+    public ResponseEntity<com.medcore.his.domain.inventory.GoodsReceiptNote> createGrn(@RequestBody com.medcore.his.domain.inventory.GoodsReceiptNote grn) {
+        return new ResponseEntity<>(inventoryService.createGrn(grn), HttpStatus.CREATED);
+    }
 }

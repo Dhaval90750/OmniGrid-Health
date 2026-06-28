@@ -79,7 +79,7 @@ fun PatientSummaryScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "${firstName.firstOrNull() ?: 'U'}${lastName.firstOrNull() ?: ''}",
+                            text = "${firstName.firstOrNull() ?: 'U'}${lastName.firstOrNull() ?: ""}",
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1565C0)
@@ -115,11 +115,11 @@ fun PatientSummaryScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     MetricRow("Blood Pressure", "120/80 mmHg", Color(0xFF263238))
-                    HorizontalDivider(color = Color(0xFFECEFF1))
+                    Divider(color = Color(0xFFECEFF1))
                     MetricRow("SpO2 (Oxygen)", "99%", Color(0xFF4CAF50))
-                    HorizontalDivider(color = Color(0xFFECEFF1))
+                    Divider(color = Color(0xFFECEFF1))
                     MetricRow("Heart Rate", "72 bpm", Color(0xFF263238))
-                    HorizontalDivider(color = Color(0xFFECEFF1))
+                    Divider(color = Color(0xFFECEFF1))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,

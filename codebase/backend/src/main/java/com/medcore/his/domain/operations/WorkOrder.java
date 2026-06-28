@@ -31,4 +31,10 @@ public class WorkOrder extends BaseEntity {
 
     @Column(name = "assigned_technician", length = 100)
     private String assignedTechnician;
+    
+    @Column(name = "sla_deadline")
+    private java.time.LocalDateTime slaDeadline;
+    
+    @Column(name = "is_breached", nullable = false)
+    private boolean breached = false;
 }

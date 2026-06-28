@@ -12,11 +12,13 @@ public class DischargeService {
 
     private final DischargeRepository dischargeRepository;
     private final VisitRepository visitRepository;
+    private final AdmissionService admissionService;
 
     @Autowired
-    public DischargeService(DischargeRepository dischargeRepository, VisitRepository visitRepository) {
+    public DischargeService(DischargeRepository dischargeRepository, VisitRepository visitRepository, AdmissionService admissionService) {
         this.dischargeRepository = dischargeRepository;
         this.visitRepository = visitRepository;
+        this.admissionService = admissionService;
     }
 
     @Transactional
@@ -27,6 +29,11 @@ public class DischargeService {
         if (saved.getVisit() != null) {
             saved.getVisit().setStatus("DISCHARGED");
             visitRepository.save(saved.getVisit());
+            
+            // Link to admission lifecycle if it exists
+            if (saved.getVisit().getAdmission() != null) {
+                admissionService.dischargePatient(saved.getVisit().getAdmission().getId(), saved.getFinalSummary());
+            }
         }
         
         return saved;

@@ -54,7 +54,29 @@ public class StaffService {
 
     @Transactional
     public LeaveRequest createLeaveRequest(LeaveRequest request) {
+        // Validate leave overlaps
+        List<LeaveRequest> existingLeaves = leaveRequestRepository.findAll();
+        for (LeaveRequest lr : existingLeaves) {
+            if (lr.getStaff().getId().equals(request.getStaff().getId()) && "Approved".equals(lr.getStatus())) {
+                if (!request.getStartDate().isAfter(lr.getEndDate()) && !request.getEndDate().isBefore(lr.getStartDate())) {
+                    throw new RuntimeException("Leave dates overlap with an already approved leave.");
+                }
+            }
+        }
         return leaveRequestRepository.save(request);
+    }
+    
+    @Transactional
+    public LeaveRequest approveLeaveRequest(java.util.UUID leaveId, java.util.UUID approverId, boolean approve) {
+        LeaveRequest leave = leaveRequestRepository.findById(leaveId)
+            .orElseThrow(() -> new RuntimeException("Leave request not found"));
+            
+        StaffProfile approver = staffProfileRepository.findById(approverId)
+            .orElseThrow(() -> new RuntimeException("Approver not found"));
+            
+        leave.setStatus(approve ? "Approved" : "Denied");
+        leave.setApprovedBy(approver);
+        return leaveRequestRepository.save(leave);
     }
 
     public List<CrossConsultation> getAllConsultations() {

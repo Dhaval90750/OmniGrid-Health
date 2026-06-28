@@ -45,4 +45,8 @@ public class Visit extends BaseEntity {
 
     @Column(name = "queue_status", length = 50)
     private String queueStatus = "WAITING";
+    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admission_id")
+    private Admission admission;
 }

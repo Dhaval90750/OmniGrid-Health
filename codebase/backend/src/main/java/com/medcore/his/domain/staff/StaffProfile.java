@@ -31,4 +31,8 @@ public class StaffProfile extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supervisor_id")
+    private StaffProfile supervisor;
 }

@@ -46,7 +46,38 @@ public class OperationsService {
 
     @Transactional
     public WorkOrder createWorkOrder(WorkOrder order) {
+        // Calculate SLA based on priority
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        switch (order.getPriority()) {
+            case "Critical":
+                order.setSlaDeadline(now.plusHours(2));
+                break;
+            case "High":
+                order.setSlaDeadline(now.plusHours(8));
+                break;
+            case "Low":
+                order.setSlaDeadline(now.plusDays(3));
+                break;
+            default: // Medium
+                order.setSlaDeadline(now.plusHours(24));
+                break;
+        }
         return workOrderRepository.save(order);
+    }
+    
+    // Scheduled job to check SLA breaches
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000) // Every minute
+    @Transactional
+    public void checkSlaBreaches() {
+        List<WorkOrder> openOrders = workOrderRepository.findAll();
+        for (WorkOrder order : openOrders) {
+            if (!order.isBreached() && !order.getStatus().equals("Resolved") && !order.getStatus().equals("Closed")) {
+                if (order.getSlaDeadline() != null && java.time.LocalDateTime.now().isAfter(order.getSlaDeadline())) {
+                    order.setBreached(true);
+                    workOrderRepository.save(order);
+                }
+            }
+        }
     }
 
     public List<TransportRequest> getAllTransportRequests() {

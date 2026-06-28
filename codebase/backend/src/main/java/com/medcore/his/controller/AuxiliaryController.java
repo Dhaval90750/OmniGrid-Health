@@ -41,4 +41,24 @@ public class AuxiliaryController {
     public ResponseEntity<InfectionReport> addInfectionReport(@RequestBody InfectionReport report) {
         return new ResponseEntity<>(auxiliaryService.addInfectionReport(report), HttpStatus.CREATED);
     }
+    
+    @GetMapping("/blood-bank/donations")
+    public ResponseEntity<List<com.medcore.his.domain.auxiliary.BloodDonation>> getDonations() {
+        return ResponseEntity.ok(auxiliaryService.getAllDonations());
+    }
+    
+    @PostMapping("/blood-bank/donations")
+    public ResponseEntity<com.medcore.his.domain.auxiliary.BloodDonation> addDonation(@RequestBody com.medcore.his.domain.auxiliary.BloodDonation donation) {
+        return new ResponseEntity<>(auxiliaryService.addDonation(donation), HttpStatus.CREATED);
+    }
+    
+    @GetMapping("/blood-bank/transfusions")
+    public ResponseEntity<List<com.medcore.his.domain.auxiliary.BloodTransfusion>> getTransfusions() {
+        return ResponseEntity.ok(auxiliaryService.getAllTransfusions());
+    }
+    
+    @PostMapping("/blood-bank/transfusions")
+    public ResponseEntity<com.medcore.his.domain.auxiliary.BloodTransfusion> requestTransfusion(@RequestBody com.medcore.his.domain.auxiliary.BloodTransfusion request) {
+        return new ResponseEntity<>(auxiliaryService.requestTransfusion(request), HttpStatus.CREATED);
+    }
 }

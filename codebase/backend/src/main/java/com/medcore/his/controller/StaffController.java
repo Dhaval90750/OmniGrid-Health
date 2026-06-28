@@ -69,6 +69,11 @@ public class StaffController {
     public ResponseEntity<LeaveRequest> createLeave(@RequestBody LeaveRequest request) {
         return new ResponseEntity<>(staffService.createLeaveRequest(request), HttpStatus.CREATED);
     }
+    
+    @PostMapping("/leaves/{id}/approve")
+    public ResponseEntity<LeaveRequest> approveLeave(@PathVariable java.util.UUID id, @RequestParam java.util.UUID approverId, @RequestParam boolean approve) {
+        return ResponseEntity.ok(staffService.approveLeaveRequest(id, approverId, approve));
+    }
 
     @GetMapping("/consults")
     public ResponseEntity<List<CrossConsultation>> getAllConsults() {

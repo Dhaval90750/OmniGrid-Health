@@ -35,4 +35,10 @@ public class InfectionReport extends BaseEntity {
 
     @Column(name = "reported_by", length = 100)
     private String reportedBy;
+    
+    @Column(name = "is_hai", nullable = false)
+    private boolean hai = false; // Hospital Acquired Infection
+    
+    @Column(name = "requires_isolation", nullable = false)
+    private boolean requiresIsolation = false;
 }

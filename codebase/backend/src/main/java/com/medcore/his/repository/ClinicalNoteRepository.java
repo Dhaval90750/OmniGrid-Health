@@ -7,7 +7,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+import java.time.LocalDateTime;
+
 @Repository
 public interface ClinicalNoteRepository extends JpaRepository<ClinicalNote, UUID> {
     List<ClinicalNote> findByVisitPatientIdOrderByCreatedAtDesc(UUID patientId);
+    
+    List<ClinicalNote> findByIsFinalizedTrueAndCreatedAtGreaterThanEqual(LocalDateTime createdAt);
 }
