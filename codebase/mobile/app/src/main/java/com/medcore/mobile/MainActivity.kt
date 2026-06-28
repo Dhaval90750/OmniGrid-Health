@@ -239,7 +239,7 @@ fun LoginScreen(
             tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Text("MedCore Connect", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+        Text("MedcoreHIS", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
         Text("Premium Doctor Portal", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         
         Spacer(modifier = Modifier.height(48.dp))
