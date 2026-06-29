@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,13 +135,14 @@ public class AnalyticsService {
         
         for (Admission admission : activeAdmissions) {
             Map<String, Object> sepsisRisk = riskAlertService.evaluateSepsisRisk(admission.getPatient().getId());
-            if ("HIGH".equals(sepsisRisk.get("riskLevel"))) {
+            String riskLevel = (String) sepsisRisk.get("riskLevel");
+            if ("HIGH".equals(riskLevel) || "CRITICAL".equals(riskLevel)) {
                 activeAlerts.add(Map.of(
                     "patient_id", admission.getPatient().getUhid(),
                     "name", admission.getPatient().getFirstName() + " " + admission.getPatient().getLastName(),
                     "ward", admission.getWard().getName(),
                     "alert_type", "Sepsis Risk",
-                    "probability", sepsisRisk.get("sirsScore"),
+                    "probability", sepsisRisk.get("sepsisRiskScore"),
                     "status", "CRITICAL"
                 ));
             }

@@ -38,6 +38,7 @@ public class RiskAlertService {
      * - Respiratory Rate > 20 breaths/min
      * Note: WBC count is normally included but omitted here for vitals-only check.
      */
+    @SuppressWarnings("unchecked")
     public Map<String, Object> evaluateSepsisRisk(UUID patientId) {
         List<PatientVital> vitalsList = patientVitalRepository.findByPatientIdOrderByRecordedAtDesc(patientId);
         

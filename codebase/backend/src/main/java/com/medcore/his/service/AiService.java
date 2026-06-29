@@ -44,6 +44,7 @@ public class AiService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> callPythonExtractor(String transcript) throws Exception {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("text", transcript);
@@ -80,6 +81,7 @@ public class AiService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> predictSepsisRisk(double heartRate, double systolicBp, double temperature, double spo2) {
         if (!useMock) {
             try {
