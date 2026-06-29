@@ -58,7 +58,9 @@ enum class Screen {
     VITALS_ENTRY, NURSING_ASSESSMENT, INCIDENT_REPORT, TASK_TRACKER, MAR_SCANNER,
     ANALYTICS, TELEMEDICINE, INVENTORY, BILLING, ORDER_ENTRY,
     // Phase 3 additions
-    STAFF_ROSTER, DOCTOR_LOGBOOK, DIET_ORDER, INDENT_APPROVAL
+    STAFF_ROSTER, DOCTOR_LOGBOOK, DIET_ORDER, INDENT_APPROVAL,
+    // Phase 5 additions
+    LAB_RESULTS, RADIOLOGY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,6 +169,8 @@ fun MedCoreAppContent() {
             onLogbookClick = { currentScreen = Screen.DOCTOR_LOGBOOK },
             onDietClick = { requirePatient(Screen.DIET_ORDER) },
             onIndentApprovalClick = { currentScreen = Screen.INDENT_APPROVAL },
+            onLabClick = { requirePatient(Screen.LAB_RESULTS) },
+            onRadClick = { requirePatient(Screen.RADIOLOGY) },
             onLogout = {
                 token = ""
                 permissions = emptyMap()
@@ -212,6 +216,9 @@ fun MedCoreAppContent() {
         Screen.DOCTOR_LOGBOOK -> DoctorLogbookScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
         Screen.DIET_ORDER -> DietOrderScreen(patientId = activePatient?.optString("id") ?: "", apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
         Screen.INDENT_APPROVAL -> IndentApprovalScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
+        
+        Screen.LAB_RESULTS -> LabResultsScreen(apiUrl = apiUrl, token = token, patientId = activePatient?.optString("id") ?: "", onBack = { currentScreen = Screen.DASHBOARD })
+        Screen.RADIOLOGY -> RadiologyScreen(apiUrl = apiUrl, token = token, patientId = activePatient?.optString("id") ?: "", onBack = { currentScreen = Screen.DASHBOARD })
     }
 }
 
@@ -331,7 +338,8 @@ fun DashboardScreen(
     onTasksClick: () -> Unit, onMarClick: () -> Unit, onAnalyticsClick: () -> Unit,
     onTelemedicineClick: () -> Unit, onInventoryClick: () -> Unit, onBillingClick: () -> Unit,
     onRosterClick: () -> Unit, onLogbookClick: () -> Unit, onDietClick: () -> Unit,
-    onIndentApprovalClick: () -> Unit, onLogout: () -> Unit
+    onIndentApprovalClick: () -> Unit, onLabClick: () -> Unit, onRadClick: () -> Unit,
+    onLogout: () -> Unit
 ) {
     fun hasAccess(module: String): Boolean = permissions[module] != null && permissions[module] != "NO_ACCESS"
 
@@ -388,6 +396,8 @@ fun DashboardScreen(
             if (hasAccess("Clinical Notes")) {
                 clinicalActions.add(ActionItem("AI Scribe", Icons.Default.PlayArrow, Color(0xFF10B981), onScribeClick))
                 clinicalActions.add(ActionItem("Telemed", Icons.Default.Call, Color(0xFFE11D48), onTelemedicineClick))
+                clinicalActions.add(ActionItem("Lab Results", Icons.Default.Search, Color(0xFF0EA5E9), onLabClick)) // Phase 5
+                clinicalActions.add(ActionItem("Radiology", Icons.Default.Search, Color(0xFFF59E0B), onRadClick)) // Phase 5
                 clinicalActions.add(ActionItem("Diet Order", Icons.Default.ShoppingCart, Color(0xFFF59E0B), onDietClick)) // Phase 3
                 clinicalActions.add(ActionItem("Logbook", Icons.Default.Edit, Color(0xFF6366F1), onLogbookClick)) // Phase 3
                 clinicalActions.add(ActionItem("Roster", Icons.Default.DateRange, Color(0xFF8B5CF6), onRosterClick)) // Phase 3
