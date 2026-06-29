@@ -171,6 +171,9 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
 
         composable(NavRoutes.SampleCollection.route) {
             SampleCollectionScreen(
+                apiUrl = "https://medcore-his-backend-production.up.railway.app/api/v1",
+                token = sessionManager.token ?: "",
+                patientId = activePatient?.optString("id") ?: "",
                 patientName = activePatient?.optString("fullName") ?: "Unknown",
                 onBack = { navController.popBackStack() },
                 onCollectSuccess = { navController.popBackStack() }
