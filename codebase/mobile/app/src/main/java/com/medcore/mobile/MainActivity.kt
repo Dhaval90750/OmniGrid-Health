@@ -245,27 +245,19 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(48.dp))
         OutlinedTextField(
             value = username, onValueChange = onUsernameChange, label = { Text("Physician ID") },
-            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-            )
+            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = password, onValueChange = onPasswordChange, label = { Text("Secure Password") },
             visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val description = if (passwordVisible) "Hide password" else "Show password"
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = description)
+                val description = if (passwordVisible) "Hide" else "Show"
+                androidx.compose.material3.TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Text(description, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
                 }
             },
-            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-            )
+            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true
         )
         if (errorMsg.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))

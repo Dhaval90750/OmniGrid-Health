@@ -29,15 +29,35 @@ public class DatabaseSeeder {
                                    BloodInventoryRepository bloodRepo,
                                    UserRepository userRepo,
                                    RoleRepository roleRepo,
+                                   com.medcore.his.repository.PermissionRepository permissionRepo,
                                    PasswordEncoder passwordEncoder) {
         return args -> {
             System.out.println("Checking Role Seeding...");
+            
+            // Seed Standard Permissions
+            String[] modules = {"Patient Registration", "Clinical Notes", "Operations", "Pharmacy", "Dashboards", "Inventory", "Billing"};
+            for (String mod : modules) {
+                com.medcore.his.domain.auth.Permission p = permissionRepo.findByModuleAndAccessLevel(mod, "FULL_ACCESS").orElse(null);
+                if (p == null) {
+                    p = new com.medcore.his.domain.auth.Permission();
+                    p.setCode(mod.toUpperCase().replace(" ", "_") + "_FULL_ACCESS");
+                    p.setModule(mod);
+                    p.setAccessLevel("FULL_ACCESS");
+                    p.setDescription("Full access to " + mod);
+                    permissionRepo.save(p);
+                }
+            }
+
             Role adminRole = roleRepo.findByName("ROLE_ADMIN").orElseGet(() -> {
                 Role role = new Role();
                 role.setName("ROLE_ADMIN");
                 role.setDescription("Administrator with full access");
                 return roleRepo.save(role);
             });
+
+            // Assign all permissions to ADMIN
+            adminRole.getPermissions().addAll(permissionRepo.findAll());
+            roleRepo.save(adminRole);
 
             System.out.println("Checking User Seeding...");
             String adminUsername = System.getenv("MEDCORE_ADMIN_USERNAME");
