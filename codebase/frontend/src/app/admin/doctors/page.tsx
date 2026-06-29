@@ -9,6 +9,17 @@ import { api } from "@/lib/api";
 
 export default function DoctorManagement() {
   const [doctors, setDoctors] = useState<any[]>([]);
+  const [showDoctorModal, setShowDoctorModal] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<any>(null);
+  
+  const [formData, setFormData] = useState({
+    employeeCode: "",
+    fullName: "",
+    department: "",
+    role: "Consultant",
+    contactNumber: "",
+    isActive: true
+  });
 
   useEffect(() => {
     fetchDoctors();
@@ -20,11 +31,35 @@ export default function DoctorManagement() {
       setDoctors(res.data);
     } catch (e) {
       console.error(e);
-      setDoctors([
-        { id: "1", fullName: "Dr. Adams", employeeCode: "EMP001", role: "Consultant", department: "Cardiology", isActive: true },
-        { id: "2", fullName: "Dr. Lee", employeeCode: "EMP002", role: "Resident", department: "Orthopedics", isActive: true }
-      ]);
+      setDoctors([]);
     }
+  };
+
+  const handleSaveDoctor = async () => {
+    try {
+      if (editingDoctor) {
+        await api.put(`/staff/profiles/${editingDoctor.id}`, formData);
+      } else {
+        await api.post("/staff/profiles", formData);
+      }
+      setShowDoctorModal(false);
+      fetchDoctors();
+    } catch (e) {
+      console.error("Failed to save doctor", e);
+      alert("Failed to save doctor");
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingDoctor(null);
+    setFormData({ employeeCode: "", fullName: "", department: "", role: "Consultant", contactNumber: "", isActive: true });
+    setShowDoctorModal(true);
+  };
+
+  const openEditModal = (doc: any) => {
+    setEditingDoctor(doc);
+    setFormData({ ...doc });
+    setShowDoctorModal(true);
   };
 
   return (
@@ -34,7 +69,7 @@ export default function DoctorManagement() {
           <h2 className="text-2xl font-semibold text-text-primary">Doctor Profiles</h2>
           <p className="text-text-secondary text-sm">Manage doctor schedules, privileges, and profiles.</p>
         </div>
-        <Button>Add Doctor</Button>
+        <Button onClick={openAddModal}>Add Doctor</Button>
       </div>
 
       <Card>
@@ -61,8 +96,8 @@ export default function DoctorManagement() {
                     {doc.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="secondary" size="sm" className="mr-2">Schedule</Button>
-                    <Button variant="secondary" size="sm">Edit</Button>
+                    <Button variant="secondary" size="sm" className="mr-2" onClick={() => alert("Scheduling module is part of Phase 2 OT/Staff Roster")}>Schedule</Button>
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(doc)}>Edit</Button>
                   </td>
                 </tr>
               ))}
@@ -70,6 +105,64 @@ export default function DoctorManagement() {
           </table>
         </CardContent>
       </Card>
+
+      {/* Add / Edit Doctor Modal */}
+      {showDoctorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface p-6 rounded-lg max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-xl font-bold">{editingDoctor ? "Edit Doctor" : "Add Doctor"}</h3>
+            
+            <div className="space-y-4">
+              <Input 
+                label="Employee Code" 
+                value={formData.employeeCode} 
+                onChange={(e) => setFormData({...formData, employeeCode: e.target.value})} 
+              />
+              <Input 
+                label="Full Name" 
+                value={formData.fullName} 
+                onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
+              />
+              <Input 
+                label="Department" 
+                value={formData.department} 
+                onChange={(e) => setFormData({...formData, department: e.target.value})} 
+              />
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-medium text-text-secondary">Role</label>
+                <select 
+                  value={formData.role} 
+                  onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  className="bg-background border rounded-[6px] h-[40px] px-3 text-sm text-text-primary outline-none transition-colors border-border hover:border-text-tertiary focus:border-primary focus:ring-1 focus:ring-primary"
+                >
+                  <option value="Consultant">Consultant</option>
+                  <option value="Resident">Resident</option>
+                  <option value="Junior Doctor">Junior Doctor</option>
+                </select>
+              </div>
+              <Input 
+                label="Contact Number" 
+                value={formData.contactNumber} 
+                onChange={(e) => setFormData({...formData, contactNumber: e.target.value})} 
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                />
+                <label className="text-sm">Active</label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="secondary" onClick={() => setShowDoctorModal(false)}>Cancel</Button>
+              <Button variant="primary" onClick={handleSaveDoctor}>Save</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

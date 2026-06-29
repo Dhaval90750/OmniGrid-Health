@@ -60,7 +60,7 @@ fun PinLoginScreen(
                 onClick = {
                     when (num) {
                         "Clear" -> pin = ""
-                        "Go" -> { if (pin.length >= 4) viewModel.simulateBiometric() }
+                        "Go" -> { if (pin.length >= 4) viewModel.pinLogin(pin) }
                         else -> if (pin.length < 6) pin += num
                     }
                 },

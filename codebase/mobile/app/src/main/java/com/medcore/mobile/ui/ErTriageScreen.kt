@@ -13,22 +13,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.CriticalCareViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ErTriageScreen(
     patientName: String,
     onBack: () -> Unit,
-    onTriageSuccess: () -> Unit
+    onTriageSuccess: () -> Unit,
+    viewModel: CriticalCareViewModel = viewModel()
 ) {
     var category by remember { mutableStateOf("Green") }
     var chiefComplaint by remember { mutableStateOf("") }
     
     val categories = listOf(
-        TriageCategory("Red", "Immediate", Color(0xFFDC2626)),
-        TriageCategory("Yellow", "Urgent", Color(0xFFF59E0B)),
-        TriageCategory("Green", "Standard", Color(0xFF10B981))
+        TriageCategory("Red", "Immediate", Color(0xFFDC2626), 1),
+        TriageCategory("Yellow", "Urgent", Color(0xFFF59E0B), 2),
+        TriageCategory("Green", "Standard", Color(0xFF10B981), 3)
     )
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -76,17 +80,24 @@ fun ErTriageScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             Button(
-                onClick = onTriageSuccess,
+                onClick = { 
+                    val acuity = categories.find { it.name == category }?.acuity ?: 3
+                    viewModel.submitTriage(acuity, chiefComplaint, "N/A") {
+                        onTriageSuccess()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = categories.find { it.name == category }?.color ?: MaterialTheme.colorScheme.primary
-                )
+                ),
+                enabled = !isLoading
             ) {
-                Text("Complete Triage", color = Color.White)
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                else Text("Complete Triage", color = Color.White)
             }
         }
     }
 }
 
-data class TriageCategory(val name: String, val description: String, val color: Color)
+data class TriageCategory(val name: String, val description: String, val color: Color, val acuity: Int)

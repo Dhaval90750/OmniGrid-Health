@@ -10,26 +10,33 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.IpdViewModel
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WardDashboardScreen(
     wardName: String,
     onBack: () -> Unit,
-    onPatientClick: (String) -> Unit
+    onPatientClick: (String) -> Unit,
+    viewModel: IpdViewModel = viewModel()
 ) {
-    val patients = listOf(
-        WardPatient("Bed 101", "John Doe", "Stable", Color(0xFF10B981)),
-        WardPatient("Bed 102", "Jane Smith", "Critical", Color(0xFFEF4444)),
-        WardPatient("Bed 103", "Alice Wong", "Observation", Color(0xFFF59E0B)),
-        WardPatient("Bed 104", "Bob Brown", "Stable", Color(0xFF10B981))
-    )
+    val patients by viewModel.wardPatients.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(wardName) {
+        viewModel.fetchWardDashboard(wardName)
+    }
 
     Scaffold(
         topBar = {
@@ -46,19 +53,25 @@ fun WardDashboardScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             WardStatsRow()
             
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(patients) { patient ->
-                    WardPatientCard(patient) { onPatientClick(patient.name) }
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(patients) { patient ->
+                        WardPatientCard(patient) { onPatientClick(patient.optString("name")) }
+                    }
                 }
             }
         }
     }
 }
 
-data class WardPatient(val bed: String, val name: String, val status: String, val statusColor: Color)
+// Removed WardPatient class in favor of JSONObject
 
 @Composable
 fun WardStatsRow() {
@@ -88,7 +101,7 @@ fun StatCard(label: String, value: String, color: Color, modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WardPatientCard(patient: WardPatient, onClick: () -> Unit) {
+fun WardPatientCard(patient: JSONObject, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().background(Color.Transparent),
         shape = RoundedCornerShape(16.dp),
@@ -97,22 +110,26 @@ fun WardPatientCard(patient: WardPatient, onClick: () -> Unit) {
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(patient.bed, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(patient.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(patient.optString("bed"), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(patient.optString("name"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = patient.statusColor.copy(alpha = 0.1f)
-            ) {
+            val status = patient.optString("status")
+            val statusColor = when(status) {
+                "Critical" -> Color(0xFFEF4444)
+                "Stable" -> Color(0xFF10B981)
+                else -> Color(0xFFF59E0B)
+            }
+
+            Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.1f)) {
                 Text(
-                    patient.status,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = patient.statusColor,
-                    style = MaterialTheme.typography.labelMedium
+                    status,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    color = statusColor,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
-            
             Spacer(modifier = Modifier.width(12.dp))
             Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

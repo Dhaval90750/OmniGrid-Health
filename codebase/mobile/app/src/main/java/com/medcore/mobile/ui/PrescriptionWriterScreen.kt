@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.PrescriptionViewModel
+import org.json.JSONObject
 
 data class PrescriptionItem(
     val drugName: String,
@@ -29,10 +32,12 @@ data class PrescriptionItem(
 fun PrescriptionWriterScreen(
     patientName: String,
     onBack: () -> Unit,
-    onSave: (List<PrescriptionItem>) -> Unit
+    onSave: () -> Unit,
+    viewModel: PrescriptionViewModel = viewModel()
 ) {
-    val items = remember { mutableStateListOf<PrescriptionItem>() }
+    val items = remember { mutableStateListOf<JSONObject>() }
     var showAddDialog by remember { mutableStateOf(false) }
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -66,11 +71,17 @@ fun PrescriptionWriterScreen(
                     }
                     item {
                         Button(
-                            onClick = { onSave(items) },
+                            onClick = { 
+                                viewModel.savePrescription("pat_123", items) {
+                                    onSave()
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth().height(56.dp).padding(vertical = 16.dp),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isLoading
                         ) {
-                            Text("Finalize & Sign Prescription")
+                            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            else Text("Finalize & Sign Prescription")
                         }
                     }
                 }
@@ -79,7 +90,9 @@ fun PrescriptionWriterScreen(
     }
 
     if (showAddDialog) {
+        // Need to pass viewModel for searching
         AddDrugDialog(
+            viewModel = viewModel,
             onDismiss = { showAddDialog = false },
             onAdd = { items.add(it); showAddDialog = false }
         )
@@ -87,7 +100,7 @@ fun PrescriptionWriterScreen(
 }
 
 @Composable
-fun PrescriptionCard(item: PrescriptionItem, onDelete: () -> Unit) {
+fun PrescriptionCard(item: JSONObject, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -95,8 +108,8 @@ fun PrescriptionCard(item: PrescriptionItem, onDelete: () -> Unit) {
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.drugName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("${item.dosage} • ${item.frequency} • ${item.duration}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(item.optString("name"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("${item.optString("dosage", "500mg")} • ${item.optString("frequency", "1-0-1")} • ${item.optString("duration", "5 Days")}", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
@@ -107,30 +120,46 @@ fun PrescriptionCard(item: PrescriptionItem, onDelete: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddDrugDialog(onDismiss: () -> Unit, onAdd: (PrescriptionItem) -> Unit) {
-    var drugName by remember { mutableStateOf("") }
-    var dosage by remember { mutableStateOf("") }
-    var frequency by remember { mutableStateOf("1-0-1") }
-    var duration by remember { mutableStateOf("5 Days") }
+fun AddDrugDialog(
+    viewModel: PrescriptionViewModel,
+    onDismiss: () -> Unit,
+    onAdd: (JSONObject) -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    val searchResults by viewModel.searchResults.collectAsState()
+
+    LaunchedEffect(query) {
+        viewModel.searchDrugs(query)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add Medication") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = drugName, onValueChange = { drugName = it }, label = { Text("Drug Name") })
-                OutlinedTextField(value = dosage, onValueChange = { dosage = it }, label = { Text("Dosage (e.g. 500mg)") })
-                OutlinedTextField(value = frequency, onValueChange = { frequency = it }, label = { Text("Frequency") })
-                OutlinedTextField(value = duration, onValueChange = { duration = it }, label = { Text("Duration") })
+                OutlinedTextField(
+                    value = query, onValueChange = { query = it },
+                    label = { Text("Search Drug") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+                    items(searchResults) { result ->
+                        Text(
+                            result.optString("name"),
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                onAdd(result)
+                            }.padding(8.dp)
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = { if (drugName.isNotEmpty()) onAdd(PrescriptionItem(drugName, dosage, frequency, duration)) }) {
-                Text("Add")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }

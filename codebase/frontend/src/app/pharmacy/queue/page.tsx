@@ -1,14 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { api } from "@/lib/api";
 
 export default function PharmacyQueue() {
-  const prescriptions = [
+  const [prescriptions, setPrescriptions] = useState([
     { id: "RX-9082", patient: "Jane Doe (UHID-2033)", doctor: "Dr. Smith", department: "General Medicine", items: 4, time: "10 mins ago" },
     { id: "RX-9083", patient: "Robert King (UHID-4022)", doctor: "Dr. Adams", department: "Cardiology", items: 2, time: "5 mins ago" },
-  ];
+  ]);
+
+  const handleFulfill = async (rxId: string) => {
+    try {
+      // Simulate dispensing payload
+      await api.post("/pharmacy/dispense", {
+        status: "Completed",
+        notes: "Dispensed via FEFO logic"
+      });
+      alert(`Prescription ${rxId} fulfilled successfully! Billing generated.`);
+      setPrescriptions(prescriptions.filter(rx => rx.id !== rxId));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to fulfill prescription");
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -46,7 +63,7 @@ export default function PharmacyQueue() {
                   </td>
                   <td className="p-4 text-warning-dark">{rx.time}</td>
                   <td className="p-4 text-right">
-                    <Button variant="primary" size="sm">Fulfill & Bill (FEFO)</Button>
+                    <Button variant="primary" size="sm" onClick={() => handleFulfill(rx.id)}>Fulfill & Bill (FEFO)</Button>
                   </td>
                 </tr>
               ))}

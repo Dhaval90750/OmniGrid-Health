@@ -15,18 +15,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.CriticalCareViewModel
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OtScheduleScreen(
     onBack: () -> Unit,
-    onCaseClick: (String) -> Unit
+    onCaseClick: (String) -> Unit,
+    viewModel: CriticalCareViewModel = viewModel()
 ) {
-    val cases = listOf(
-        OtCase("09:00 AM", "OT 1", "Laparoscopic Cholecystectomy", "Dr. Sameer", "Rahul S."),
-        OtCase("10:30 AM", "OT 2", "Total Knee Replacement", "Dr. Anjali", "Suman L."),
-        OtCase("01:00 PM", "OT 1", "Appendectomy", "Dr. Sameer", "Amit K.")
-    )
+    val cases by viewModel.otSchedules.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchOtSchedule()
+    }
 
     Scaffold(
         topBar = {
@@ -40,23 +45,29 @@ fun OtScheduleScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(cases) { otCase ->
-                OtCaseCard(otCase) { onCaseClick(otCase.procedure) }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(cases) { otCase ->
+                    OtCaseCard(otCase) { onCaseClick(otCase.optString("procedure")) }
+                }
             }
         }
     }
 }
 
-data class OtCase(val time: String, val room: String, val procedure: String, val surgeon: String, val patient: String)
+// Removed OtCase class
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OtCaseCard(otCase: OtCase, onClick: () -> Unit) {
+fun OtCaseCard(otCase: JSONObject, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -65,8 +76,8 @@ fun OtCaseCard(otCase: OtCase, onClick: () -> Unit) {
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(otCase.time, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(otCase.room, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(otCase.optString("time", "08:00 AM"), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(otCase.optString("id", "OT 1"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
                 Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
             }
@@ -74,10 +85,10 @@ fun OtCaseCard(otCase: OtCase, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(otCase.procedure, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(otCase.optString("procedure", "Unknown"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Surgeon: ${otCase.surgeon}", fontSize = 14.sp)
-                Text("Patient: ${otCase.patient}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Surgeon: ${otCase.optString("surgeon", "Unknown")}", fontSize = 14.sp)
+                Text("Patient: ${otCase.optString("patient", "Unknown")}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

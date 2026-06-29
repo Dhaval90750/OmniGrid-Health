@@ -10,7 +10,8 @@ import { api } from "@/lib/api";
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: "", code: "", description: "" });
+  const [editingDept, setEditingDept] = useState<any>(null);
+  const [formData, setFormData] = useState({ code: "", name: "", description: "", isActive: true });
 
   useEffect(() => {
     fetchDepartments();
@@ -32,14 +33,31 @@ export default function DepartmentManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/departments", { ...formData, isActive: true });
-      alert("Department created!");
+      if (editingDept) {
+        await api.put(`/departments/${editingDept.id}`, formData);
+        alert("Department updated!");
+      } else {
+        await api.post("/departments", formData);
+        alert("Department created!");
+      }
       setShowModal(false);
       fetchDepartments();
     } catch (e) {
       console.error(e);
-      alert("Failed to create department");
+      alert("Failed to save department");
     }
+  };
+
+  const openAddModal = () => {
+    setEditingDept(null);
+    setFormData({ code: "", name: "", description: "", isActive: true });
+    setShowModal(true);
+  };
+
+  const openEditModal = (dept: any) => {
+    setEditingDept(dept);
+    setFormData({ code: dept.code, name: dept.name, description: dept.description, isActive: dept.isActive !== false });
+    setShowModal(true);
   };
 
   return (
@@ -49,7 +67,7 @@ export default function DepartmentManagement() {
           <h2 className="text-2xl font-semibold text-text-primary">Department Management</h2>
           <p className="text-text-secondary text-sm">Create and organize hospital clinical departments.</p>
         </div>
-        <Button onClick={() => setShowModal(true)}>Add Department</Button>
+        <Button onClick={openAddModal}>Add Department</Button>
       </div>
 
       <Card>
@@ -74,7 +92,7 @@ export default function DepartmentManagement() {
                     {dept.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="secondary" size="sm">Edit</Button>
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(dept)}>Edit</Button>
                   </td>
                 </tr>
               ))}
@@ -86,7 +104,7 @@ export default function DepartmentManagement() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-[500px]">
-            <CardHeader><CardTitle>Create Department</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{editingDept ? "Edit Department" : "Create Department"}</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-4">
                 <div>
@@ -110,15 +128,25 @@ export default function DepartmentManagement() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Description</label>
                   <textarea 
-                    className="w-full p-2 border border-border rounded-md text-sm outline-none focus:border-primary"
-                    rows={3}
+                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[80px]"
+                    placeholder="Brief description of the department..."
                     value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})} 
+                    onChange={e => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
-                <div className="flex justify-end gap-3 mt-6">
+                {editingDept && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.isActive}
+                      onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    />
+                    <label className="text-sm">Active</label>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-                  <Button type="submit">Save Department</Button>
+                  <Button type="submit" variant="primary">Save Department</Button>
                 </div>
               </form>
             </CardContent>

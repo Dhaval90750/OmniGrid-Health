@@ -17,8 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import com.medcore.mobile.data.SessionManager
 import com.medcore.mobile.viewmodels.DashboardViewModel
 
@@ -29,10 +32,48 @@ fun DashboardScreen(
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Patients", "Clinical", "Tasks", "Alerts", "More")
+
+    val safeNavigate: (String) -> Unit = { route ->
+        try {
+            onNavigate(route)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Module '$route' is under construction", Toast.LENGTH_SHORT).show()
+        }
+    }
     
     val statsText by viewModel.statsText.collectAsState()
+    
+    // Prevent accidental exit when pressing back on the Dashboard
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        showExitDialog = true
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Exit App") },
+            text = { Text("Are you sure you want to exit MedcoreHIS?") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showExitDialog = false
+                    // Let the app close by invoking activity finish
+                    (context as? android.app.Activity)?.finish()
+                }) {
+                    Text("Exit", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
     
     LaunchedEffect(Unit) {
         viewModel.loadMetrics()
@@ -78,7 +119,7 @@ fun DashboardScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { onNavigate("qr_scanner") },
+                onClick = { safeNavigate("qr_scanner") },
                 icon = { Icon(Icons.Default.Menu, "Scan") },
                 text = { Text("Scan QR") },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -141,11 +182,11 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             when (selectedTab) {
-                0 -> PatientsSection(onNavigate)
-                1 -> ClinicalSection(onNavigate, sessionManager.permissions)
-                2 -> TasksSection(onNavigate)
-                3 -> AlertsSection(onNavigate)
-                4 -> MoreSection(onNavigate)
+                0 -> PatientsSection(safeNavigate)
+                1 -> ClinicalSection(safeNavigate, sessionManager.permissions)
+                2 -> TasksSection(safeNavigate)
+                3 -> AlertsSection(safeNavigate)
+                4 -> MoreSection(safeNavigate)
             }
             
             Spacer(modifier = Modifier.height(80.dp))

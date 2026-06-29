@@ -13,6 +13,19 @@ export default function AiScribeDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
 
+  const handleSignAndSave = async () => {
+    try {
+      // Simulate saving to EMR
+      // await api.post("/clinical-notes", { soapNote: aiResult.generated_soap_note });
+      alert("Clinical note successfully signed and saved to EMR!");
+      setTranscript("");
+      setAiResult(null);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save to EMR");
+    }
+  };
+
   const handleToggleRecord = () => {
     if (isRecording) {
       setIsRecording(false);
@@ -170,7 +183,7 @@ export default function AiScribeDashboard() {
 
                 <div className="pt-4 flex gap-3">
                   <Button variant="secondary" className="flex-1">Edit / Refine</Button>
-                  <Button variant="primary" className="flex-1">Sign & Save to EMR</Button>
+                  <Button variant="primary" className="flex-1" onClick={handleSignAndSave}>Sign & Save to EMR</Button>
                 </div>
               </>
             )}

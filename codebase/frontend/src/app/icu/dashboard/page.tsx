@@ -3,8 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useRouter } from "next/navigation";
 
 export default function IcuDashboard() {
+  const router = useRouter();
   const beds = [
     { bed: "ICU-1", patient: "Alice Smith (UHID-1002)", apache: 18, vent: "SIMV (Volume)", map: 65, status: "Critical" },
     { bed: "ICU-2", patient: "John Doe (UHID-5401)", apache: 12, vent: "CPAP", map: 75, status: "Stable" },
@@ -53,7 +55,14 @@ export default function IcuDashboard() {
                     Vent: <span className="font-semibold ml-1">{b.vent}</span>
                   </div>
 
-                  <Button size="sm" variant="secondary" className="w-full mt-2">Open Flowsheet</Button>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="w-full mt-2"
+                    onClick={() => router.push('/icu/flowsheet')}
+                  >
+                    Open Flowsheet
+                  </Button>
                 </div>
               ) : (
                 <div className="h-32 flex items-center justify-center text-text-secondary">

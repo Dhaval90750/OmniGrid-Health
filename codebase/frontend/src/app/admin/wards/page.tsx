@@ -7,10 +7,14 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { api } from "@/lib/api";
 
+import { useRouter } from "next/navigation";
+
 export default function WardManagement() {
+  const router = useRouter();
   const [wards, setWards] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: "", code: "", category: "General" });
+  const [editingWard, setEditingWard] = useState<any>(null);
+  const [formData, setFormData] = useState({ code: "", name: "", category: "General", isActive: true });
 
   useEffect(() => {
     fetchWards();
@@ -32,14 +36,31 @@ export default function WardManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/wards", formData);
-      alert("Ward created!");
+      if (editingWard) {
+        await api.put(`/wards/${editingWard.id}`, formData);
+        alert("Ward updated!");
+      } else {
+        await api.post("/wards", formData);
+        alert("Ward created!");
+      }
       setShowModal(false);
       fetchWards();
     } catch (e) {
       console.error(e);
-      alert("Failed to create ward");
+      alert("Failed to save ward");
     }
+  };
+
+  const openAddModal = () => {
+    setEditingWard(null);
+    setFormData({ code: "", name: "", category: "General", isActive: true });
+    setShowModal(true);
+  };
+
+  const openEditModal = (ward: any) => {
+    setEditingWard(ward);
+    setFormData({ code: ward.code, name: ward.name, category: ward.category, isActive: ward.isActive !== false });
+    setShowModal(true);
   };
 
   return (
@@ -49,7 +70,7 @@ export default function WardManagement() {
           <h2 className="text-2xl font-semibold text-text-primary">Ward Configuration</h2>
           <p className="text-text-secondary text-sm">Manage hospital wards, categories, and bed mapping.</p>
         </div>
-        <Button onClick={() => setShowModal(true)}>Create Ward</Button>
+        <Button onClick={openAddModal}>Create Ward</Button>
       </div>
 
       <Card>
@@ -74,8 +95,8 @@ export default function WardManagement() {
                     {ward.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="default">Inactive</Badge>}
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="secondary" size="sm" className="mr-2">Manage Beds</Button>
-                    <Button variant="secondary" size="sm">Edit</Button>
+                    <Button variant="secondary" size="sm" className="mr-2" onClick={() => router.push('/operations/beds')}>Manage Beds</Button>
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(ward)}>Edit</Button>
                   </td>
                 </tr>
               ))}
@@ -87,7 +108,7 @@ export default function WardManagement() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-[500px]">
-            <CardHeader><CardTitle>Create New Ward</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{editingWard ? "Edit Ward" : "Create New Ward"}</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-4">
                 <div>
@@ -101,20 +122,30 @@ export default function WardManagement() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Category</label>
                   <select 
-                    className="w-full h-10 px-3 py-2 border border-border rounded-md text-sm outline-none focus:border-primary bg-white"
-                    value={formData.category} 
+                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={formData.category}
                     onChange={e => setFormData({...formData, category: e.target.value})}
                   >
-                    <option>General</option>
-                    <option>ICU</option>
-                    <option>Maternity</option>
-                    <option>Pediatric</option>
-                    <option>Isolation</option>
+                    <option value="General">General</option>
+                    <option value="ICU">ICU</option>
+                    <option value="Maternity">Maternity</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Emergency">Emergency</option>
                   </select>
                 </div>
-                <div className="flex justify-end gap-3 mt-6">
+                {editingWard && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.isActive}
+                      onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    />
+                    <label className="text-sm">Active</label>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-                  <Button type="submit">Save Ward</Button>
+                  <Button type="submit" variant="primary">Save Ward</Button>
                 </div>
               </form>
             </CardContent>

@@ -15,18 +15,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.CriticalCareViewModel
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IcuDashboardScreen(
     onBack: () -> Unit,
-    onPatientClick: (String) -> Unit
+    onPatientClick: (String) -> Unit,
+    viewModel: CriticalCareViewModel = viewModel()
 ) {
-    val icuPatients = listOf(
-        IcuPatient("Bed 1", "John Doe", "Ventilated", "High", Color(0xFFEF4444)),
-        IcuPatient("Bed 2", "Jane Smith", "Post-op", "Medium", Color(0xFFF59E0B)),
-        IcuPatient("Bed 3", "Alice Wong", "Stable", "Low", Color(0xFF10B981))
-    )
+    val icuPatients by viewModel.icuPatients.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchIcuDashboard()
+    }
 
     Scaffold(
         topBar = {
@@ -40,23 +45,36 @@ fun IcuDashboardScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(icuPatients) { patient ->
-                IcuPatientCard(patient) { onPatientClick(patient.name) }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(icuPatients) { patient ->
+                    IcuPatientCard(patient) { onPatientClick(patient.optString("name")) }
+                }
             }
         }
     }
 }
 
-data class IcuPatient(val bed: String, val name: String, val support: String, val acuity: String, val acuityColor: Color)
+// Removed IcuPatient class
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IcuPatientCard(patient: IcuPatient, onClick: () -> Unit) {
+fun IcuPatientCard(patient: JSONObject, onClick: () -> Unit) {
+    val apacheScore = patient.optInt("apacheScore", 0)
+    val acuity = if (apacheScore > 20) "High" else if (apacheScore > 10) "Medium" else "Low"
+    val acuityColor = when(acuity) {
+        "High" -> Color(0xFFEF4444)
+        "Medium" -> Color(0xFFF59E0B)
+        else -> Color(0xFF10B981)
+    }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -66,26 +84,26 @@ fun IcuPatientCard(patient: IcuPatient, onClick: () -> Unit) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(patient.bed, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    if (patient.acuity == "High") {
+                    Text(patient.optString("bed"), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    if (acuity == "High") {
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                     }
                 }
-                Text(patient.name, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Support: ${patient.support}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(patient.optString("name"), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                Text("APACHE II Score: $apacheScore", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             
             Column(horizontalAlignment = Alignment.End) {
                 Text("Acuity", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = patient.acuityColor.copy(alpha = 0.1f)
+                    color = acuityColor.copy(alpha = 0.1f)
                 ) {
                     Text(
-                        patient.acuity,
+                        acuity,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = patient.acuityColor,
+                        color = acuityColor,
                         fontWeight = FontWeight.Bold
                     )
                 }

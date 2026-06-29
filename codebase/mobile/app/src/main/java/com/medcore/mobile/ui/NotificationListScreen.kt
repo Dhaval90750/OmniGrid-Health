@@ -15,17 +15,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.AlertsViewModel
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationListScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: AlertsViewModel = viewModel()
 ) {
-    val notifications = listOf(
-        AppNotification("Critical Lab Value", "Patient John Doe (Bed 101) has Glucose 450 mg/dL", "2 mins ago", true),
-        AppNotification("New Task Assigned", "Deep clean OT 1 required", "15 mins ago", false),
-        AppNotification("Patient Admission", "New patient Amit K. admitted to ER", "1 hour ago", false)
-    )
+    val notifications by viewModel.notifications.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchNotifications()
+    }
 
     Scaffold(
         topBar = {
@@ -39,40 +44,47 @@ fun NotificationListScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(notifications) { notification ->
-                NotificationCard(notification)
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(notifications) { notification ->
+                    NotificationCard(notification)
+                }
             }
         }
     }
 }
 
-data class AppNotification(val title: String, val message: String, val time: String, val isCritical: Boolean)
+// Removed AppNotification class
 
 @Composable
-fun NotificationCard(notification: AppNotification) {
+fun NotificationCard(notification: JSONObject) {
+    val isCritical = notification.optString("type") == "Critical"
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isCritical) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isCritical) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
         )
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Default.Notifications, 
                 contentDescription = null, 
-                tint = if (notification.isCritical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                tint = if (isCritical) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(notification.title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(notification.message, fontSize = 14.sp)
-                Text(notification.time, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(notification.optString("title"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(notification.optString("message"), fontSize = 14.sp)
+                Text(notification.optString("time"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

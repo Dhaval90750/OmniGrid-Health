@@ -14,6 +14,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medcore.mobile.viewmodels.AuthViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +32,36 @@ fun LoginScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMsg by viewModel.error.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+
+    val context = LocalContext.current
+
+    val showBiometricPrompt = {
+        val fragmentActivity = context as? FragmentActivity
+        if (fragmentActivity != null) {
+            val executor = ContextCompat.getMainExecutor(fragmentActivity)
+            val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                    }
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        viewModel.biometricVerify()
+                    }
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                    }
+                })
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Biometric Login for MedCoreHIS")
+                .setSubtitle("Log in using your biometric credential")
+                .setNegativeButtonText("Cancel")
+                .build()
+
+            biometricPrompt.authenticate(promptInfo)
+        }
+    }
 
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
@@ -87,7 +121,7 @@ fun LoginScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
-                onClick = { viewModel.simulateBiometric() }, 
+                onClick = { showBiometricPrompt() }, 
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {

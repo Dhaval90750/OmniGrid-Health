@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useSearchParams, useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
-export default function WhoChecklist() {
+function ChecklistForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const bookingId = searchParams.get('bookingId');
+
   const [checked, setChecked] = useState({
     patientConfirmed: false,
     siteMarked: false,
@@ -22,7 +28,7 @@ export default function WhoChecklist() {
       <div className="flex justify-between items-center border-b border-border pb-4">
         <div>
           <h2 className="text-2xl font-semibold text-text-primary">WHO Safe Surgery Checklist</h2>
-          <p className="text-text-secondary text-sm">Booking: OTB-402 | Patient: Sarah Miller</p>
+          <p className="text-text-secondary text-sm">Booking ID: {bookingId || "Unknown"}</p>
         </div>
       </div>
 
@@ -67,11 +73,44 @@ export default function WhoChecklist() {
             </label>
           </div>
 
-          <div className="flex justify-end pt-4 mt-4">
-            <Button variant={allChecked ? "primary" : "secondary"} disabled={!allChecked}>Complete Sign-In</Button>
+          <div className="flex justify-end pt-4 mt-4 gap-2">
+            <Button variant="secondary" onClick={() => router.back()}>Cancel</Button>
+            <Button 
+              variant={allChecked ? "primary" : "secondary"} 
+              disabled={!allChecked}
+              onClick={async () => {
+                if (!bookingId) {
+                  alert("No booking ID found");
+                  return;
+                }
+                try {
+                  await api.post("/ot/records", {
+                    booking: { id: bookingId },
+                    signInCompleted: true,
+                    timeOutCompleted: false,
+                    signOutCompleted: false
+                  });
+                  alert("Sign-In checklist completed!");
+                  router.push("/ot/schedule");
+                } catch (e) {
+                  console.error(e);
+                  alert("Failed to save checklist record");
+                }
+              }}
+            >
+              Complete Sign-In
+            </Button>
           </div>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function WhoChecklist() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading checklist...</div>}>
+      <ChecklistForm />
+    </Suspense>
   );
 }

@@ -61,10 +61,28 @@ export default function PatientProfile() {
       link.setAttribute("download", `wristband_${id}.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.parentNode?.removeChild(link);
     } catch (error) {
-      console.error("Failed to download wristband", error);
-      alert("Error downloading wristband PDF.");
+      console.error("Failed to download PDF", error);
+    }
+  };
+
+  const startVisit = async () => {
+    try {
+      const docRes = await api.get("/staff?role=DOCTOR");
+      const doctorId = docRes.data.length > 0 ? docRes.data[0].id : null;
+      if (!doctorId) {
+        alert("No doctor found to start visit");
+        return;
+      }
+      const response = await api.post("/visits", {
+        patientId: id,
+        doctorId: doctorId,
+        tokenNumber: 0,
+      });
+      router.push(`/doctor/visit/${response.data.id}`);
+    } catch (error) {
+      console.error("Failed to start visit", error);
+      alert("Failed to start visit.");
     }
   };
 
@@ -100,8 +118,8 @@ export default function PatientProfile() {
           <h2 className="text-2xl font-semibold text-text-primary">Patient Profile</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary">Admit Patient</Button>
-          <Button variant="primary">Start OPD Visit</Button>
+          <Button variant="secondary" onClick={() => router.push(`/admissions/new?patientId=${id}`)}>Admit Patient</Button>
+          <Button variant="primary" onClick={startVisit}>Start OPD Visit</Button>
         </div>
       </div>
 

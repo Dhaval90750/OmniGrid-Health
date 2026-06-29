@@ -1,7 +1,8 @@
 package com.medcore.mobile
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.widget.Toast
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var sessionManager: SessionManager
@@ -54,8 +55,10 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
 
     NavHost(navController = navController, startDestination = NavRoutes.Login.route) {
         composable(NavRoutes.Login.route) {
+            val context = androidx.compose.ui.platform.LocalContext.current
             LoginScreen(
                 onLoginSuccess = {
+                    Toast.makeText(context, "Logged in successfully", Toast.LENGTH_SHORT).show()
                     navController.navigate(NavRoutes.Dashboard.route) {
                         popUpTo(NavRoutes.Login.route) { inclusive = true }
                     }
@@ -114,10 +117,14 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
         }
 
         composable(NavRoutes.AdmitPatient.route) {
+            val context = androidx.compose.ui.platform.LocalContext.current
             AdmitPatientScreen(
                 patientName = activePatient?.optString("fullName") ?: "Unknown",
                 onBack = { navController.popBackStack() },
-                onAdmitSuccess = { navController.popBackStack() }
+                onAdmitSuccess = { 
+                    Toast.makeText(context, "Patient admitted successfully", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack() 
+                }
             )
         }
 
@@ -145,10 +152,14 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
         }
 
         composable(NavRoutes.DischargeInitiation.route) {
+            val context = androidx.compose.ui.platform.LocalContext.current
             DischargeInitiationScreen(
                 patientName = activePatient?.optString("fullName") ?: "Unknown",
                 onBack = { navController.popBackStack() },
-                onInitiateSuccess = { navController.popBackStack() }
+                onInitiateSuccess = { 
+                    Toast.makeText(context, "Discharge initiated successfully", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack() 
+                }
             )
         }
 
@@ -174,10 +185,14 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
         }
 
         composable(NavRoutes.ErTriage.route) {
+            val context = androidx.compose.ui.platform.LocalContext.current
             ErTriageScreen(
                 patientName = activePatient?.optString("fullName") ?: "Unknown",
                 onBack = { navController.popBackStack() },
-                onTriageSuccess = { navController.popBackStack() }
+                onTriageSuccess = { 
+                    Toast.makeText(context, "Triage completed successfully", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack() 
+                }
             )
         }
 

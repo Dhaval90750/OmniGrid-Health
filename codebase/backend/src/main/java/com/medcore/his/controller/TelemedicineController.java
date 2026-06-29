@@ -56,4 +56,12 @@ public class TelemedicineController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/rooms/{roomId}/signal")
+    public ResponseEntity<?> signalRoom(@PathVariable String roomId, @RequestBody Map<String, Object> signalPayload) {
+        // In a real WebRTC architecture, this would publish the signal to a Redis Pub/Sub channel 
+        // or a WebSocket topic so the other peer receives the ICE candidates or SDP offer/answer.
+        // For this mock implementation, we acknowledge receipt of the signal.
+        return ResponseEntity.ok(Map.of("status", "Signal delivered", "roomId", roomId, "timestamp", System.currentTimeMillis()));
+    }
 }

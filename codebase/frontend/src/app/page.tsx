@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { api } from "@/lib/api";
 
 export default function Home() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -58,8 +60,8 @@ export default function Home() {
           <p className="text-text-secondary text-sm">Here is what&apos;s happening today in OmniGrid Health.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary">View Schedule</Button>
-          <Button variant="primary">New Patient Registration</Button>
+          <Button variant="secondary" onClick={() => router.push('/staff')}>View Schedule</Button>
+          <Button variant="primary" onClick={() => router.push('/patients/new')}>New Patient Registration</Button>
         </div>
       </div>
 

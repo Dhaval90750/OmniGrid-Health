@@ -17,19 +17,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.IpdViewModel
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdmitPatientScreen(
     patientName: String,
     onBack: () -> Unit,
-    onAdmitSuccess: () -> Unit
+    onAdmitSuccess: () -> Unit,
+    viewModel: IpdViewModel = viewModel()
 ) {
     var selectedWard by remember { mutableStateOf("General Ward") }
-    var selectedBed by remember { mutableStateOf("") }
+    var selectedBed by remember { mutableStateOf<JSONObject?>(null) }
     
     val wards = listOf("General Ward", "Private Wing", "ICU", "ER Observation")
-    val beds = (1..20).map { "Bed $it" }
+    val beds by viewModel.beds.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(selectedWard) {
+        viewModel.fetchBedMatrix(selectedWard)
+    }
 
     Scaffold(
         topBar = {
@@ -80,7 +89,8 @@ fun AdmitPatientScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(beds) { bed ->
-                    val isAvailable = (1..100).random() > 30
+                    val isAvailable = bed.optBoolean("isAvailable", false)
+                    val label = bed.optString("label")
                     Card(
                         modifier = Modifier
                             .height(60.dp)
@@ -96,7 +106,7 @@ fun AdmitPatientScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Text(
-                                bed,
+                                label,
                                 fontSize = 12.sp,
                                 color = if (selectedBed == bed) Color.White else if (!isAvailable) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                             )
@@ -106,12 +116,19 @@ fun AdmitPatientScreen(
             }
             
             Button(
-                onClick = onAdmitSuccess,
+                onClick = {
+                    selectedBed?.let { bed ->
+                        viewModel.admitPatient("pat_123", selectedWard, bed.optString("id")) {
+                            onAdmitSuccess()
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 16.dp),
-                enabled = selectedBed.isNotEmpty(),
+                enabled = selectedBed != null && !isLoading,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Confirm Admission")
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                else Text("Confirm Admission")
             }
         }
     }

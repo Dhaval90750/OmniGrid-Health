@@ -39,6 +39,17 @@ public class StaffService {
         return staffProfileRepository.save(staff);
     }
 
+    @Transactional
+    public StaffProfile updateStaff(java.util.UUID id, StaffProfile updatedStaff) {
+        StaffProfile staff = staffProfileRepository.findById(id).orElseThrow(() -> new RuntimeException("Staff not found"));
+        staff.setFullName(updatedStaff.getFullName());
+        staff.setRole(updatedStaff.getRole());
+        staff.setDepartment(updatedStaff.getDepartment());
+        staff.setContactNumber(updatedStaff.getContactNumber());
+        staff.setActive(updatedStaff.isActive());
+        return staffProfileRepository.save(staff);
+    }
+
     public List<DutyRoster> getAllRosters() {
         return dutyRosterRepository.findAll();
     }

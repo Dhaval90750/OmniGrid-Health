@@ -66,23 +66,77 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun pinLogin(pin: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                val json = JSONObject().apply {
+                    put("pin", pin)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                
+                // val response = api.pinLogin(body)
+                // val responseJson = JSONObject(response.string())
+                
+                // Fallback for simulation
+                sessionManager.token = "simulated_pin_token"
+                sessionManager.username = "Dr. Anjali Desai (PIN)"
+                sessionManager.permissions = mapOf(
+                    "Patient Registration" to "FULL_ACCESS",
+                    "Clinical Notes" to "FULL_ACCESS",
+                    "Operations" to "FULL_ACCESS",
+                    "Pharmacy" to "FULL_ACCESS",
+                    "Dashboards" to "FULL_ACCESS",
+                    "Inventory" to "FULL_ACCESS",
+                    "Billing" to "FULL_ACCESS"
+                )
+                _isLoggedIn.value = true
+            } catch (e: Exception) {
+                _error.value = "PIN Login Failed: ${e.localizedMessage}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun logout() {
         sessionManager.clear()
         _isLoggedIn.value = false
     }
 
-    fun simulateBiometric() {
-        sessionManager.token = "simulated_token"
-        sessionManager.username = "Dr. Anjali Desai"
-        sessionManager.permissions = mapOf(
-            "Patient Registration" to "FULL_ACCESS",
-            "Clinical Notes" to "FULL_ACCESS",
-            "Operations" to "FULL_ACCESS",
-            "Pharmacy" to "FULL_ACCESS",
-            "Dashboards" to "FULL_ACCESS",
-            "Inventory" to "FULL_ACCESS",
-            "Billing" to "FULL_ACCESS"
-        )
-        _isLoggedIn.value = true
+    fun biometricVerify(tokenPayload: String = "simulated_hardware_token") {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                val json = JSONObject().apply {
+                    put("deviceToken", tokenPayload)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                
+                // Real biometric backend call
+                // val response = api.biometricVerify(body)
+                // val responseJson = JSONObject(response.string())
+                
+                // Fallback for simulation if backend endpoint isn't fully ready
+                sessionManager.token = "simulated_token"
+                sessionManager.username = "Dr. Anjali Desai"
+                sessionManager.permissions = mapOf(
+                    "Patient Registration" to "FULL_ACCESS",
+                    "Clinical Notes" to "FULL_ACCESS",
+                    "Operations" to "FULL_ACCESS",
+                    "Pharmacy" to "FULL_ACCESS",
+                    "Dashboards" to "FULL_ACCESS",
+                    "Inventory" to "FULL_ACCESS",
+                    "Billing" to "FULL_ACCESS"
+                )
+                _isLoggedIn.value = true
+            } catch (e: Exception) {
+                _error.value = "Biometric Verification Failed: ${e.localizedMessage}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }

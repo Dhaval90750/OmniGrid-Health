@@ -30,4 +30,17 @@ public class WardController {
     public ResponseEntity<List<Ward>> getAllWards() {
         return ResponseEntity.ok(wardRepository.findAll());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Ward> updateWard(@PathVariable java.util.UUID id, @RequestBody Ward updatedWard) {
+        return wardRepository.findById(id)
+            .map(ward -> {
+                ward.setCode(updatedWard.getCode());
+                ward.setName(updatedWard.getName());
+                ward.setCategory(updatedWard.getCategory());
+                ward.setActive(updatedWard.isActive());
+                return ResponseEntity.ok(wardRepository.save(ward));
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
 }

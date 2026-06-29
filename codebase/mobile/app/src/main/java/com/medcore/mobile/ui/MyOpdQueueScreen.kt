@@ -17,18 +17,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.OpdViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyOpdQueueScreen(
     onBack: () -> Unit,
-    onPatientClick: (JSONObject) -> Unit
+    onPatientClick: (JSONObject) -> Unit,
+    viewModel: OpdViewModel = viewModel()
 ) {
-    val mockQueue = listOf(
-        JSONObject().apply { put("token", 101); put("fullName", "Rahul Sharma"); put("age", 45); put("gender", "M"); put("status", "Waiting") },
-        JSONObject().apply { put("token", 102); put("fullName", "Suman Lata"); put("age", 32); put("gender", "F"); put("status", "In-Progress") },
-        JSONObject().apply { put("token", 103); put("fullName", "Amit Kumar"); put("age", 28); put("gender", "M"); put("status", "Waiting") }
-    )
+    val queue by viewModel.opdQueue.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchOpdQueue("doc_123") // Replace with actual doctor ID
+    }
 
     Scaffold(
         topBar = {
@@ -42,15 +47,25 @@ fun MyOpdQueueScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(mockQueue) { patient ->
-                OpdQueueItem(patient) { onPatientClick(patient) }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (error != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(error!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(queue) { patient ->
+                    OpdQueueItem(patient) { onPatientClick(patient) }
+                }
             }
         }
     }

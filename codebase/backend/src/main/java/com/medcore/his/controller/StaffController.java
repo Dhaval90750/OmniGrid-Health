@@ -42,6 +42,11 @@ public class StaffController {
         return new ResponseEntity<>(staffService.createStaff(staff), HttpStatus.CREATED);
     }
 
+    @PutMapping("/profiles/{id}")
+    public ResponseEntity<StaffProfile> updateStaff(@PathVariable java.util.UUID id, @RequestBody StaffProfile updatedStaff) {
+        return ResponseEntity.ok(staffService.updateStaff(id, updatedStaff));
+    }
+
     @GetMapping("/doctors")
     public ResponseEntity<List<StaffProfile>> getDoctors() {
         return ResponseEntity.ok(staffProfileRepository.findByRoleIn(List.of("Consultant", "Resident")));

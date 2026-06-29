@@ -12,19 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.medcore.mobile.viewmodels.AlertsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DischargeInitiationScreen(
     patientName: String,
     onBack: () -> Unit,
-    onInitiateSuccess: () -> Unit
+    onInitiateSuccess: () -> Unit,
+    viewModel: AlertsViewModel = viewModel()
 ) {
     var diagnosis by remember { mutableStateOf("") }
     var condition by remember { mutableStateOf("Stable") }
     var instructions by remember { mutableStateOf("") }
     
     val conditions = listOf("Stable", "Improved", "Guarded", "Against Medical Advice")
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -83,12 +87,18 @@ fun DischargeInitiationScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             Button(
-                onClick = onInitiateSuccess,
+                onClick = {
+                    viewModel.initiateDischarge("pat_123", diagnosis, instructions) {
+                        onInitiateSuccess()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                enabled = !isLoading
             ) {
-                Text("Initiate Discharge Process")
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                else Text("Initiate Discharge Process")
             }
         }
     }
