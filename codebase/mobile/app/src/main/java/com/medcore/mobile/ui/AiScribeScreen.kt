@@ -56,6 +56,7 @@ fun AiScribeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(20.dp)
     ) {
         Row(
@@ -64,35 +65,37 @@ fun AiScribeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
             }
-            Text("AI Voice Scribe Portal", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("AI Voice Scribe Portal", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         }
         
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F3F4))
+                .height(200.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(20.dp)
             ) {
                 Text(
-                    text = if (transcript.isEmpty()) "Tap simulate to dictate clinical notes..." else transcript,
-                    fontSize = 14.sp,
-                    color = if (transcript.isEmpty()) Color.Gray else Color.Black
+                    text = if (transcript.isEmpty()) "Tap to record clinical dictation..." else transcript,
+                    fontSize = 16.sp,
+                    color = if (transcript.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(
                 onClick = {
                     if (hasAudioPermission) {
@@ -103,10 +106,11 @@ fun AiScribeScreen(
                         launcher.launch(Manifest.permission.RECORD_AUDIO)
                     }
                 },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335))
+                modifier = Modifier.weight(1f).height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("🎙 Record Voice")
+                Text("🎙 Record", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             
             Button(
@@ -129,59 +133,68 @@ fun AiScribeScreen(
                     }
                 },
                 enabled = transcript.isNotEmpty() && !isProcessing,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8))
+                modifier = Modifier.weight(1f).height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text(if (isProcessing) "Processing..." else "Process SOAP")
+                if (isProcessing) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Process SOAP", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
         if (errorMsg.isNotEmpty()) {
-            Text(errorMsg, color = Color.Red, fontSize = 14.sp)
+            Text(errorMsg, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
         if (soapResult != null) {
-            Text("AI Extracted SOAP Note Summary", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Structured Clinical Note", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(16.dp))
             
             val soapObj = soapResult!!.optJSONObject("generated_soap_note")
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (soapObj != null) {
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Subjective", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Subjective", "N/A"), fontSize = 13.sp)
+                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+                            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                                Text("Subjective", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(soapObj.optString("Subjective", "N/A"), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Objective", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Objective", "N/A"), fontSize = 13.sp)
+                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+                            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                                Text("Objective", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(soapObj.optString("Objective", "N/A"), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Assessment", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Assessment", "N/A"), fontSize = 13.sp)
+                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+                            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                                Text("Assessment", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(soapObj.optString("Assessment", "N/A"), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Plan", fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8))
-                                Text(soapObj.optString("Plan", "N/A"), fontSize = 13.sp)
+                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+                            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                                Text("Plan", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(soapObj.optString("Plan", "N/A"), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }

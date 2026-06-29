@@ -24,6 +24,10 @@ fun TelemedicineScreen(
     onBack: () -> Unit
 ) {
     var inCall by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var activeRoomId by remember { mutableStateOf<String?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -31,9 +35,9 @@ fun TelemedicineScreen(
                 TopAppBar(
                     title = { Text("Telemedicine", fontWeight = FontWeight.Bold) },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF8F9FA),
-                        titleContentColor = Color(0xFF263238),
-                        navigationIconContentColor = Color(0xFF263238)
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                     ),
                     navigationIcon = {
                         IconButton(onClick = onBack) {
@@ -43,7 +47,7 @@ fun TelemedicineScreen(
                 )
             }
         },
-        containerColor = if (inCall) Color.Black else Color(0xFFF8F9FA)
+        containerColor = if (inCall) Color.Black else MaterialTheme.colorScheme.background
     ) { padding ->
         if (!inCall) {
             Column(
@@ -54,19 +58,49 @@ fun TelemedicineScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.Call, contentDescription = "Call", tint = Color(0xFFE91E63), modifier = Modifier.size(80.dp))
+                Icon(Icons.Default.Call, contentDescription = "Call", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(80.dp))
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Upcoming Consultation", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+                Text("Upcoming Consultation", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Patient: David Chen (UHID: 8842)", fontSize = 16.sp, color = Color(0xFF78909C))
+                Text("Patient: David Chen (UHID: 8842)", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(48.dp))
-                Button(
-                    onClick = { inCall = true },
-                    modifier = Modifier.fillMaxWidth().height(60.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
-                ) {
-                    Text("Join Video Call", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                
+                if (errorMsg.isNotEmpty()) {
+                    Text(errorMsg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                
+                if (isLoading) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                } else {
+                    Button(
+                        onClick = {
+                            isLoading = true
+                            errorMsg = ""
+                            scope.launch {
+                                try {
+                                    val body = org.json.JSONObject().apply {
+                                        put("patientName", "David Chen")
+                                        put("doctorName", "Current Doctor")
+                                    }.toString()
+                                    
+                                    val res = com.medcore.mobile.NetworkClient.post("$apiUrl/telemedicine/rooms", body, token)
+                                    val json = org.json.JSONObject(res)
+                                    activeRoomId = json.getString("roomId")
+                                    inCall = true
+                                } catch (e: Exception) {
+                                    errorMsg = "Failed to connect to telemedicine server: ${e.message}"
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(60.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Start Video Session", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         } else {
@@ -80,7 +114,12 @@ fun TelemedicineScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Receiving Patient Video Stream...", color = Color.Gray)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Color.Gray)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Waiting for patient to join...", color = Color.LightGray)
+                        Text("Room ID: ${activeRoomId?.take(8)}...", color = Color.Gray, fontSize = 12.sp)
+                    }
                 }
                 
                 // PiP Video (Doctor)
@@ -105,8 +144,21 @@ fun TelemedicineScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(
-                        onClick = { inCall = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    activeRoomId?.let { id ->
+                                        val body = org.json.JSONObject().apply { put("status", "COMPLETED") }.toString()
+                                        com.medcore.mobile.NetworkClient.post("$apiUrl/telemedicine/rooms/$id/status", body, token) // Using post for PUT mock if NetworkClient doesn't have PUT
+                                    }
+                                } catch (e: Exception) {
+                                    // Ignore errors on end
+                                }
+                                inCall = false
+                                activeRoomId = null
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier.size(64.dp),
                         shape = RoundedCornerShape(32.dp)
                     ) {
