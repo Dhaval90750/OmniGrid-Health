@@ -22,16 +22,17 @@ public class AnalyticsService {
     private final InvoiceRepository invoiceRepository;
     private final AdmissionRepository admissionRepository;
     private final RiskAlertService riskAlertService;
+    private final com.medcore.his.repository.VisitRepository visitRepository;
 
     @Autowired
-    public AnalyticsService(InvoiceRepository invoiceRepository, AdmissionRepository admissionRepository, RiskAlertService riskAlertService) {
+    public AnalyticsService(InvoiceRepository invoiceRepository, AdmissionRepository admissionRepository, RiskAlertService riskAlertService, com.medcore.his.repository.VisitRepository visitRepository) {
         this.invoiceRepository = invoiceRepository;
         this.admissionRepository = admissionRepository;
         this.riskAlertService = riskAlertService;
+        this.visitRepository = visitRepository;
     }
 
     public Map<String, Object> getExecutiveOverview() {
-        // ... (unchanged)
         Map<String, Object> executive = new HashMap<>();
         
         // Revenue Today
@@ -51,8 +52,23 @@ public class AnalyticsService {
         double occupancy = (activeAdmissions / 200.0) * 100.0;
         executive.put("bed_occupancy_percent", Math.round(occupancy * 10.0) / 10.0);
         
-        // ER Waiting Time (Mocked for now as we don't have ER queue table)
-        executive.put("er_waiting_time_mins", 14);
+        // Real ER Waiting Time calculation
+        List<com.medcore.his.domain.clinical.Visit> erVisits = visitRepository.findAllActiveQueuesByDate(LocalDateTime.now());
+        long totalWaitMins = 0;
+        long erCount = 0;
+        
+        for (com.medcore.his.domain.clinical.Visit v : erVisits) {
+            if (v.getDepartment() != null && v.getDepartment().getName().toLowerCase().contains("emergency")) {
+                if ("WAITING".equals(v.getStatus())) {
+                    long wait = java.time.Duration.between(v.getCreatedAt(), LocalDateTime.now()).toMinutes();
+                    totalWaitMins += wait;
+                    erCount++;
+                }
+            }
+        }
+        
+        long avgWait = erCount > 0 ? (totalWaitMins / erCount) : 0;
+        executive.put("er_waiting_time_mins", avgWait);
         
         return executive;
     }

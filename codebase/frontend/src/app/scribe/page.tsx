@@ -13,23 +13,49 @@ export default function AiScribeDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
 
-  const DUMMY_TRANSCRIPT = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever.";
-
-  const handleSimulateRecord = () => {
-    setIsRecording(true);
-    setTranscript("");
-    setAiResult(null);
+  const handleToggleRecord = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
     
-    // Simulate typing out the transcript via Voice
-    let i = 0;
-    const interval = setInterval(() => {
-      setTranscript(DUMMY_TRANSCRIPT.substring(0, i));
-      i += 3;
-      if (i > DUMMY_TRANSCRIPT.length) {
-        clearInterval(interval);
-        setIsRecording(false);
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome.");
+      return;
+    }
+    
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setTranscript("");
+      setAiResult(null);
+    };
+    
+    recognition.onresult = (event: any) => {
+      let currentTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        currentTranscript += event.results[i][0].transcript;
       }
-    }, 50);
+      setTranscript(currentTranscript);
+    };
+    
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsRecording(false);
+    };
+    
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+    
+    recognition.start();
   };
 
   const handleExtractEntities = async () => {
@@ -48,8 +74,8 @@ export default function AiScribeDashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">AI Clinical Scribe (Phase 4 MVP)</h1>
-          <p className="text-text-secondary text-sm">Powered by mock Whisper V3 and Medical NER</p>
+          <h1 className="text-2xl font-bold text-text-primary">AI Clinical Scribe</h1>
+          <p className="text-text-secondary text-sm">Powered by Whisper and Medical NER</p>
         </div>
       </div>
 
@@ -72,10 +98,9 @@ export default function AiScribeDashboard() {
               <Button 
                 variant={isRecording ? "secondary" : "danger"} 
                 className="flex-1"
-                onClick={handleSimulateRecord}
-                disabled={isRecording}
+                onClick={handleToggleRecord}
               >
-                {isRecording ? "Listening..." : "🎙 Simulate Voice Recording"}
+                {isRecording ? "Stop Recording" : "🎙 Start Voice Recording"}
               </Button>
               <Button 
                 variant="primary" 

@@ -35,12 +35,12 @@ public class DatabaseSeeder {
             System.out.println("Checking Role Seeding...");
             
             // Seed Standard Permissions
-            String[] modules = {"Patient Registration", "Clinical Notes", "Operations", "Pharmacy", "Dashboards", "Inventory", "Billing"};
+            String[] modules = {"Patient Registration", "Clinical Notes", "Operations", "Pharmacy", "Dashboards", "Inventory", "Billing", "Admission/ADT", "Lab Orders/Results", "Radiology", "System Config"};
             for (String mod : modules) {
                 com.medcore.his.domain.auth.Permission p = permissionRepo.findByModuleAndAccessLevel(mod, "FULL_ACCESS").orElse(null);
                 if (p == null) {
                     p = new com.medcore.his.domain.auth.Permission();
-                    p.setCode(mod.toUpperCase().replace(" ", "_") + "_FULL_ACCESS");
+                    p.setCode(mod.toUpperCase().replace(" ", "_").replace("/", "_") + "_FULL_ACCESS");
                     p.setModule(mod);
                     p.setAccessLevel("FULL_ACCESS");
                     p.setDescription("Full access to " + mod);
@@ -48,39 +48,59 @@ public class DatabaseSeeder {
                 }
             }
 
-            Role adminRole = roleRepo.findByName("ROLE_ADMIN").orElseGet(() -> {
-                Role role = new Role();
-                role.setName("ROLE_ADMIN");
-                role.setDescription("Administrator with full access");
-                return roleRepo.save(role);
-            });
+            // Create Helper Function for Roles
+            java.util.function.Function<String, Role> getOrCreateRole = (roleName) -> {
+                return roleRepo.findByName(roleName).orElseGet(() -> {
+                    Role role = new Role();
+                    role.setName(roleName);
+                    role.setDescription(roleName + " access");
+                    return roleRepo.save(role);
+                });
+            };
 
-            // Assign all permissions to ADMIN
+            Role adminRole = getOrCreateRole.apply("ROLE_ADMIN");
             adminRole.getPermissions().addAll(permissionRepo.findAll());
             roleRepo.save(adminRole);
+            
+            Role doctorRole = getOrCreateRole.apply("ROLE_DOCTOR");
+            Role nurseRole = getOrCreateRole.apply("ROLE_NURSE");
+            Role pharmacistRole = getOrCreateRole.apply("ROLE_PHARMACIST");
+            Role labRole = getOrCreateRole.apply("ROLE_LAB_TECH");
+            Role radRole = getOrCreateRole.apply("ROLE_RADIOLOGIST");
+            Role billerRole = getOrCreateRole.apply("ROLE_BILLER");
+            Role invRole = getOrCreateRole.apply("ROLE_INVENTORY_MANAGER");
+            Role receptionistRole = getOrCreateRole.apply("ROLE_RECEPTIONIST");
 
             System.out.println("Checking User Seeding...");
-            String adminUsername = System.getenv("MEDCORE_ADMIN_USERNAME");
-            if (adminUsername == null || adminUsername.isEmpty()) {
-                adminUsername = "admin";
-            }
-            String adminPassword = System.getenv("MEDCORE_ADMIN_PASSWORD");
-            if (adminPassword == null || adminPassword.isEmpty()) {
-                adminPassword = "admin123";
-            }
-            User admin = userRepo.findByUsername(adminUsername).orElse(null);
-            if (admin == null) {
-                admin = new User();
-                admin.setUsername(adminUsername);
-                admin.getRoles().add(adminRole);
-            }
-            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
-            if (admin.getFirstName() == null) admin.setFirstName("System");
-            if (admin.getLastName() == null) admin.setLastName("Administrator");
-            if (admin.getEmail() == null) admin.setEmail("admin@omnigrid.health");
             
-            userRepo.save(admin);
-            System.out.println("Seeded/Updated Admin: " + adminUsername + " / " + adminPassword);
+            // Helper Function for Users
+            java.util.function.BiConsumer<String, Role> seedUser = (username, role) -> {
+                User u = userRepo.findByUsername(username).orElse(null);
+                if (u == null) {
+                    u = new User();
+                    u.setUsername(username);
+                    u.setPasswordHash(passwordEncoder.encode(username + "123"));
+                    u.setFirstName(username.substring(0, 1).toUpperCase() + username.substring(1));
+                    u.setLastName("User");
+                    u.setEmail(username + "@medcore.health");
+                    u.getRoles().add(role);
+                    userRepo.save(u);
+                }
+            };
+
+            String adminUsername = System.getenv("MEDCORE_ADMIN_USERNAME");
+            if (adminUsername == null || adminUsername.isEmpty()) adminUsername = "admin";
+            seedUser.accept(adminUsername, adminRole);
+            seedUser.accept("doctor1", doctorRole);
+            seedUser.accept("nurse1", nurseRole);
+            seedUser.accept("pharmacist1", pharmacistRole);
+            seedUser.accept("labtech1", labRole);
+            seedUser.accept("rad1", radRole);
+            seedUser.accept("biller1", billerRole);
+            seedUser.accept("inv1", invRole);
+            seedUser.accept("receptionist1", receptionistRole);
+
+            System.out.println("Seeded all standard role accounts.");
             if (staffRepo.count() == 0) {
                 System.out.println("Seeding StaffProfiles...");
                 

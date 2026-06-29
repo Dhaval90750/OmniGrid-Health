@@ -25,22 +25,25 @@ export const useAuthStore = create<AuthState>()(
       login: (user, token) => {
         // Also store token in localStorage for Axios interceptor
         if (typeof window !== "undefined") {
-          localStorage.setItem("omnigrid_token", token);
+          localStorage.setItem("medcore_token", token);
           // Set cookie for middleware
-          document.cookie = `omnigrid_token=${token}; path=/; max-age=86400; SameSite=Strict`;
+          document.cookie = `medcore_token=${token}; path=/; max-age=86400; SameSite=Strict`;
+          // Set roles cookie for middleware RBAC
+          document.cookie = `medcore_roles=${user.roles.join(',')}; path=/; max-age=86400; SameSite=Strict`;
         }
         set({ user, token, isAuthenticated: true });
       },
       logout: () => {
         if (typeof window !== "undefined") {
-          localStorage.removeItem("omnigrid_token");
-          document.cookie = "omnigrid_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+          localStorage.removeItem("medcore_token");
+          document.cookie = "medcore_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+          document.cookie = "medcore_roles=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
         }
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),
     {
-      name: 'omnigrid-auth-storage',
+      name: 'medcore-auth-storage',
     }
   )
 );

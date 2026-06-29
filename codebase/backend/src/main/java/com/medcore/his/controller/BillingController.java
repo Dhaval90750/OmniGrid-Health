@@ -27,6 +27,16 @@ public class BillingController {
         return ResponseEntity.ok(billingService.getPendingInvoices());
     }
 
+    @GetMapping("/ipd/pending")
+    public ResponseEntity<List<com.medcore.his.domain.billing.IpdBill>> getPendingIpdBills() {
+        return ResponseEntity.ok(billingService.getPendingIpdBills());
+    }
+
+    @GetMapping("/claims")
+    public ResponseEntity<List<com.medcore.his.domain.billing.InsuranceClaim>> getAllClaims() {
+        return ResponseEntity.ok(billingService.getAllClaims());
+    }
+
     @PostMapping("/invoices/{id}/pay")
     public ResponseEntity<Payment> collectPayment(@PathVariable UUID id, @RequestBody Payment payment) {
         Payment savedPayment = billingService.recordPayment(id, payment);

@@ -22,6 +22,23 @@ fun IndentApprovalScreen(
     token: String,
     onBack: () -> Unit
 ) {
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var indents by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        isLoading = true
+        try {
+            val res = com.medcore.mobile.NetworkClient.get("$apiUrl/inventory/indents", token)
+            indents = org.json.JSONArray(res)
+        } catch (e: Exception) {
+            errorMsg = "Failed to load indents: ${e.message}"
+        } finally {
+            isLoading = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -40,29 +57,48 @@ fun IndentApprovalScreen(
             item {
                 Text("High Priority Approvals", style = MaterialTheme.typography.titleLarge)
             }
-            items(2) { index ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Warning, contentDescription = "Critical", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Surgical Gloves (Box of 100)", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Quantity: 50 | Dept: Surgery", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Total: $1,250.00", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                        }
-                        IconButton(onClick = { /* Approve */ }) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Approve", tint = Color(0xFF10B981))
+            if (indents != null) {
+                items(indents!!.length()) { index ->
+                    val indent = indents!!.getJSONObject(index)
+                    val indentId = indent.optString("id", "")
+                    val isApproved = indent.optString("status", "") == "Approved"
+                    if (!isApproved) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Warning, contentDescription = "Critical", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(32.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Indent: ${indent.optString("indentNumber", "Unknown")}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Requested By: ${indent.optString("requestedBy", "N/A")}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                IconButton(onClick = {
+                                    scope.kotlinx.coroutines.launch {
+                                        try {
+                                            com.medcore.mobile.NetworkClient.post("$apiUrl/inventory/indents/$indentId/approve?level=L1", "", token)
+                                            // Refresh logic would ideally go here
+                                        } catch (e: Exception) {
+                                            // Handle error
+                                        }
+                                    }
+                                }) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = "Approve", tint = Color(0xFF10B981))
+                                }
+                            }
                         }
                     }
                 }
+            } else if (isLoading) {
+                item { CircularProgressIndicator() }
+            } else {
+                item { Text(errorMsg, color = MaterialTheme.colorScheme.error) }
             }
         }
     }

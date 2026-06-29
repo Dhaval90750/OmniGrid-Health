@@ -65,15 +65,47 @@ fun DietOrderScreen(
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
+                    var isSubmitting by remember { mutableStateOf(false) }
+                    var submitResult by remember { mutableStateOf("") }
+                    val scope = rememberCoroutineScope()
+                    
                     Button(
-                        onClick = { onBack() },
+                        onClick = {
+                            isSubmitting = true
+                            scope.kotlinx.coroutines.launch {
+                                try {
+                                    val body = org.json.JSONObject().apply {
+                                        put("priority", "Routine")
+                                        put("description", "Diet Order: $dietType. Instructions: $instructions. Patient: $patientId")
+                                        put("status", "Pending")
+                                    }
+                                    com.medcore.mobile.NetworkClient.post("$apiUrl/operations/work-orders", body.toString(), token)
+                                    submitResult = "Diet order sent to kitchen."
+                                    dietType = ""
+                                    instructions = ""
+                                } catch (e: Exception) {
+                                    submitResult = "Error: ${e.message}"
+                                } finally {
+                                    isSubmitting = false
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        enabled = !isSubmitting
                     ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Order", modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Send to Kitchen")
+                        if (isSubmitting) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onSecondary)
+                        } else {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = "Order", modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Send to Kitchen")
+                        }
+                    }
+                    if (submitResult.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(submitResult, color = if (submitResult.startsWith("Error")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                     }
                 }
             }

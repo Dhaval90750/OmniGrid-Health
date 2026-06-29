@@ -15,10 +15,19 @@ import java.util.UUID;
 public class RiskAlertService {
 
     private final PatientVitalRepository patientVitalRepository;
+    private final com.medcore.his.repository.DiagnosisRepository diagnosisRepository;
+    private final com.medcore.his.repository.VisitRepository visitRepository;
+    private final AiService aiService;
 
     @Autowired
-    public RiskAlertService(PatientVitalRepository patientVitalRepository) {
+    public RiskAlertService(PatientVitalRepository patientVitalRepository, 
+                            com.medcore.his.repository.DiagnosisRepository diagnosisRepository,
+                            com.medcore.his.repository.VisitRepository visitRepository,
+                            AiService aiService) {
         this.patientVitalRepository = patientVitalRepository;
+        this.diagnosisRepository = diagnosisRepository;
+        this.visitRepository = visitRepository;
+        this.aiService = aiService;
     }
 
     /**
@@ -30,62 +39,49 @@ public class RiskAlertService {
      * Note: WBC count is normally included but omitted here for vitals-only check.
      */
     public Map<String, Object> evaluateSepsisRisk(UUID patientId) {
-        // Fetch the most recent vitals for the patient
         List<PatientVital> vitalsList = patientVitalRepository.findByPatientIdOrderByRecordedAtDesc(patientId);
         
-        Map<String, Object> result = new HashMap<>();
         if (vitalsList == null || vitalsList.isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
             result.put("riskLevel", "UNKNOWN");
             result.put("message", "No vitals recorded for this patient.");
             return result;
         }
 
-        PatientVital latestVitals = vitalsList.get(0);
-        int sirsScore = 0;
-        StringBuilder riskFactors = new StringBuilder();
-
-        // 1. Temperature
-        if (latestVitals.getTemperature() != null) {
-            double temp = latestVitals.getTemperature().doubleValue();
-            if (temp > 38.0 || temp < 36.0) {
-                sirsScore++;
-                riskFactors.append("Abnormal Temperature (").append(temp).append("°C). ");
-            }
+        PatientVital latest = vitalsList.get(0);
+        double hr = latest.getHeartRate() != null ? latest.getHeartRate() : 80;
+        double sbp = latest.getBloodPressureSystolic() != null ? latest.getBloodPressureSystolic() : 120;
+        double temp = latest.getTemperature() != null ? latest.getTemperature().doubleValue() : 37.0;
+        double spo2 = latest.getSpo2() != null ? latest.getSpo2().doubleValue() : 98;
+        
+        Map<String, Object> aiResult = aiService.predictSepsisRisk(hr, sbp, temp, spo2);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("riskLevel", aiResult.get("riskLevel"));
+        result.put("sepsisRiskScore", aiResult.get("sepsisRiskScore"));
+        
+        List<String> factors = (List<String>) aiResult.get("contributingFactors");
+        factors = factors.stream().filter(f -> !f.isEmpty()).toList();
+        
+        if (!factors.isEmpty()) {
+            result.put("factors", String.join(", ", factors));
+        } else {
+            result.put("factors", "None");
         }
-
-        // 2. Heart Rate
-        if (latestVitals.getHeartRate() != null && latestVitals.getHeartRate() > 90) {
-            sirsScore++;
-            riskFactors.append("Elevated Heart Rate (").append(latestVitals.getHeartRate()).append(" bpm). ");
-        }
-
-        // 3. Respiratory Rate
-        if (latestVitals.getRespiratoryRate() != null && latestVitals.getRespiratoryRate() > 20) {
-            sirsScore++;
-            riskFactors.append("Elevated Respiratory Rate (").append(latestVitals.getRespiratoryRate()).append(" breaths/min). ");
-        }
-
-        result.put("sirsScore", sirsScore);
-        result.put("factors", riskFactors.toString().trim());
-
-        if (sirsScore >= 2) {
-            result.put("riskLevel", "HIGH");
-            result.put("message", "High risk of Sepsis detected based on SIRS criteria.");
-        } else if (sirsScore == 1) {
-            result.put("riskLevel", "MODERATE");
+        
+        if ("CRITICAL".equals(aiResult.get("riskLevel")) || "HIGH".equals(aiResult.get("riskLevel"))) {
+            result.put("message", "High risk of Sepsis detected by AI model.");
+        } else if ("MODERATE".equals(aiResult.get("riskLevel"))) {
             result.put("message", "Moderate risk of Sepsis. Monitor patient closely.");
         } else {
-            result.put("riskLevel", "LOW");
             result.put("message", "Low risk of Sepsis.");
         }
-
+        
         return result;
     }
 
     /**
      * Evaluates readmission risk based on a simplified LACE heuristic.
-     * For this prototype, we'll use a mocked calculation based on length of stay if provided,
-     * or general patient metrics.
      */
     public Map<String, Object> evaluateReadmissionRisk(UUID patientId, int lengthOfStayDays, boolean isEmergency) {
         Map<String, Object> result = new HashMap<>();
@@ -100,8 +96,22 @@ public class RiskAlertService {
             laceScore += 3;
         }
         
-        // C & E would normally be calculated from historical visits/comorbidities.
-        // We add a baseline heuristic here for the prototype.
+        // C: Comorbidities (Charlson index approximation)
+        List<com.medcore.his.domain.clinical.Diagnosis> diagnoses = diagnosisRepository.findByPatientIdAndStatusOrderByDiagnosedDateDesc(patientId, "Active");
+        if (diagnoses != null) {
+            int comorbiditiesScore = Math.min(diagnoses.size(), 5); // Rough heuristic: 1 point per active diagnosis, max 5
+            laceScore += comorbiditiesScore;
+        }
+        
+        // E: Emergency department visits in past 6 months
+        java.time.LocalDateTime sixMonthsAgo = java.time.LocalDateTime.now().minusMonths(6);
+        List<com.medcore.his.domain.clinical.Visit> visits = visitRepository.findByPatientIdOrderByVisitDateDesc(patientId);
+        long edVisits = visits.stream()
+                .filter(v -> v.getVisitDate() != null && v.getVisitDate().isAfter(sixMonthsAgo))
+                .filter(v -> v.getDepartment() != null && v.getDepartment().getName().toLowerCase().contains("emergency"))
+                .count();
+                
+        laceScore += Math.min(edVisits, 4); // Max 4 points for ED visits
         
         result.put("laceScore", laceScore);
         

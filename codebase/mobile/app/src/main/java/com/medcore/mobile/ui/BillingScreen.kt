@@ -23,6 +23,22 @@ fun BillingScreen(
     token: String,
     onBack: () -> Unit
 ) {
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var invoices by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        isLoading = true
+        try {
+            val res = com.medcore.mobile.NetworkClient.get("$apiUrl/billing/invoices/pending", token)
+            invoices = org.json.JSONArray(res)
+        } catch (e: Exception) {
+            errorMsg = "Failed to load invoices: ${e.message}"
+        } finally {
+            isLoading = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,33 +61,45 @@ fun BillingScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(24.dp)
         ) {
-            Text("Recent IPD Bills", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+            Text("Pending IPD Bills", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            // Mock Bill
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Bill", tint = Color(0xFF607D8B))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("INV-2026-901", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Patient: Sunita Verma (Ward B)", color = Color.Gray)
-                    Text("Total Due: ₹12,500", fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))) {
-                        Text("Send Payment Link via SMS")
+            if (invoices != null) {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(invoices!!.length()) { index ->
+                        val invoice = invoices!!.getJSONObject(index)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.DateRange, contentDescription = "Bill", tint = Color(0xFF607D8B))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(invoice.optString("invoiceNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Patient: ${invoice.optJSONObject("patient")?.optString("fullName") ?: "Unknown"}", color = Color.Gray)
+                                Text("Total Due: ₹${invoice.optString("totalAmount", "0.0")}", fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(onClick = { }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))) {
+                                    Text("Send Payment Link via SMS")
+                                }
+                            }
+                        }
                     }
                 }
+            } else if (isLoading) {
+                CircularProgressIndicator(color = Color(0xFF1565C0))
+            } else {
+                Text(errorMsg, color = MaterialTheme.colorScheme.error)
             }
         }
     }

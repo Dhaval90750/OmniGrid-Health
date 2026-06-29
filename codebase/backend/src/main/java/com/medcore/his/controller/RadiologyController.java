@@ -28,6 +28,11 @@ public class RadiologyController {
         return ResponseEntity.ok(radiologyService.getTemplatesByModality(modality));
     }
 
+    @GetMapping("/orders/pending")
+    public ResponseEntity<List<RadiologyOrder>> getPendingOrders(@RequestParam String modality) {
+        return ResponseEntity.ok(radiologyService.getPendingOrdersByModality(modality));
+    }
+
     @PostMapping("/orders")
     public ResponseEntity<RadiologyOrder> createOrder(@RequestBody RadiologyOrder order) {
         RadiologyOrder saved = radiologyService.placeOrder(order);
@@ -48,5 +53,10 @@ public class RadiologyController {
     @GetMapping("/dashboard/critical")
     public ResponseEntity<List<RadiologyReport>> getCriticalReports() {
         return ResponseEntity.ok(radiologyService.getCriticalReports());
+    }
+
+    @GetMapping("/patients/{patientId}/reports")
+    public ResponseEntity<List<RadiologyReport>> getPatientReports(@PathVariable java.util.UUID patientId) {
+        return ResponseEntity.ok(radiologyService.getReportsByPatient(patientId));
     }
 }

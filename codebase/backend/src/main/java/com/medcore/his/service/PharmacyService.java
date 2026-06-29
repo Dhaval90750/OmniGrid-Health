@@ -21,16 +21,19 @@ public class PharmacyService {
     private final DispensingRecordRepository dispensingRepository;
     private final com.medcore.his.repository.PrescriptionRepository prescriptionRepository;
     private final com.medcore.his.repository.StockMovementRepository stockMovementRepository;
+    private final BillingService billingService;
 
     @Autowired
     public PharmacyService(PharmacyStockRepository stockRepository, 
                            DispensingRecordRepository dispensingRepository,
                            com.medcore.his.repository.PrescriptionRepository prescriptionRepository,
-                           com.medcore.his.repository.StockMovementRepository stockMovementRepository) {
+                           com.medcore.his.repository.StockMovementRepository stockMovementRepository,
+                           BillingService billingService) {
         this.stockRepository = stockRepository;
         this.dispensingRepository = dispensingRepository;
         this.prescriptionRepository = prescriptionRepository;
         this.stockMovementRepository = stockMovementRepository;
+        this.billingService = billingService;
     }
 
     public List<PharmacyStock> getStockByDrug(UUID drugId) {
@@ -51,17 +54,8 @@ public class PharmacyService {
             int requiredQty = line.getQuantity();
             List<PharmacyStock> availableStocks = getStockByDrug(line.getDrug().getId());
             
-            // Auto-seed dummy stock if none exists to allow testing without manual ingestion
             if (availableStocks.isEmpty()) {
-                PharmacyStock dummyStock = new PharmacyStock();
-                dummyStock.setDrug(line.getDrug());
-                dummyStock.setBatchNumber("AUTO-" + UUID.randomUUID().toString().substring(0, 6));
-                dummyStock.setExpiryDate(LocalDate.now().plusYears(1));
-                dummyStock.setQuantity(1000); // Give plenty of dummy stock
-                dummyStock.setUnitPrice(java.math.BigDecimal.valueOf(10.0));
-                dummyStock.setMrp(java.math.BigDecimal.valueOf(12.0));
-                stockRepository.save(dummyStock);
-                availableStocks.add(dummyStock);
+                throw new RuntimeException("Insufficient stock for drug: " + line.getDrug().getGenericName());
             }
             
             for (PharmacyStock stock : availableStocks) {
@@ -87,6 +81,14 @@ public class PharmacyService {
             if (requiredQty > 0) {
                 throw new RuntimeException("Insufficient stock for drug: " + line.getDrug().getGenericName());
             }
+
+            // Charge patient for the dispensed drug
+            billingService.addChargeToPatient(
+                prescription.getPatient().getId(), 
+                "Pharmacy: " + line.getDrug().getGenericName(), 
+                java.math.BigDecimal.valueOf(10.0), 
+                line.getQuantity()
+            );
         }
         
         record.setStatus("Dispensed");

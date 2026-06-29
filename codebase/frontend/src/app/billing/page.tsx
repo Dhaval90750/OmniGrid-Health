@@ -9,12 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// Dummy claims data (since we're focusing on Basic Billing first)
-const CLAIMS = [
-  { id: "CLM-001", patient: "Rahul Verma", policy: "HDFC Ergo Optima", preAuth: 150000, status: "PreAuth_Approved", date: "2026-06-12" },
-  { id: "CLM-002", patient: "Neha Joshi", policy: "Star Health Comprehensive", preAuth: 80000, status: "PreAuth_Pending", date: "2026-06-18" },
-  { id: "CLM-003", patient: "Suresh Kumar", policy: "ICICI Lombard", claimed: 210000, approved: 195000, status: "Settled", date: "2026-06-05" }
-];
+// Removed dummy claims data
 
 export default function BillingDashboard() {
   const router = useRouter();
@@ -39,22 +34,50 @@ export default function BillingDashboard() {
 
   const [loading, setLoading] = useState(false);
 
+  const [claims, setClaims] = useState<any[]>([]);
+
   useEffect(() => {
     if (user && (user.permissions['BILLING_MANAGE'] === 'true' || user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN'))) {
       fetchInvoices();
       fetchPendingDischarges();
+      fetchClaims();
     }
   }, [user]);
 
   const fetchPendingDischarges = async () => {
     try {
-      // In a real app this would call an endpoint for pending IPD bills
-      // We will mock it using the discharged state or dummy data for now
-      setPendingDischarges([
-        { id: 'a1', patientId: 'p1', name: 'Rahul Verma', dischargeType: 'Normal', duration: 12, dischargedAt: new Date().toISOString() }
-      ]);
+      const res = await api.get(`/billing/ipd/pending`);
+      const mapped = res.data.map((bill: any) => ({
+        id: bill.id,
+        patientId: bill.patient?.id,
+        name: bill.patient ? `${bill.patient.firstName} ${bill.patient.lastName}` : "Unknown",
+        duration: 0, // Calculate from admission/discharge dates if available
+        dischargedAt: bill.generatedAt || bill.createdAt
+      }));
+      setPendingDischarges(mapped);
     } catch (e) {
       console.error(e);
+      alert("Failed to load pending IPD bills");
+    }
+  };
+
+  const fetchClaims = async () => {
+    try {
+      const res = await api.get(`/billing/claims`);
+      const mapped = res.data.map((claim: any) => ({
+        id: claim.id,
+        patient: claim.visit?.patient ? `${claim.visit.patient.firstName} ${claim.visit.patient.lastName}` : "Unknown",
+        policy: claim.policy?.policyNumber || "Unknown Policy",
+        preAuth: claim.preauthAmount || 0,
+        claimed: claim.claimedAmount || 0,
+        approved: claim.approvedAmount || 0,
+        status: claim.status,
+        date: claim.createdAt
+      }));
+      setClaims(mapped);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load insurance claims");
     }
   };
 
@@ -128,9 +151,13 @@ export default function BillingDashboard() {
 
   const handleFinalizeMasterBill = async () => {
     try {
-      // Post a master invoice to the backend
+      if (!selectedPatient || !selectedPatient.patientId) {
+        alert("Invalid patient selection");
+        return;
+      }
+      
       const payload = {
-        patient: { id: "00000000-0000-0000-0000-000000000000" }, // Mock valid UUID
+        patient: { id: selectedPatient.patientId },
         invoiceNumber: `MB-${Date.now()}`,
         status: "PENDING",
         totalAmount: 150800.00,
@@ -144,6 +171,7 @@ export default function BillingDashboard() {
       fetchInvoices();
       setPendingDischarges(pendingDischarges.filter(p => p.id !== selectedPatient.id));
     } catch (e) {
+      console.error(e);
       alert("Failed to finalize bill");
     }
   };
@@ -343,7 +371,7 @@ export default function BillingDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {CLAIMS.map(claim => (
+                {claims.map(claim => (
                   <tr key={claim.id} className="border-b border-surface-hover">
                     <td className="p-3 font-medium">{claim.id}</td>
                     <td className="p-3">{claim.patient}</td>
@@ -353,6 +381,7 @@ export default function BillingDashboard() {
                       {claim.status === "PreAuth_Approved" && <Badge variant="success">PreAuth Approved</Badge>}
                       {claim.status === "PreAuth_Pending" && <Badge variant="warning">PreAuth Pending</Badge>}
                       {claim.status === "Settled" && <Badge variant="info">Settled</Badge>}
+                      {claim.status !== "PreAuth_Approved" && claim.status !== "PreAuth_Pending" && claim.status !== "Settled" && <Badge>{claim.status}</Badge>}
                     </td>
                     <td className="p-3">
                       <Button variant="secondary" size="sm">Update Status</Button>

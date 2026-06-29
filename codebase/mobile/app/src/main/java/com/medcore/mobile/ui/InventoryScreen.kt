@@ -23,6 +23,22 @@ fun InventoryScreen(
     token: String,
     onBack: () -> Unit
 ) {
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var pos by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        isLoading = true
+        try {
+            val res = com.medcore.mobile.NetworkClient.get("$apiUrl/inventory/purchase-orders", token)
+            pos = org.json.JSONArray(res)
+        } catch (e: Exception) {
+            errorMsg = "Failed to load POs: ${e.message}"
+        } finally {
+            isLoading = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,38 +61,50 @@ fun InventoryScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(24.dp)
         ) {
             Text("Pending Purchase Orders", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263238))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            // Mock PO
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "PO", tint = Color(0xFF795548))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("PO-2026-089", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Vendor: MedTech Supplies Ltd", color = Color.Gray)
-                    Text("Amount: ₹45,000", fontWeight = FontWeight.Bold, color = Color(0xFF388E3C))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))) {
-                            Text("Approve")
-                        }
-                        Button(onClick = { }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
-                            Text("Reject")
+            if (pos != null) {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(pos!!.length()) { index ->
+                        val po = pos!!.getJSONObject(index)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.ShoppingCart, contentDescription = "PO", tint = Color(0xFF795548))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(po.optString("poNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Vendor: ${po.optJSONObject("vendor")?.optString("name") ?: "Unknown"}", color = Color.Gray)
+                                Text("Amount: ₹${po.optString("totalAmount", "0.0")}", fontWeight = FontWeight.Bold, color = Color(0xFF388E3C))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Button(onClick = { }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))) {
+                                        Text("Approve")
+                                    }
+                                    Button(onClick = { }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                                        Text("Reject")
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+            } else if (isLoading) {
+                CircularProgressIndicator(color = Color(0xFF1565C0))
+            } else {
+                Text(errorMsg, color = MaterialTheme.colorScheme.error)
             }
         }
     }

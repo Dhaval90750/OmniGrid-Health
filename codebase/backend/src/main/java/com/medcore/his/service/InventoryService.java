@@ -99,6 +99,14 @@ public class InventoryService {
                 if (line.getReceivedQuantity() > line.getOrderedQuantity()) {
                     throw new RuntimeException("Received quantity cannot exceed ordered quantity for 3-way matching");
                 }
+                
+                // Increase the live stock based on accepted quantity
+                if (line.getAcceptedQuantity() > 0 && line.getItem() != null) {
+                    InventoryItem item = inventoryItemRepository.findById(line.getItem().getId())
+                            .orElseThrow(() -> new RuntimeException("Inventory Item not found"));
+                    item.setCurrentStock(item.getCurrentStock() + line.getAcceptedQuantity());
+                    inventoryItemRepository.save(item);
+                }
             });
         }
         return grnRepository.save(grn);

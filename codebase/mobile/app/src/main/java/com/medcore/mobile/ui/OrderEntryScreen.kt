@@ -133,16 +133,19 @@ fun OrderEntryScreen(
                         successMsg = ""
                         scope.launch {
                             try {
+                                val endpoint = if (orderType == "LAB") "/lab/orders" else "/radiology/orders"
                                 val body = JSONObject().apply {
-                                    put("patientId", patientId)
-                                    put("orderType", orderType)
-                                    put("details", orderDetails)
-                                    put("priority", "ROUTINE")
+                                    val pObj = JSONObject().apply { put("id", patientId) }
+                                    put("patient", pObj)
+                                    if (orderType == "LAB") {
+                                        put("tests", org.json.JSONArray().put(JSONObject().apply { put("name", orderDetails) }))
+                                    } else {
+                                        put("modality", orderDetails.split(" ").firstOrNull() ?: "UNKNOWN")
+                                        put("procedureName", orderDetails)
+                                    }
                                 }.toString()
                                 
-                                // Mock endpoint hit, in reality this would hit the LIS/RIS order endpoint
-                                // NetworkClient.post("$apiUrl/clinical/orders", body, token)
-                                kotlinx.coroutines.delay(1000) // Simulate network call
+                                NetworkClient.post("$apiUrl$endpoint", body, token)
                                 
                                 successMsg = "$orderType order placed successfully!"
                                 orderDetails = ""

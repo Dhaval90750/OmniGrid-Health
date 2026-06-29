@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
 fun TelemedicineScreen(
     apiUrl: String,
     token: String,
+    patientName: String,
+    patientUhid: String,
+    doctorName: String,
     onBack: () -> Unit
 ) {
     var inCall by remember { mutableStateOf(false) }
@@ -62,7 +65,7 @@ fun TelemedicineScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Text("Upcoming Consultation", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Patient: David Chen (UHID: 8842)", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Patient: $patientName (UHID: $patientUhid)", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(48.dp))
                 
                 if (errorMsg.isNotEmpty()) {
@@ -80,8 +83,8 @@ fun TelemedicineScreen(
                             scope.launch {
                                 try {
                                     val body = org.json.JSONObject().apply {
-                                        put("patientName", "David Chen")
-                                        put("doctorName", "Current Doctor")
+                                        put("patientName", patientName)
+                                        put("doctorName", doctorName)
                                     }.toString()
                                     
                                     val res = com.medcore.mobile.NetworkClient.post("$apiUrl/telemedicine/rooms", body, token)

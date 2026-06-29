@@ -64,4 +64,14 @@ public class LabController {
     public ResponseEntity<List<LabResult>> enterResults(@PathVariable UUID sampleId, @RequestBody List<LabResult> results) {
         return ResponseEntity.ok(labService.enterResults(sampleId, results, null));
     }
+
+    @GetMapping("/patients/{patientId}/results")
+    public ResponseEntity<List<LabResult>> getPatientLabResults(@PathVariable UUID patientId) {
+        return ResponseEntity.ok(labService.getResultsByPatient(patientId));
+    }
+
+    @GetMapping("/samples")
+    public ResponseEntity<List<LabSample>> getSamples(@RequestParam String status) {
+        return ResponseEntity.ok(labService.getSamplesByStatus(status));
+    }
 }

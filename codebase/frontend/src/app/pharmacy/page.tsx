@@ -23,24 +23,33 @@ export default function PharmacyDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Mock data for UI since backend logic might return empty initially
+      const statsRes = await api.get("/pharmacy/dashboard/stats");
+      // The backend returns lowStockItems, expiringItems, pendingPrescriptions. We add a dummy totalStockValue for now if it's missing.
       setStats({
-        totalStockValue: 125000,
-        dispensedToday: 42,
-        lowStockItems: 5,
-        expiringItems: 2
+        totalStockValue: statsRes.data.totalStockValue || 0,
+        dispensedToday: statsRes.data.dispensedToday || 0,
+        lowStockItems: statsRes.data.lowStockItems || 0,
+        expiringItems: statsRes.data.expiringItems || 0
       });
 
-      setLowStock([
-        { id: "1", drugName: "Amoxicillin 250mg", currentQty: 15, reorderLevel: 50 },
-        { id: "2", drugName: "Ibuprofen 400mg", currentQty: 20, reorderLevel: 100 }
-      ]);
+      const lowStockRes = await api.get("/pharmacy/stock/alerts/low");
+      setLowStock(lowStockRes.data.map((item: any) => ({
+        id: item.id,
+        drugName: item.drug.genericName + " " + (item.drug.brandName || ""),
+        currentQty: item.quantity,
+        reorderLevel: item.drug.reorderLevel
+      })));
 
-      setExpiring([
-        { id: "3", drugName: "Tetanus Toxoid", batch: "B-2023", expiryDate: "2026-07-15", qty: 10 }
-      ]);
+      const expiringRes = await api.get("/pharmacy/stock/alerts/expiring");
+      setExpiring(expiringRes.data.map((item: any) => ({
+        id: item.id,
+        drugName: item.drug.genericName + " " + (item.drug.brandName || ""),
+        batch: item.batchNumber,
+        expiryDate: item.expiryDate,
+        qty: item.quantity
+      })));
     } catch (e) {
-      console.error(e);
+      console.error("Failed to load pharmacy dashboard data", e);
     }
   };
 

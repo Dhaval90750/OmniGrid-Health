@@ -23,31 +23,20 @@ public class DiagnosisController {
     private final DiagnosisRepository diagnosisRepository;
     private final PatientRepository patientRepository;
     private final VisitRepository visitRepository;
+    private final com.medcore.his.repository.Icd10Repository icd10Repository;
 
     @Autowired
-    public DiagnosisController(DiagnosisRepository diagnosisRepository, PatientRepository patientRepository, VisitRepository visitRepository) {
+    public DiagnosisController(DiagnosisRepository diagnosisRepository, PatientRepository patientRepository, VisitRepository visitRepository, com.medcore.his.repository.Icd10Repository icd10Repository) {
         this.diagnosisRepository = diagnosisRepository;
         this.patientRepository = patientRepository;
         this.visitRepository = visitRepository;
+        this.icd10Repository = icd10Repository;
     }
 
-    // --- Mock ICD-10 Search ---
     @GetMapping("/icd/search")
-    public ResponseEntity<List<Map<String, String>>> searchIcd10(@RequestParam String q) {
-        // Mock dataset for MVP
-        List<Map<String, String>> mockData = List.of(
-            Map.of("code", "E11.9", "description", "Type 2 diabetes mellitus without complications"),
-            Map.of("code", "I10", "description", "Essential (primary) hypertension"),
-            Map.of("code", "J45.909", "description", "Unspecified asthma, uncomplicated"),
-            Map.of("code", "R07.9", "description", "Chest pain, unspecified"),
-            Map.of("code", "E78.5", "description", "Hyperlipidemia, unspecified")
-        );
-        
-        List<Map<String, String>> filtered = mockData.stream()
-            .filter(d -> d.get("description").toLowerCase().contains(q.toLowerCase()) || d.get("code").toLowerCase().contains(q.toLowerCase()))
-            .toList();
-            
-        return ResponseEntity.ok(filtered);
+    public ResponseEntity<List<com.medcore.his.domain.clinical.Icd10>> searchIcd10(@RequestParam String q) {
+        List<com.medcore.his.domain.clinical.Icd10> results = icd10Repository.findByCodeContainingIgnoreCaseOrDescriptionContainingIgnoreCase(q, q);
+        return ResponseEntity.ok(results);
     }
 
     // --- Patient Diagnoses ---

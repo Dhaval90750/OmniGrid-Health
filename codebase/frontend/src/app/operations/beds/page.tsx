@@ -9,25 +9,35 @@ import { api } from "@/lib/api";
 export default function BedManagement() {
   const [beds, setBeds] = useState<any[]>([]);
 
-  const mockBeds = [
-    { id: "b1", ward: "General Ward A", bedNumber: "A-01", status: "AVAILABLE" },
-    { id: "b2", ward: "General Ward A", bedNumber: "A-02", status: "OCCUPIED", patient: "Jane Smith" },
-    { id: "b3", ward: "General Ward A", bedNumber: "A-03", status: "CLEANING" },
-    { id: "b4", ward: "General Ward A", bedNumber: "A-04", status: "AVAILABLE" },
-    { id: "b5", ward: "ICU", bedNumber: "ICU-01", status: "OCCUPIED", patient: "Robert Johnson" },
-    { id: "b6", ward: "ICU", bedNumber: "ICU-02", status: "CLEANING" }
-  ];
 
   useEffect(() => {
-    // In a real implementation, fetch from backend
-    // fetchBeds();
-    setBeds(mockBeds);
+    fetchBeds();
   }, []);
+
+  const fetchBeds = async () => {
+    try {
+      const res = await api.get("/admin/bed-matrix");
+      const fetchedWards = res.data.wards || [];
+      const allBeds = fetchedWards.flatMap((w: any) => 
+        w.beds.map((b: any) => ({
+          id: b.id,
+          ward: w.wardName,
+          bedNumber: b.bedId,
+          status: b.status,
+          patient: b.patient
+        }))
+      );
+      setBeds(allBeds);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to fetch beds.");
+    }
+  };
 
   const markClean = async (bedId: string) => {
     try {
-      // await api.put(`/admissions/beds/${bedId}/clean`);
-      setBeds(beds.map(b => b.id === bedId ? { ...b, status: "AVAILABLE" } : b));
+      await api.put(`/admissions/beds/${bedId}/clean`);
+      fetchBeds();
       alert("Bed marked as Clean & Available.");
     } catch (e) {
       console.error(e);

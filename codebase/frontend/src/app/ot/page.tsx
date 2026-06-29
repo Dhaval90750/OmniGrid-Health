@@ -46,10 +46,7 @@ export default function OtDashboard() {
       setBookings(res.data);
     } catch (e) {
       console.error(e);
-      // Fallback UI
-      setBookings([
-        { id: "b1", patient: { firstName: "Rajesh", lastName: "Gupta" }, surgeon: { firstName: "Arun", lastName: "Patel" }, procedureName: "Laparoscopic Cholecystectomy", otRoom: "OT-1", scheduledDate: new Date().toISOString(), status: "SCHEDULED" }
-      ]);
+      alert("Failed to load OT bookings.");
     }
   };
 
@@ -67,9 +64,8 @@ export default function OtDashboard() {
       setShowBookingModal(false);
       fetchBookings();
     } catch (e) {
+      console.error(e);
       alert("Error creating OT Booking. Ensure valid patient UUID in a real scenario.");
-      // Soft mock fallback for UI
-      setBookings([...bookings, { id: Date.now().toString(), patient: { firstName: "Unknown", lastName: "Patient" }, surgeon: { firstName: "Dr.", lastName: "Surgeon" }, procedureName: newBooking.procedureName, otRoom: newBooking.otRoom, scheduledDate: new Date().toISOString(), status: "SCHEDULED" }]);
       setShowBookingModal(false);
     }
   };
@@ -101,6 +97,7 @@ export default function OtDashboard() {
       setSelectedBooking(null);
       setActiveTab("schedule");
     } catch (e) {
+      console.error(e);
       alert("Error submitting Operative Note.");
       setSelectedBooking(null);
       setActiveTab("schedule");

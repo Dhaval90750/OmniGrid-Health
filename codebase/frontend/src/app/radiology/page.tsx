@@ -36,25 +36,19 @@ export default function RadiologyDashboard() {
   };
 
   const fetchWorklist = async () => {
-    // In a real implementation this would fetch pending orders filtered by modality
-    // Mocking here for UI as we only have POST /orders for now, no GET pending orders
     try {
-      let mockList: any[] = [];
-      if (activeTab === "X-Ray") {
-        mockList = [
-          { id: "o1", studyName: "Chest X-Ray PA View", patientName: "Rahul Sharma", uhid: "UHID-1002", priority: "ROUTINE", status: "ORDERED", date: new Date().toISOString() },
-          { id: "o2", studyName: "Knee AP/Lat Right", patientName: "Anita Desai", uhid: "UHID-1055", priority: "STAT", status: "ORDERED", date: new Date().toISOString() },
-        ];
-      } else if (activeTab === "CT Scan") {
-        mockList = [
-          { id: "o3", studyName: "CT Head Non-Contrast", patientName: "Suresh Kumar", uhid: "UHID-1088", priority: "STAT", status: "ORDERED", date: new Date().toISOString() }
-        ];
-      } else if (activeTab === "MRI") {
-        mockList = [
-          { id: "o4", studyName: "MRI Lumbar Spine", patientName: "Priya Patel", uhid: "UHID-1008", priority: "ROUTINE", status: "ORDERED", date: new Date().toISOString() }
-        ];
-      }
-      setWorklist(mockList);
+      const res = await api.get(`/radiology/orders/pending?modality=${activeTab}`);
+      // Transform response to match expected UI structure
+      const formattedList = res.data.map((o: any) => ({
+        id: o.id,
+        studyName: o.studyDescription,
+        patientName: o.patient ? `${o.patient.firstName} ${o.patient.lastName}` : "Unknown Patient",
+        uhid: o.patient ? o.patient.uhid : "N/A",
+        priority: o.urgency ? o.urgency.toUpperCase() : "ROUTINE",
+        status: o.status,
+        date: o.createdAt || new Date().toISOString()
+      }));
+      setWorklist(formattedList);
     } catch (e) {
       console.error(e);
     }
@@ -101,11 +95,8 @@ export default function RadiologyDashboard() {
       fetchStats();
       fetchWorklist();
     } catch (e) {
-      alert("Failed to submit report. Ensure UUIDs are valid.");
-      // Soft-fallback for demo
-      alert("Mock Report Published Successfully!");
-      setSelectedOrder(null);
-      setWorklist(worklist.filter(o => o.id !== selectedOrder.id));
+      console.error(e);
+      alert("Failed to submit report.");
     }
   };
 

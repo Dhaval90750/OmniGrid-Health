@@ -16,11 +16,13 @@ public class IcuService {
 
     private final IcuChartRepository icuChartRepository;
     private final IcuScoreRepository icuScoreRepository;
+    private final com.medcore.his.repository.PatientVitalRepository patientVitalRepository;
 
     @Autowired
-    public IcuService(IcuChartRepository icuChartRepository, IcuScoreRepository icuScoreRepository) {
+    public IcuService(IcuChartRepository icuChartRepository, IcuScoreRepository icuScoreRepository, com.medcore.his.repository.PatientVitalRepository patientVitalRepository) {
         this.icuChartRepository = icuChartRepository;
         this.icuScoreRepository = icuScoreRepository;
+        this.patientVitalRepository = patientVitalRepository;
     }
 
     public List<IcuChart> getChartsByPatient(UUID patientId) {
@@ -44,17 +46,48 @@ public class IcuService {
                         (score.getGcsMotor() != null ? score.getGcsMotor() : 0);
             score.setTotalScore(total);
         } else if ("APACHE_II".equals(score.getScoreType())) {
-            // Mock APACHE II calculation
             score.setTotalScore(calculateApacheScore(score));
         }
         return icuScoreRepository.save(score);
     }
 
     private int calculateApacheScore(IcuScore score) {
-        // In a real system, this pulls the worst vitals and labs for the last 24h.
-        // We will just mock a score between 10 and 25 based on GCS and age.
-        int mockScore = 15;
-        if (score.getGcsEye() != null && score.getGcsEye() < 3) mockScore += 5;
-        return mockScore;
+        int baseScore = 0;
+        
+        List<com.medcore.his.domain.nursing.PatientVital> vitals = patientVitalRepository.findByPatientIdOrderByRecordedAtDesc(score.getPatient().getId());
+        if (vitals != null && !vitals.isEmpty()) {
+            com.medcore.his.domain.nursing.PatientVital latest = vitals.get(0);
+            
+            // Heuristic scoring based on vitals
+            if (latest.getTemperature() != null) {
+                double temp = latest.getTemperature().doubleValue();
+                if (temp >= 41 || temp <= 29.9) baseScore += 4;
+                else if (temp >= 39 || temp <= 31.9) baseScore += 3;
+                else if (temp <= 33.9) baseScore += 2;
+                else if (temp >= 38.5 || temp <= 35.9) baseScore += 1;
+            }
+            if (latest.getHeartRate() != null) {
+                int hr = latest.getHeartRate();
+                if (hr >= 180 || hr <= 39) baseScore += 4;
+                else if (hr >= 140 || hr <= 54) baseScore += 3;
+                else if (hr >= 110 || hr <= 69) baseScore += 2;
+            }
+            if (latest.getRespiratoryRate() != null) {
+                int rr = latest.getRespiratoryRate();
+                if (rr >= 50 || rr <= 5) baseScore += 4;
+                else if (rr >= 35) baseScore += 3;
+                else if (rr <= 9) baseScore += 2;
+                else if (rr >= 25 || rr <= 11) baseScore += 1;
+            }
+        }
+        
+        // Add GCS inversion (15 - GCS)
+        int gcs = 15;
+        if (score.getGcsEye() != null && score.getGcsVerbal() != null && score.getGcsMotor() != null) {
+            gcs = score.getGcsEye() + score.getGcsVerbal() + score.getGcsMotor();
+        }
+        baseScore += (15 - gcs);
+        
+        return baseScore;
     }
 }

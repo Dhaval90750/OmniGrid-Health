@@ -35,21 +35,15 @@ fun AiScribeScreen(
     var errorMsg by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     
-    val context = LocalContext.current
-    var hasAudioPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasAudioPermission = isGranted
-        if (isGranted) {
-            isRecording = true
-            transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
-            isRecording = false
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data
+            val results = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            if (!results.isNullOrEmpty()) {
+                transcript = results[0]
+            }
         }
     }
 
@@ -98,12 +92,14 @@ fun AiScribeScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(
                 onClick = {
-                    if (hasAudioPermission) {
-                        isRecording = true
-                        transcript = "Patient presents with a mild fever and severe headache for the past 2 days. Blood pressure is 120/80 mmHg. Heart rate is 85 bpm. Prescribing paracetamol for the fever."
-                        isRecording = false
-                    } else {
-                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                    val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Speak now...")
+                    }
+                    try {
+                        speechRecognizerLauncher.launch(intent)
+                    } catch (e: Exception) {
+                        errorMsg = "Speech recognition not supported on this device"
                     }
                 },
                 modifier = Modifier.weight(1f).height(56.dp),

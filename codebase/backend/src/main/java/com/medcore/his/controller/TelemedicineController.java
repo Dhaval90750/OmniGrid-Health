@@ -1,7 +1,7 @@
 package com.medcore.his.controller;
 
 import com.medcore.his.service.TelemedicineService;
-import com.medcore.his.service.TelemedicineService.VirtualRoom;
+import com.medcore.his.domain.clinical.TelemedicineRoom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,18 +25,18 @@ public class TelemedicineController {
         String patientName = payload.getOrDefault("patientName", "Unknown Patient");
         String doctorName = payload.getOrDefault("doctorName", "Unknown Doctor");
         
-        VirtualRoom room = telemedicineService.createVirtualRoom(patientName, doctorName);
+        TelemedicineRoom room = telemedicineService.createVirtualRoom(patientName, doctorName);
         return ResponseEntity.ok(room);
     }
 
     @GetMapping("/rooms")
     public ResponseEntity<?> getAllActiveRooms() {
-        return ResponseEntity.ok(telemedicineService.getAllActiveRooms().values());
+        return ResponseEntity.ok(telemedicineService.getAllActiveRooms());
     }
 
     @GetMapping("/rooms/{roomId}")
     public ResponseEntity<?> getRoomStatus(@PathVariable String roomId) {
-        VirtualRoom room = telemedicineService.getRoomStatus(roomId);
+        TelemedicineRoom room = telemedicineService.getRoomStatus(roomId);
         if (room != null) {
             return ResponseEntity.ok(room);
         }

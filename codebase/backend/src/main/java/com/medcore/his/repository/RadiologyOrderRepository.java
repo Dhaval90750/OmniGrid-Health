@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface RadiologyOrderRepository extends JpaRepository<RadiologyOrder, UUID> {
+    java.util.List<RadiologyOrder> findByModalityIgnoreCaseAndStatusOrderByCreatedAtAsc(String modality, String status);
 }

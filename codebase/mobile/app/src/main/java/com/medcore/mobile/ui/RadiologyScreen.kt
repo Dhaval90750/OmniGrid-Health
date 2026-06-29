@@ -37,28 +37,34 @@ fun RadiologyScreen(
     LaunchedEffect(Unit) {
         isLoading = true
         try {
-            // Mocking the call to the Radiology controller
-            val mockJson = """
-            [
-                {
-                    "modality": "CT Scan",
-                    "region": "Head without Contrast",
-                    "status": "Reported",
-                    "isCritical": true,
-                    "date": "2026-06-29",
-                    "reportText": "FINDINGS: There is a 2cm acute subdural hematoma along the right frontoparietal convexity. Midline shift of 4mm to the left. No skull fracture identified.\n\nIMPRESSION: Acute right-sided subdural hematoma with mass effect."
-                },
-                {
-                    "modality": "X-Ray",
-                    "region": "Chest PA",
-                    "status": "Completed",
-                    "isCritical": false,
-                    "date": "2026-06-28",
-                    "reportText": "FINDINGS: Lungs are clear. Heart size is normal. No pleural effusion or pneumothorax.\n\nIMPRESSION: Normal Chest X-Ray."
+            val res = NetworkClient.get("$apiUrl/radiology/patients/$patientId/reports", token)
+            val jsonArray = JSONArray(res)
+            
+            val mappedReports = JSONArray()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val orderObj = obj.optJSONObject("order")
+                val templateObj = obj.optJSONObject("template")
+                
+                val modality = templateObj?.optString("modality", "Unknown") ?: "Unknown"
+                val region = templateObj?.optString("bodyRegion", "Unknown") ?: "Unknown"
+                val status = obj.optString("status", "Final")
+                val isCritical = obj.optBoolean("isCritical", false)
+                val date = obj.optString("createdAt", "").take(10)
+                
+                val reportText = "FINDINGS:\n${obj.optString("findings", "N/A")}\n\nIMPRESSION:\n${obj.optString("impression", "N/A")}"
+                
+                val mappedObj = JSONObject().apply {
+                    put("modality", modality)
+                    put("region", region)
+                    put("status", status)
+                    put("isCritical", isCritical)
+                    put("date", date)
+                    put("reportText", reportText)
                 }
-            ]
-            """.trimIndent()
-            reports = JSONArray(mockJson)
+                mappedReports.put(mappedObj)
+            }
+            reports = mappedReports
         } catch (e: Exception) {
             errorMsg = "Error loading radiology: ${e.message}"
         } finally {

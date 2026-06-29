@@ -36,40 +36,38 @@ fun LabResultsScreen(
     LaunchedEffect(Unit) {
         isLoading = true
         try {
-            // Mocking the call since there isn't a direct endpoint for patient specific lab results in LabController yet,
-            // or if there is, we simulate a successful parsed array of results with flags.
-            val mockJson = """
-            [
-                {
-                    "testName": "Complete Blood Count (CBC)",
-                    "value": "11.2",
-                    "unit": "g/dL",
-                    "refRange": "12.0 - 15.5",
-                    "isAbnormal": true,
-                    "isCritical": false,
-                    "flag": "LOW"
-                },
-                {
-                    "testName": "Potassium (Serum)",
-                    "value": "6.1",
-                    "unit": "mmol/L",
-                    "refRange": "3.5 - 5.0",
-                    "isAbnormal": true,
-                    "isCritical": true,
-                    "flag": "HIGH - CRITICAL"
-                },
-                {
-                    "testName": "Fasting Blood Sugar",
-                    "value": "95",
-                    "unit": "mg/dL",
-                    "refRange": "70 - 100",
-                    "isAbnormal": false,
-                    "isCritical": false,
-                    "flag": "NORMAL"
+            val res = NetworkClient.get("$apiUrl/lab/patients/$patientId/results", token)
+            val jsonArray = JSONArray(res)
+            
+            // Map backend LabResult structure to the UI structure expected below
+            val mappedResults = JSONArray()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val sampleObj = obj.optJSONObject("sample")
+                val testObj = sampleObj?.optJSONObject("test")
+                
+                val testName = testObj?.optString("testName", "Unknown Test") ?: "Unknown Test"
+                val value = obj.optString("resultValue", "N/A")
+                val unit = testObj?.optString("unit", "") ?: ""
+                val refLow = testObj?.optString("referenceRangeLow", "") ?: ""
+                val refHigh = testObj?.optString("referenceRangeHigh", "") ?: ""
+                
+                val isAbnormal = obj.optBoolean("isAbnormal", false)
+                val isCritical = obj.optBoolean("isCritical", false)
+                val flag = if (isCritical) "CRITICAL" else if (isAbnormal) "ABNORMAL" else "NORMAL"
+                
+                val mappedObj = JSONObject().apply {
+                    put("testName", testName)
+                    put("value", value)
+                    put("unit", unit)
+                    put("refRange", "$refLow - $refHigh")
+                    put("isAbnormal", isAbnormal)
+                    put("isCritical", isCritical)
+                    put("flag", flag)
                 }
-            ]
-            """.trimIndent()
-            results = JSONArray(mockJson)
+                mappedResults.put(mappedObj)
+            }
+            results = mappedResults
         } catch (e: Exception) {
             errorMsg = "Error loading labs: ${e.message}"
         } finally {

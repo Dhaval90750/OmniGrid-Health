@@ -53,11 +53,7 @@ export default function NursingDashboard() {
       setOccupiedBeds(patients);
     } catch (e) {
       console.error(e);
-      // Mock data fallback if api fails or is empty for demo
-      setOccupiedBeds([
-        { patientId: "mock1", name: 'Rahul Sharma', bed: 'GM-01', ward: 'General Medical', doctor: 'Dr. Anjali Desai' },
-        { patientId: "mock2", name: 'Sneha Patel', bed: 'GM-02', ward: 'General Medical', doctor: 'Dr. Vikram Singh' }
-      ]);
+      alert("Failed to load occupied beds.");
     }
   };
 
@@ -77,11 +73,7 @@ export default function NursingDashboard() {
       setMarSchedule(res.data);
     } catch (e) {
       console.error(e);
-      // Fallback Mock
-      setMarSchedule([
-        { id: "m1", drugName: "Paracetamol 500mg Tab", doseRoute: "500mg, Oral", frequency: "TDS", status: "DUE" },
-        { id: "m2", drugName: "Ceftriaxone 1g Injection", doseRoute: "1g, IV", frequency: "BD", status: "GIVEN" },
-      ]);
+      alert("Failed to load MAR.");
     }
   };
 

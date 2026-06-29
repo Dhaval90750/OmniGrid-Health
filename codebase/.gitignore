@@ -19,6 +19,7 @@ node_modules/
 # Logs
 logs/
 *.log
+*.hprof
 
 # Environment variables
 .env
@@ -29,3 +30,10 @@ logs/
 
 # Docker
 docker-compose.override.yml
+
+# Python / AI Service
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/

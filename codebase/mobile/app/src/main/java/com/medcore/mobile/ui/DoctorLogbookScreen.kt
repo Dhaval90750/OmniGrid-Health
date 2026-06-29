@@ -20,7 +20,11 @@ fun DoctorLogbookScreen(
     token: String,
     onBack: () -> Unit
 ) {
+    var procedure by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var submitResult by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
     
     Scaffold(
         topBar = {
@@ -46,11 +50,10 @@ fun DoctorLogbookScreen(
                     Text("New Procedure Log", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
-                        value = "Central Venous Catheter Insertion",
-                        onValueChange = {},
+                        value = procedure,
+                        onValueChange = { procedure = it },
                         label = { Text("Procedure Observed/Performed") },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
@@ -62,13 +65,40 @@ fun DoctorLogbookScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { onBack() },
+                        onClick = {
+                            isSubmitting = true
+                            scope.kotlinx.coroutines.launch {
+                                try {
+                                    val body = org.json.JSONObject().apply {
+                                        put("procedureName", procedure)
+                                        put("notes", notes)
+                                    }
+                                    com.medcore.mobile.NetworkClient.post("$apiUrl/staff/logbooks", body.toString(), token)
+                                    submitResult = "Logbook entry submitted successfully."
+                                    procedure = ""
+                                    notes = ""
+                                } catch (e: Exception) {
+                                    submitResult = "Error: ${e.message}"
+                                } finally {
+                                    isSubmitting = false
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = procedure.isNotBlank() && !isSubmitting
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Sign", modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Submit for Guide Sign-off")
+                        if (isSubmitting) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Icon(Icons.Default.Edit, contentDescription = "Sign", modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Submit for Guide Sign-off")
+                        }
+                    }
+                    if (submitResult.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(submitResult, color = if (submitResult.startsWith("Error")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                     }
                 }
             }

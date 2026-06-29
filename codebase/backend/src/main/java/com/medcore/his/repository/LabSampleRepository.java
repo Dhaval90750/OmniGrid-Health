@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface LabSampleRepository extends JpaRepository<LabSample, UUID> {
     LabSample findByBarcode(String barcode);
+    java.util.List<LabSample> findByStatus(String status);
 }

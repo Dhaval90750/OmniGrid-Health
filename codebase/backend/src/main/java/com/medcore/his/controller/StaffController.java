@@ -22,12 +22,14 @@ public class StaffController {
     private final StaffService staffService;
     private final VisitRepository visitRepository;
     private final com.medcore.his.repository.StaffProfileRepository staffProfileRepository;
+    private final com.medcore.his.repository.InternLogbookRepository internLogbookRepository;
 
     @Autowired
-    public StaffController(StaffService staffService, VisitRepository visitRepository, com.medcore.his.repository.StaffProfileRepository staffProfileRepository) {
+    public StaffController(StaffService staffService, VisitRepository visitRepository, com.medcore.his.repository.StaffProfileRepository staffProfileRepository, com.medcore.his.repository.InternLogbookRepository internLogbookRepository) {
         this.staffService = staffService;
         this.visitRepository = visitRepository;
         this.staffProfileRepository = staffProfileRepository;
+        this.internLogbookRepository = internLogbookRepository;
     }
 
     @GetMapping("/profiles")
@@ -83,5 +85,10 @@ public class StaffController {
     @PostMapping("/consults")
     public ResponseEntity<CrossConsultation> createConsult(@RequestBody CrossConsultation consult) {
         return new ResponseEntity<>(staffService.createConsultation(consult), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/logbooks")
+    public ResponseEntity<com.medcore.his.domain.staff.InternLogbook> createLogbook(@RequestBody com.medcore.his.domain.staff.InternLogbook logbook) {
+        return new ResponseEntity<>(internLogbookRepository.save(logbook), HttpStatus.CREATED);
     }
 }

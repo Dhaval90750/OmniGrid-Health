@@ -151,6 +151,8 @@ fun MedCoreAppContent() {
         )
         
         Screen.DASHBOARD -> DashboardScreen(
+            apiUrl = apiUrl,
+            token = token,
             user = loggedInUser,
             permissions = permissions,
             onScanClick = { requirePatient(Screen.PATIENT_SUMMARY) },
@@ -208,7 +210,7 @@ fun MedCoreAppContent() {
         Screen.TASK_TRACKER -> TaskTrackerScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
         Screen.MAR_SCANNER -> MarScannerScreen(apiUrl = apiUrl, token = token, patientId = activePatient?.optString("id") ?: "", onBack = { currentScreen = Screen.DASHBOARD })
         Screen.ANALYTICS -> AnalyticsScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
-        Screen.TELEMEDICINE -> TelemedicineScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
+        Screen.TELEMEDICINE -> TelemedicineScreen(apiUrl = apiUrl, token = token, patientName = activePatient?.optString("fullName") ?: "Unknown", patientUhid = activePatient?.optString("uhid") ?: "UNKNOWN", doctorName = loggedInUser, onBack = { currentScreen = Screen.DASHBOARD })
         Screen.INVENTORY -> InventoryScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
         Screen.BILLING -> BillingScreen(apiUrl = apiUrl, token = token, onBack = { currentScreen = Screen.DASHBOARD })
         
@@ -332,6 +334,7 @@ fun CarouselSection(title: String, items: List<ActionItem>) {
 
 @Composable
 fun DashboardScreen(
+    apiUrl: String, token: String,
     user: String, permissions: Map<String, String>,
     onScanClick: () -> Unit, onScribeClick: () -> Unit, onVitalsClick: () -> Unit,
     onAssessClick: () -> Unit, onOrderClick: () -> Unit, onIncidentClick: () -> Unit,
@@ -342,6 +345,26 @@ fun DashboardScreen(
     onLogout: () -> Unit
 ) {
     fun hasAccess(module: String): Boolean = permissions[module] != null && permissions[module] != "NO_ACCESS"
+
+    var statsText by remember { mutableStateOf("Loading live metrics...") }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        try {
+            val res = NetworkClient.get("$apiUrl/analytics/dashboard", token)
+            val json = JSONObject(res)
+            val overview = json.optJSONObject("executive_overview")
+            if (overview != null) {
+                val bedOcc = overview.optString("bed_occupancy", "0%")
+                val waiting = overview.optInt("waiting_patients", 0)
+                statsText = "Bed Occupancy: $bedOcc • $waiting Waiting"
+            } else {
+                statsText = "Metrics loaded successfully."
+            }
+        } catch (e: Exception) {
+            statsText = "Failed to load metrics."
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -385,7 +408,7 @@ fun DashboardScreen(
                         Text("Active Shift Details", style = MaterialTheme.typography.titleLarge, color = Color.White)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Department: General Medicine", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha=0.9f))
-                        Text("2 New Admits • 5 Pending Lab Results", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha=0.9f))
+                        Text(statsText, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha=0.9f))
                     }
                 }
             }

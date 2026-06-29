@@ -22,53 +22,52 @@ export default function LabDashboard() {
   }, [activeTab]);
 
   const fetchSamples = async () => {
-    // In a real app, this would hit specific endpoints like /lab/samples/pending-collection, /lab/samples/pending-results, etc.
-    // For MVP, we use mock data that mimics the flow based on activeTab
     try {
-      let mockData: any[] = [];
-      if (activeTab === "COLLECTION") {
-        mockData = [
-          { id: "s1", barcode: null, testName: "Complete Blood Count (CBC)", patientName: "Rahul Sharma", uhid: "UHID-1002", status: "ORDERED" }
-        ];
-      } else if (activeTab === "RECEPTION") {
-        mockData = [
-          { id: "s2", barcode: "LAB-2026-0001", testName: "Lipid Profile", patientName: "Amit Kumar", uhid: "UHID-1005", status: "COLLECTED" }
-        ];
-      } else if (activeTab === "RESULTS") {
-        mockData = [
-          { 
-            id: "s3", 
-            barcode: "LAB-2026-0002", 
-            testName: "Complete Blood Count (CBC)", 
-            patientName: "Priya Patel", 
-            uhid: "UHID-1008", 
-            status: "RECEIVED",
-            parameters: [
-              { id: "p1", name: "Hemoglobin", unit: "g/dL", refRange: "12.0 - 15.5" },
-              { id: "p2", name: "WBC Count", unit: "cells/mcL", refRange: "4,500 - 11,000" },
-              { id: "p3", name: "Platelets", unit: "cells/mcL", refRange: "150,000 - 450,000" }
-            ]
-          }
-        ];
-      } else if (activeTab === "AUTHORIZATION") {
-        mockData = [
-          { id: "s4", barcode: "LAB-2026-0003", testName: "Liver Function Test", patientName: "Sneha Reddy", uhid: "UHID-1012", status: "RESULT_ENTERED" }
-        ];
-      }
-      setSamples(mockData);
+      let statusQuery = "";
+      if (activeTab === "COLLECTION") statusQuery = "Pending_Collection";
+      else if (activeTab === "RECEPTION") statusQuery = "Collected";
+      else if (activeTab === "RESULTS") statusQuery = "Received";
+      else if (activeTab === "AUTHORIZATION") statusQuery = "Result_Entered";
+
+      const res = await api.get(`/lab/samples?status=${statusQuery}`);
+      const formattedData = res.data.map((s: any) => {
+        // Map backend domain to UI shape
+        return {
+          id: s.id,
+          orderId: s.order?.id,
+          barcode: s.barcode,
+          testName: s.test?.testName || "Unknown Test",
+          patientName: s.order?.patient ? `${s.order.patient.firstName} ${s.order.patient.lastName}` : "Unknown Patient",
+          uhid: s.order?.patient?.uhid || "N/A",
+          status: s.status,
+          parameters: s.test?.parameters?.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            unit: p.unit,
+            refRange: `${p.referenceRangeLow} - ${p.referenceRangeHigh}`
+          }))
+        };
+      });
+      setSamples(formattedData);
       setSelectedSample(null);
       setResults({});
     } catch (e) {
       console.error(e);
+      alert("Failed to load lab samples");
     }
   };
 
   const handleGenerateBarcode = async (sample: any) => {
     try {
-      // await api.post(`/lab/orders/${sample.orderId}/generate-barcodes`);
-      alert("Barcode generated successfully: LAB-2026-XXXX");
+      if (!sample.orderId) {
+        alert("Cannot generate barcode: missing order ID");
+        return;
+      }
+      await api.post(`/lab/orders/${sample.orderId}/generate-barcodes`);
+      alert("Barcode generated successfully.");
       fetchSamples();
     } catch (e) {
+      console.error(e);
       alert("Failed to generate barcode");
     }
   };

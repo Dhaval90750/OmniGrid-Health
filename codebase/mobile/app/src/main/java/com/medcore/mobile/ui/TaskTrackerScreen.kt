@@ -44,29 +44,40 @@ fun TaskTrackerScreen(
         errorMsg = ""
         tasks.clear()
         try {
-            // Mock network latency
-            kotlinx.coroutines.delay(500)
-            
-            // Generate mock tasks based on category for demonstration (since operations backend is mocked in Phase 3)
             val category = tabs[selectedTabIndex]
-            val mockTasks = when (category) {
-                "Biomedical" -> listOf(
-                    OperationsTask("BIO-1", "Repair MRI Cooling System", "Radiology", false, category),
-                    OperationsTask("BIO-2", "Calibrate Ventillator #4", "ICU", true, category)
-                )
-                "Transport" -> listOf(
-                    OperationsTask("TR-1", "Move Patient MED-1045 to OT", "Ward B -> OT 2", false, category),
-                    OperationsTask("TR-2", "Transport Blood Bags", "Blood Bank -> ER", false, category)
-                )
-                else -> listOf(
-                    OperationsTask("HK-1", "Deep Clean OT 1", "Surgical Wing", false, category),
-                    OperationsTask("HK-2", "Spill Cleanup", "ER Waiting Area", true, category)
-                )
+            val endpoint = when (category) {
+                "Biomedical" -> "/operations/work-orders"
+                "Transport" -> "/operations/transport"
+                else -> "/operations/housekeeping" // Housekeeping
             }
-            tasks.addAll(mockTasks)
             
+            val res = NetworkClient.get("$apiUrl$endpoint", token)
+            val jsonArray = JSONArray(res)
+            
+            val fetchedTasks = mutableListOf<OperationsTask>()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val id = obj.optString("id", "")
+                
+                val title = when (category) {
+                    "Biomedical" -> obj.optString("description", "Work Order")
+                    "Transport" -> "Move Patient " + (obj.optJSONObject("patient")?.optString("uhid") ?: "Unknown")
+                    else -> obj.optString("taskDescription", "Housekeeping Task")
+                }
+                
+                val zone = when (category) {
+                    "Biomedical" -> "Maintenance"
+                    "Transport" -> obj.optString("originLocation", "") + " -> " + obj.optString("destinationLocation", "")
+                    else -> obj.optString("location", "Unknown Location")
+                }
+                
+                val isComplete = obj.optString("status", "Pending") == "Completed"
+                
+                fetchedTasks.add(OperationsTask(id, title, zone, isComplete, category))
+            }
+            tasks.addAll(fetchedTasks)
         } catch (e: Exception) {
-            errorMsg = "Failed to load tasks: ${e.localizedMessage}"
+            errorMsg = "Failed to load tasks: ${e.message}"
         } finally {
             isLoading = false
         }

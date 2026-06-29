@@ -21,19 +21,35 @@ public class LabService {
     private final LabTestRepository labTestRepository;
     private final com.medcore.his.repository.LabSampleRepository labSampleRepository;
     private final com.medcore.his.repository.LabResultRepository labResultRepository;
+    private final BillingService billingService;
 
     @Autowired
     public LabService(LabOrderRepository labOrderRepository, LabTestRepository labTestRepository,
                       com.medcore.his.repository.LabSampleRepository labSampleRepository,
-                      com.medcore.his.repository.LabResultRepository labResultRepository) {
+                      com.medcore.his.repository.LabResultRepository labResultRepository,
+                      BillingService billingService) {
         this.labOrderRepository = labOrderRepository;
         this.labTestRepository = labTestRepository;
         this.labSampleRepository = labSampleRepository;
         this.labResultRepository = labResultRepository;
+        this.billingService = billingService;
     }
 
     public List<LabTest> searchTests(String query) {
         return labTestRepository.findByTestNameContainingIgnoreCaseOrTestCodeContainingIgnoreCase(query, query);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LabResult> getResultsByPatient(UUID patientId) {
+        return labResultRepository.findAll().stream()
+                .filter(r -> r.getSample().getOrder().getPatient().getId().equals(patientId))
+                .sorted((r1, r2) -> r2.getCreatedAt().compareTo(r1.getCreatedAt()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LabSample> getSamplesByStatus(String status) {
+        return labSampleRepository.findByStatus(status);
     }
 
     @Transactional
@@ -41,6 +57,16 @@ public class LabService {
         for (LabSample sample : order.getSamples()) {
             sample.setOrder(order);
             sample.setStatus("Pending_Collection");
+            
+            // Charge the patient for each requested test
+            if (sample.getTest() != null && order.getPatient() != null) {
+                billingService.addChargeToPatient(
+                    order.getPatient().getId(),
+                    "Lab Test: " + sample.getTest().getTestName(),
+                    java.math.BigDecimal.valueOf(50.0),
+                    1
+                );
+            }
         }
         order.setStatus("Ordered");
         return labOrderRepository.save(order);
@@ -130,8 +156,7 @@ public class LabService {
 
         for (LabResult result : results) {
             result.setSample(sample);
-            result.setAuthorizedBy(user);
-            result.setAuthorizedAt(LocalDateTime.now());
+            // DO NOT set authorizedBy and authorizedAt here. They belong in authorizeResults.
 
             // Flagging Engine
             if (test.getReferenceRangeLow() != null && test.getReferenceRangeHigh() != null && result.getResultValue() != null) {
@@ -164,18 +189,10 @@ public class LabService {
             labResultRepository.save(result);
         }
         
-        sample.setStatus("Completed");
+        sample.setStatus("Result_Entered");
         labSampleRepository.save(sample);
         
-        // Update order status if all samples completed
-        boolean allCompleted = sample.getOrder().getSamples().stream()
-                .allMatch(s -> "Completed".equals(s.getStatus()) || "Rejected".equals(s.getStatus()));
-                
-        if (allCompleted) {
-            sample.getOrder().setStatus("Completed");
-            labOrderRepository.save(sample.getOrder());
-        }
-        
+        // We only mark order completed when samples are "Completed" or "Rejected" (handled in authorizeResults)
         return results;
     }
 }

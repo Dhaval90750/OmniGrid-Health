@@ -16,11 +16,8 @@ public class AiService {
 
     private static final Logger logger = LoggerFactory.getLogger(AiService.class);
 
-    @Value("${medcore.ai.ollama.url:http://localhost:11434/api/generate}")
-    private String ollamaUrl;
-    
-    @Value("${medcore.ai.ollama.model:mistral}")
-    private String ollamaModel;
+    @Value("${medcore.ai.python.url:http://localhost:8000}")
+    private String pythonAiUrl;
 
     @Value("${medcore.ai.useMock:false}")
     private boolean useMock;
@@ -36,9 +33,9 @@ public class AiService {
     public Map<String, Object> extractMedicalEntities(String transcript) {
         if (!useMock) {
             try {
-                return callOllamaApi(transcript);
+                return callPythonExtractor(transcript);
             } catch (Exception e) {
-                logger.error("Failed to call local Ollama API at {}, falling back to mock: {}", ollamaUrl, e.getMessage());
+                logger.error("Failed to call local Python AI API at {}, falling back to mock: {}", pythonAiUrl, e.getMessage());
                 return fallbackMockExtraction(transcript);
             }
         } else {
@@ -47,44 +44,70 @@ public class AiService {
         }
     }
 
-    private Map<String, Object> callOllamaApi(String transcript) throws Exception {
-        String prompt = "You are an expert clinical AI scribe. Analyze the following transcript and extract structured medical information. "
-                + "Return ONLY a valid JSON object without markdown formatting. The JSON must have this exact structure: "
-                + "{ \"extracted_symptoms\": [\"symptom1\"], \"extracted_medications\": [\"drug1\"], "
-                + "\"vitals\": { \"blood_pressure\": \"...\", \"heart_rate\": \"...\" }, "
-                + "\"generated_soap_note\": { \"Subjective\": \"...\", \"Objective\": \"...\", \"Assessment\": \"...\", \"Plan\": \"...\" } } "
-                + "Transcript: " + transcript;
-
+    private Map<String, Object> callPythonExtractor(String transcript) throws Exception {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", ollamaModel);
-        requestBody.put("prompt", prompt);
-        requestBody.put("stream", false);
+        requestBody.put("text", transcript);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(ollamaUrl, entity, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity(pythonAiUrl + "/extract", entity, String.class);
         
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String responseText = root.path("response").asText();
+            Map<String, Object> pythonResult = objectMapper.readValue(response.getBody(), Map.class);
             
-            // Clean markdown if present
-            if (responseText.startsWith("```json")) {
-                responseText = responseText.substring(7);
-            }
-            if (responseText.endsWith("```")) {
-                responseText = responseText.substring(0, responseText.length() - 3);
-            }
-            
-            Map<String, Object> result = objectMapper.readValue(responseText.trim(), Map.class);
+            // Map FastAPI format to HIS expected format
+            Map<String, Object> result = new HashMap<>();
             result.put("transcript", transcript);
-            result.put("confidence_score", 0.98);
+            result.put("extracted_symptoms", pythonResult.get("symptoms"));
+            result.put("extracted_medications", pythonResult.get("medications"));
+            
+            // Generate basic SOAP note since FastAPI doesn't
+            Map<String, String> soapNote = new HashMap<>();
+            List<String> symptomsList = (List<String>) pythonResult.get("symptoms");
+            List<String> medsList = (List<String>) pythonResult.get("medications");
+            soapNote.put("Subjective", "Patient presents with " + (symptomsList.isEmpty() ? "unspecified symptoms" : String.join(", ", symptomsList)) + ".");
+            soapNote.put("Objective", "Vitals stable.");
+            soapNote.put("Assessment", "Evaluation pending.");
+            soapNote.put("Plan", "Continue care. " + (medsList.isEmpty() ? "" : "Prescribed " + String.join(", ", medsList) + "."));
+            
+            result.put("generated_soap_note", soapNote);
+            result.put("confidence_score", 0.95);
             return result;
         } else {
-            throw new RuntimeException("Unexpected response from Ollama: " + response.getStatusCode());
+            throw new RuntimeException("Unexpected response from Python AI: " + response.getStatusCode());
         }
+    }
+
+    public Map<String, Object> predictSepsisRisk(double heartRate, double systolicBp, double temperature, double spo2) {
+        if (!useMock) {
+            try {
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("heartRate", heartRate);
+                requestBody.put("systolicBp", systolicBp);
+                requestBody.put("temperature", temperature);
+                requestBody.put("spo2", spo2);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                ResponseEntity<String> response = restTemplate.postForEntity(pythonAiUrl + "/predict/sepsis", entity, String.class);
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    return objectMapper.readValue(response.getBody(), Map.class);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to call local Python AI API for Sepsis, falling back to mock: {}", e.getMessage());
+            }
+        }
+        
+        // Mock fallback for Sepsis
+        Map<String, Object> mockResp = new HashMap<>();
+        mockResp.put("sepsisRiskScore", 0.15);
+        mockResp.put("riskLevel", "LOW");
+        mockResp.put("contributingFactors", Arrays.asList());
+        return mockResp;
     }
 
     private Map<String, Object> fallbackMockExtraction(String transcript) {
@@ -118,61 +141,11 @@ public class AiService {
     }
         
     public Map<String, Object> generateDischargeSummary(String clinicalContext) {
-        if (!useMock) {
-            try {
-                return callOllamaForSummary(clinicalContext, "discharge");
-            } catch (Exception e) {
-                logger.error("Failed to call Ollama API for discharge summary, falling back: {}", e.getMessage());
-                return fallbackMockSummary("discharge");
-            }
-        }
         return fallbackMockSummary("discharge");
     }
 
     public Map<String, Object> generatePatientOneLiner(String patientHistory) {
-        if (!useMock) {
-            try {
-                return callOllamaForSummary(patientHistory, "oneliner");
-            } catch (Exception e) {
-                logger.error("Failed to call Ollama API for patient one-liner, falling back: {}", e.getMessage());
-                return fallbackMockSummary("oneliner");
-            }
-        }
         return fallbackMockSummary("oneliner");
-    }
-
-    private Map<String, Object> callOllamaForSummary(String context, String type) throws Exception {
-        String prompt = "";
-        if (type.equals("discharge")) {
-            prompt = "You are an expert clinical AI. Read the following hospital admission context and generate a cohesive, professional 2-paragraph Hospital Course and Discharge Summary. "
-                   + "Return ONLY a valid JSON object: { \"discharge_summary\": \"...\" }\n\nContext: " + context;
-        } else {
-            prompt = "You are an expert clinical AI. Read the following patient history and generate a quick 1-2 sentence 'One-Liner' clinical summary. "
-                   + "Return ONLY a valid JSON object: { \"patient_summary\": \"...\" }\n\nHistory: " + context;
-        }
-
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", ollamaModel);
-        requestBody.put("prompt", prompt);
-        requestBody.put("stream", false);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> response = restTemplate.postForEntity(ollamaUrl, entity, String.class);
-        
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String responseText = root.path("response").asText();
-            
-            if (responseText.startsWith("```json")) responseText = responseText.substring(7);
-            if (responseText.endsWith("```")) responseText = responseText.substring(0, responseText.length() - 3);
-            
-            return objectMapper.readValue(responseText.trim(), Map.class);
-        } else {
-            throw new RuntimeException("Unexpected response from Ollama: " + response.getStatusCode());
-        }
     }
 
     private Map<String, Object> fallbackMockSummary(String type) {

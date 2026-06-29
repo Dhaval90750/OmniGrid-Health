@@ -21,6 +21,22 @@ fun StaffRosterScreen(
     token: String,
     onBack: () -> Unit
 ) {
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var rosters by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        isLoading = true
+        try {
+            val res = com.medcore.mobile.NetworkClient.get("$apiUrl/staff/rosters", token)
+            rosters = org.json.JSONArray(res)
+        } catch (e: Exception) {
+            errorMsg = "Failed to load rosters: ${e.message}"
+        } finally {
+            isLoading = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,28 +55,39 @@ fun StaffRosterScreen(
             item {
                 Text("Upcoming Shifts", style = MaterialTheme.typography.titleLarge)
             }
-            items(3) { index ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
+            if (rosters != null) {
+                items(rosters!!.length()) { index ->
+                    val roster = rosters!!.getJSONObject(index)
+                    val title = roster.optString("shiftType", "Standard Shift")
+                    val time = roster.optString("startTime", "08:00 AM") + " - " + roster.optString("endTime", "05:00 PM")
+                    val department = roster.optString("department", "General")
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Shift", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Night Call - ICU", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Tomorrow, 8:00 PM - 8:00 AM", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        IconButton(onClick = { /* Request Swap */ }) {
-                            Icon(Icons.Default.Send, contentDescription = "Swap", tint = MaterialTheme.colorScheme.secondary)
+                        Row(
+                            modifier = Modifier.padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Shift", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("$title - $department", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Text(time, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            IconButton(onClick = { /* Request Swap */ }) {
+                                Icon(Icons.Default.Send, contentDescription = "Swap", tint = MaterialTheme.colorScheme.secondary)
+                            }
                         }
                     }
                 }
+            } else if (isLoading) {
+                item { CircularProgressIndicator() }
+            } else {
+                item { Text(errorMsg, color = MaterialTheme.colorScheme.error) }
             }
         }
     }
