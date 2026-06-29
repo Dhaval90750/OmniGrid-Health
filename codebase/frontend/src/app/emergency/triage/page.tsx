@@ -37,8 +37,8 @@ export default function TriageAssessment() {
       };
       const response = await api.post('/analytics/sepsis-risk', payload);
       setSepsisAlert({
-        riskLevel: response.riskLevel,
-        message: response.message
+        riskLevel: response.data.riskLevel,
+        message: response.data.message
       });
     } catch (err) {
       console.error(err);
