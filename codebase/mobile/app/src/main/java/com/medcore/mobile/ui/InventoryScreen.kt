@@ -9,6 +9,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,11 +28,11 @@ fun InventoryScreen(
     token: String,
     onBack: () -> Unit
 ) {
-    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var pos by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
-    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var pos by remember { mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
     
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         isLoading = true
         try {
             val res = com.medcore.mobile.NetworkClient.get("$apiUrl/inventory/purchase-orders", token)
@@ -83,7 +88,7 @@ fun InventoryScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.ShoppingCart, contentDescription = "PO", tint = Color(0xFF795548))
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text(po.optString("poNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                    Text(text = po.optString("poNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text("Vendor: ${po.optJSONObject("vendor")?.optString("name") ?: "Unknown"}", color = Color.Gray)

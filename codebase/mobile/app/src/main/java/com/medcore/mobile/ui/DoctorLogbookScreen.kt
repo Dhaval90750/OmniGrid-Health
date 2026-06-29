@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -67,7 +68,7 @@ fun DoctorLogbookScreen(
                     Button(
                         onClick = {
                             isSubmitting = true
-                            scope.kotlinx.coroutines.launch {
+                            scope.launch {
                                 try {
                                     val body = org.json.JSONObject().apply {
                                         put("procedureName", procedure)

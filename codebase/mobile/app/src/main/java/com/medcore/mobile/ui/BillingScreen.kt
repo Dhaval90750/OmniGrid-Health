@@ -9,6 +9,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,11 +28,11 @@ fun BillingScreen(
     token: String,
     onBack: () -> Unit
 ) {
-    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var invoices by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
-    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var invoices by remember { mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
     
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         isLoading = true
         try {
             val res = com.medcore.mobile.NetworkClient.get("$apiUrl/billing/invoices/pending", token)
@@ -83,7 +88,7 @@ fun BillingScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.DateRange, contentDescription = "Bill", tint = Color(0xFF607D8B))
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text(invoice.optString("invoiceNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                Text(text = invoice.optString("invoiceNumber", "Unknown"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text("Patient: ${invoice.optJSONObject("patient")?.optString("fullName") ?: "Unknown"}", color = Color.Gray)

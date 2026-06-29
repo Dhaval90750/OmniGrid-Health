@@ -9,6 +9,13 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,12 +29,12 @@ fun IndentApprovalScreen(
     token: String,
     onBack: () -> Unit
 ) {
-    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var indents by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
-    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+    var indents by remember { mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
     
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         isLoading = true
         try {
             val res = com.medcore.mobile.NetworkClient.get("$apiUrl/inventory/indents", token)
@@ -76,11 +83,11 @@ fun IndentApprovalScreen(
                                 Icon(Icons.Default.Warning, contentDescription = "Critical", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(32.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Indent: ${indent.optString("indentNumber", "Unknown")}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(text = "Indent: ${indent.optString("indentNumber", "Unknown")}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                                     Text("Requested By: ${indent.optString("requestedBy", "N/A")}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 IconButton(onClick = {
-                                    scope.kotlinx.coroutines.launch {
+                                    scope.launch {
                                         try {
                                             com.medcore.mobile.NetworkClient.post("$apiUrl/inventory/indents/$indentId/approve?level=L1", "", token)
                                             // Refresh logic would ideally go here

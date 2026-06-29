@@ -9,6 +9,11 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,11 +26,11 @@ fun StaffRosterScreen(
     token: String,
     onBack: () -> Unit
 ) {
-    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var rosters by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<org.json.JSONArray?>(null) }
-    var errorMsg by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var rosters by remember { mutableStateOf<org.json.JSONArray?>(null) }
+    var errorMsg by remember { mutableStateOf("") }
     
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         isLoading = true
         try {
             val res = com.medcore.mobile.NetworkClient.get("$apiUrl/staff/rosters", token)
@@ -75,8 +80,8 @@ fun StaffRosterScreen(
                             Icon(Icons.Default.DateRange, contentDescription = "Shift", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("$title - $department", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                                Text(time, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(text = "$title - $department", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Text(text = time, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             IconButton(onClick = { /* Request Swap */ }) {
                                 Icon(Icons.Default.Send, contentDescription = "Swap", tint = MaterialTheme.colorScheme.secondary)

@@ -65,6 +65,24 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Biometric
+    implementation("androidx.biometric:biometric:1.1.0")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Shimmer
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.2.0")
+    
     // Room
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
