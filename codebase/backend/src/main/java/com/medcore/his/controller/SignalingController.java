@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import java.util.Map;
 
 @Controller
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class SignalingController {
 
     private static final Logger logger = LoggerFactory.getLogger(SignalingController.class);
