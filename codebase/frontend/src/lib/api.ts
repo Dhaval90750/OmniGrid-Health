@@ -30,10 +30,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      // If the 401 is from the login endpoint itself, DO NOT redirect! Let the component handle the error and show the message.
+      if (error.config && error.config.url && error.config.url.includes("/auth/login")) {
+        return Promise.reject(error);
+      }
+
       if (typeof window !== "undefined") {
         localStorage.removeItem("medcore_token");
         document.cookie = "medcore_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;";
-        window.location.href = "/login";
+        window.location.href = "/login?expired=true";
       }
     }
     return Promise.reject(error);
