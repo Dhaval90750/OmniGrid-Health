@@ -13,7 +13,7 @@ api.interceptors.request.use(
     // In a real application, you might want to get this from cookies or state
     // For this demonstration, we'll try to get it from localStorage if available
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("omnigrid_token");
+      const token = localStorage.getItem("medcore_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -31,8 +31,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("omnigrid_token");
-        document.cookie = "omnigrid_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;";
+        localStorage.removeItem("medcore_token");
+        document.cookie = "medcore_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;";
         window.location.href = "/login";
       }
     }
