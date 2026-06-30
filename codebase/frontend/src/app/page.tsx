@@ -1,24 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
-export default function Home() {
+export default function Dashboard() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    dateOfBirth: "",
-    gender: "",
-    mobileNumber: "",
-    email: ""
-  });
+  const { user } = useAuthStore();
   
+  // Determine primary role for dashboard routing
+  const primaryRole = user?.roles?.[0] || "";
+  const isAdmin = primaryRole === "ROLE_ADMIN";
+  const isReceptionist = primaryRole === "ROLE_RECEPTIONIST";
+  const isDoctor = primaryRole === "ROLE_DOCTOR";
+  const isPharmacist = primaryRole === "ROLE_PHARMACIST";
+
+  // --- RECEPTIONIST STATE ---
+  const [formData, setFormData] = useState({
+    firstName: "", lastName: "", dateOfBirth: "", gender: "", mobileNumber: "", email: ""
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -26,52 +31,140 @@ export default function Home() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
   const handleClear = () => {
-    setFormData({
-      firstName: "", lastName: "", dateOfBirth: "", gender: "", mobileNumber: "", email: ""
-    });
+    setFormData({ firstName: "", lastName: "", dateOfBirth: "", gender: "", mobileNumber: "", email: "" });
     setErrorMsg("");
   };
-
   const handleSubmit = async () => {
     try {
-      setIsLoading(true);
-      setErrorMsg("");
-      setSuccessMsg("");
+      setIsLoading(true); setErrorMsg(""); setSuccessMsg("");
       const response = await api.post("/patients", formData);
       setSuccessMsg(`Success! Generated UHID: ${response.data.uhid}`);
-      setFormData({
-        firstName: "", lastName: "", dateOfBirth: "", gender: "", mobileNumber: "", email: ""
-      });
+      handleClear();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.response?.data?.error || "Failed to register patient");
+      setErrorMsg(err.response?.data?.message || "Failed to register patient");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --- RENDER DYNAMIC DASHBOARDS ---
+
+  // 1. ADMIN DASHBOARD
+  if (isAdmin) {
+    return (
+      <div className="max-w-6xl space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-text-primary mb-1">Administrator Dashboard</h2>
+            <p className="text-text-secondary text-sm">Welcome back, {user?.username}. System operations overview.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={() => router.push('/admin/users')}>Manage Users</Button>
+            <Button variant="primary" onClick={() => router.push('/admin/settings')}>System Settings</Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-text-secondary">Active Sessions</div>
+              <div className="text-3xl font-bold text-primary mt-2">124</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-text-secondary">Server CPU Load</div>
+              <div className="text-3xl font-bold text-warning-dark mt-2">42%</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-text-secondary">Database Health</div>
+              <div className="text-3xl font-bold text-success mt-2">Optimal</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-text-secondary">Pending Security Audits</div>
+              <div className="text-3xl font-bold text-error mt-2">3</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader><CardTitle>Recent Activity Logs</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="space-y-4 text-sm">
+                <li className="flex justify-between border-b pb-2"><span className="text-text-primary">System Backup Completed</span><span className="text-text-secondary">02:00 AM</span></li>
+                <li className="flex justify-between border-b pb-2"><span className="text-text-primary">New User Registered (Dr. Jane Doe)</span><span className="text-text-secondary">08:15 AM</span></li>
+                <li className="flex justify-between"><span className="text-text-primary text-error">Failed Login Attempt (IP: 192.168.1.5)</span><span className="text-text-secondary">09:42 AM</span></li>
+              </ul>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Module Status</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b"><span className="text-sm">Authentication</span><Badge variant="success">Online</Badge></div>
+              <div className="flex justify-between items-center pb-2 border-b"><span className="text-sm">Billing Gateway (Stripe)</span><Badge variant="success">Online</Badge></div>
+              <div className="flex justify-between items-center pb-2 border-b"><span className="text-sm">ABDM Sandbox Sync</span><Badge variant="warning">Syncing</Badge></div>
+              <div className="flex justify-between items-center"><span className="text-sm">Telemedicine WebSockets</span><Badge variant="success">Active</Badge></div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. DOCTOR DASHBOARD
+  if (isDoctor) {
+    return (
+      <div className="max-w-6xl space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-text-primary mb-1">Welcome back, Dr. {user?.username}</h2>
+            <p className="text-text-secondary text-sm">Here is your schedule for today.</p>
+          </div>
+          <Button variant="primary" onClick={() => router.push('/patients')}>View All Patients</Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="col-span-2">
+            <CardHeader><CardTitle>Today's Appointments</CardTitle></CardHeader>
+            <CardContent>
+              <div className="text-center p-8 text-text-secondary border-2 border-dashed rounded-lg">
+                No upcoming appointments scheduled for today.
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start" variant="secondary" onClick={() => router.push('/doctor/ai-scribe')}>🎙️ Start AI Scribe</Button>
+              <Button className="w-full justify-start" variant="secondary" onClick={() => router.push('/doctor/telemedicine')}>💻 Join Telemedicine Room</Button>
+              <Button className="w-full justify-start" variant="secondary" onClick={() => router.push('/patients')}>📋 Write Prescription</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. RECEPTIONIST DASHBOARD (Default / Registration)
   return (
     <div className="max-w-5xl space-y-8">
-      {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-text-primary mb-1">Welcome back, Dr. Smith</h2>
-          <p className="text-text-secondary text-sm">Here is what&apos;s happening today in OmniGrid Health.</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => router.push('/staff')}>View Schedule</Button>
-          <Button variant="primary" onClick={() => router.push('/patients/new')}>New Patient Registration</Button>
+          <h2 className="text-2xl font-semibold text-text-primary mb-1">Welcome, {user?.username || 'Staff'}</h2>
+          <p className="text-text-secondary text-sm">OmniGrid Health Front Desk Operations</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Patient Registration Card */}
         <Card className="col-span-1 md:col-span-2">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Quick Registration</CardTitle>
+              <CardTitle>Quick Patient Registration</CardTitle>
               <Badge variant="info">OPD Flow</Badge>
             </div>
           </CardHeader>
@@ -118,28 +211,23 @@ export default function Home() {
         {/* System Status Card */}
         <Card>
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
+            <CardTitle>Department Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-surface-hover">
-              <span className="text-sm text-text-secondary">Core Database</span>
-              <Badge variant="success">Online</Badge>
+              <span className="text-sm text-text-secondary">OPD Queue</span>
+              <Badge variant="info">12 Waiting</Badge>
             </div>
             <div className="flex justify-between items-center pb-2 border-b border-surface-hover">
-              <span className="text-sm text-text-secondary">Auth Service</span>
-              <Badge variant="success">Online</Badge>
+              <span className="text-sm text-text-secondary">Lab Reports</span>
+              <Badge variant="success">All Cleared</Badge>
             </div>
             <div className="flex justify-between items-center pb-2 border-b border-surface-hover">
-              <span className="text-sm text-text-secondary">Lab Integration</span>
-              <Badge variant="warning">Sync Delayed</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-text-secondary">ICU Ventilators</span>
-              <Badge variant="error">Critical Load</Badge>
+              <span className="text-sm text-text-secondary">Pharmacy</span>
+              <Badge variant="success">Operating</Badge>
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );
