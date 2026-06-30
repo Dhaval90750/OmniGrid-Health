@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('medcore_token')?.value;
   const rolesString = request.cookies.get('medcore_roles')?.value || '';
-  const roles = rolesString.split(',').map(r => r.trim());
+  const roles = rolesString.split(',').map(r => r.trim().toUpperCase());
   const isAdmin = roles.includes('ROLE_ADMIN');
   
   const path = request.nextUrl.pathname;
@@ -27,14 +27,14 @@ export function middleware(request: NextRequest) {
       '/pharmacy': ['ROLE_PHARMACIST'],
       '/lab': ['ROLE_LAB_TECH'],
       '/radiology': ['ROLE_RADIOLOGIST'],
-      '/billing': ['ROLE_BILLER'],
-      '/inventory': ['ROLE_INVENTORY_MANAGER'],
+      '/billing': ['ROLE_BILLER', 'ROLE_RECEPTIONIST'],
+      '/inventory': ['ROLE_INVENTORY_MANAGER', 'ROLE_PHARMACIST'],
       '/ot': ['ROLE_DOCTOR', 'ROLE_NURSE'],
       '/icu': ['ROLE_DOCTOR', 'ROLE_NURSE'],
-      '/admissions': ['ROLE_RECEPTIONIST'],
+      '/admissions': ['ROLE_RECEPTIONIST', 'ROLE_NURSE'],
       '/opd': ['ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_NURSE'],
-      '/patients': ['ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_NURSE'],
-      '/admin': [] // Only Admin (handled by isAdmin above)
+      '/patients': ['ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_PHARMACIST', 'ROLE_LAB_TECH', 'ROLE_RADIOLOGIST', 'ROLE_BILLER'],
+      '/admin': [] // Handled by isAdmin above
     };
 
     for (const [route, allowedRoles] of Object.entries(roleRequirements)) {
