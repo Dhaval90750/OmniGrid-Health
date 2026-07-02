@@ -15,7 +15,13 @@ export default function NewAdmission() {
     doctorId: "",
     wardId: "",
     bedId: "",
-    provisionalDiagnosis: ""
+    provisionalDiagnosis: "",
+    admissionType: "Elective",
+    roomType: "General",
+    insurance: "",
+    preAuthNumber: "",
+    consentForTreatment: false,
+    mlcFlag: false
   });
 
   const [patient, setPatient] = useState<any>(null);
@@ -90,7 +96,14 @@ export default function NewAdmission() {
         admittingDoctor: { id: formData.doctorId },
         ward: { id: formData.wardId },
         bed: { id: formData.bedId },
-        admissionReason: formData.provisionalDiagnosis
+        admissionReason: formData.provisionalDiagnosis,
+        admissionType: formData.admissionType,
+        roomType: formData.roomType,
+        insurance: formData.insurance,
+        preAuthNumber: formData.preAuthNumber,
+        consentForTreatment: formData.consentForTreatment,
+        mlcFlag: formData.mlcFlag,
+        provisionalDiagnosis: formData.provisionalDiagnosis
       });
       alert("Patient successfully admitted to bed!");
       router.push("/admissions");
@@ -165,6 +178,36 @@ export default function NewAdmission() {
                     value={formData.provisionalDiagnosis} 
                     onChange={e => setFormData({...formData, provisionalDiagnosis: e.target.value})} 
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Admission Type</label>
+                  <select 
+                    className="w-full h-10 px-3 py-2 border border-border rounded-md text-sm outline-none focus:border-primary bg-white"
+                    value={formData.admissionType}
+                    onChange={e => setFormData({...formData, admissionType: e.target.value})}
+                  >
+                    <option value="Elective">Elective</option>
+                    <option value="Emergency">Emergency</option>
+                    <option value="Transfer">Transfer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Insurance Details</label>
+                  <Input 
+                    placeholder="Insurance Provider" 
+                    value={formData.insurance} 
+                    onChange={e => setFormData({...formData, insurance: e.target.value})} 
+                  />
+                </div>
+                <div className="col-span-2 flex gap-4 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.consentForTreatment} onChange={e => setFormData({...formData, consentForTreatment: e.target.checked})} />
+                    <span className="text-sm">Patient Consent Obtained</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.mlcFlag} onChange={e => setFormData({...formData, mlcFlag: e.target.checked})} />
+                    <span className="text-sm text-error font-medium">Medico-Legal Case (MLC)</span>
+                  </label>
                 </div>
               </div>
               

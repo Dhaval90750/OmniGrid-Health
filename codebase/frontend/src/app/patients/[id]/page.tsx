@@ -129,10 +129,14 @@ export default function PatientProfile() {
         <div className="lg:col-span-1 space-y-6">
           <Card className="border-primary/20 shadow-md">
           <CardContent className="p-6 flex flex-col items-center text-center">
-            <div className="w-24 h-24 bg-primary-light text-primary rounded-full flex items-center justify-center text-3xl font-bold mb-4">
-              {(patient.firstName?.[0] || "") + (patient.lastName?.[0] || "")}
+            <div className="w-24 h-24 bg-primary-light text-primary rounded-full flex items-center justify-center text-3xl font-bold mb-4 overflow-hidden">
+              {patient.photoBase64 ? (
+                <img src={patient.photoBase64} alt="Patient" className="w-full h-full object-cover" />
+              ) : (
+                (patient.firstName?.[0] || "") + (patient.lastName?.[0] || "")
+              )}
             </div>
-            <h3 className="text-xl font-bold text-text-primary">{(patient.firstName || "") + " " + (patient.lastName || "")}</h3>
+            <h3 className="text-xl font-bold text-text-primary">{(patient.firstName || "") + (patient.middleName ? " " + patient.middleName : "") + " " + (patient.lastName || "")}</h3>
             <div className="text-sm text-text-secondary mb-2">{patient.gender} • {patient.dateOfBirth}</div>
             
             <div className="bg-surface px-4 py-2 rounded-md border border-border w-full flex justify-between items-center mb-6 mt-4">
@@ -236,6 +240,26 @@ export default function PatientProfile() {
                     <div>
                       <div className="text-xs text-text-secondary mb-1">Aadhaar (National ID)</div>
                       <div className="font-medium text-text-primary">{patient.nationalId || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Passport Number</div>
+                      <div className="font-medium text-text-primary">{patient.passportNumber || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">ABHA ID</div>
+                      <div className="font-medium text-text-primary">{patient.abhaId || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Religion</div>
+                      <div className="font-medium text-text-primary">{patient.religion || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Occupation</div>
+                      <div className="font-medium text-text-primary">{patient.occupation || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-text-secondary mb-1">Referred By</div>
+                      <div className="font-medium text-text-primary">{patient.referredBy || "—"}</div>
                     </div>
                     <div className="col-span-2 md:col-span-3">
                       <div className="text-xs text-text-secondary mb-1">Address</div>

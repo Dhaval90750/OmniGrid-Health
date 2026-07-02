@@ -58,28 +58,39 @@ public class PatientService {
         patient.setEmergencyContactRelation(request.getEmergencyContactRelation());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         
+        patient.setMiddleName(request.getMiddleName());
+        patient.setOccupation(request.getOccupation());
+        patient.setSecondaryMobile(request.getSecondaryMobile());
+        patient.setAbhaId(request.getAbhaId());
+        patient.setPassportNumber(request.getPassportNumber());
+        patient.setReligion(request.getReligion());
+        patient.setReferredBy(request.getReferredBy());
+        patient.setPhoto(request.getPhotoBase64());
+        
         if (!request.isBypassDuplicateCheck()) {
-            Patient existing = patientRepository.findFirstByMobileNumber(request.getMobileNumber())
-                    .orElseGet(() -> patientRepository.findFirstByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndDateOfBirth(
-                            request.getFirstName(), request.getLastName(), request.getDateOfBirth()
-                    ).orElse(null));
+            String fullName = request.getFirstName() + " " + request.getLastName();
+            List<Patient> potentialDuplicates = patientRepository.findPotentialDuplicates(
+                    fullName, request.getMobileNumber(), request.getDateOfBirth());
 
-            if (existing != null) {
+            if (!potentialDuplicates.isEmpty()) {
+                List<PatientResponse> dupResponses = potentialDuplicates.stream()
+                        .map(this::getPatientWithQrCode)
+                        .collect(Collectors.toList());
                 throw new com.medcore.his.exception.DuplicatePatientException(
-                        "Duplicate patient detected with same mobile number or identical name and DOB.",
-                        getPatientWithQrCode(existing)
+                        "Potential duplicate patient detected via fuzzy matching or exact mobile/DOB match.",
+                        dupResponses
                 );
             }
         }
         
-        // Generate UHID: MED-YYYY-XXXXXX atomically via sequence
+        // Generate UHID: HOS-YYYY-NNNNNNN atomically via sequence
         String currentYear = String.valueOf(Year.now().getValue());
         Long sequenceValue = jdbcTemplate.queryForObject("SELECT nextval('uhid_seq')", Long.class);
         if (sequenceValue == null) {
             throw new RuntimeException("Failed to generate UHID sequence");
         }
-        String sequence = String.format("%06d", sequenceValue);
-        String generatedUhid = "MED-" + currentYear + "-" + sequence;
+        String sequence = String.format("%07d", sequenceValue);
+        String generatedUhid = "HOS-" + currentYear + "-" + sequence;
         
         patient.setUhid(generatedUhid);
         
@@ -102,11 +113,25 @@ public class PatientService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<PatientResponse> advancedSearchPatients(String uhid, String mobileNumber, String firstName, String lastName, String nationalId) {
+        return patientRepository.advancedSearchPatients(uhid, mobileNumber, firstName, lastName, nationalId).stream()
+                .map(p -> PatientResponse.fromEntity(p, null)) // Don't generate QR in list view for performance
+                .collect(Collectors.toList());
+    }
+
     private PatientResponse getPatientWithQrCode(Patient patient) {
         Map<String, String> qrDataMap = new HashMap<>();
         qrDataMap.put("uhid", patient.getUhid());
+        qrDataMap.put("hospital_code", "MEDCORE-01");
         qrDataMap.put("name", patient.getFirstName() + " " + patient.getLastName());
         qrDataMap.put("dob", patient.getDateOfBirth().toString());
+        qrDataMap.put("blood_group", patient.getBloodGroup() != null ? patient.getBloodGroup() : "Unknown");
+        qrDataMap.put("allergies_flag", "false"); // Needs real logic later if patient has allergies
+        
+        // Simple checksum: length of UHID + name
+        int checksum = patient.getUhid().length() + (patient.getFirstName() + patient.getLastName()).length();
+        qrDataMap.put("checksum", String.valueOf(checksum));
         
         String qrJson;
         try {

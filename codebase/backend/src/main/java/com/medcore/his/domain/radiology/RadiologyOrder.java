@@ -45,6 +45,12 @@ public class RadiologyOrder extends BaseEntity {
 
     @Column(name = "scheduled_time")
     private LocalDateTime scheduledTime;
+
+    @Column(name = "contrast_allergy_check")
+    private Boolean contrastAllergyCheck = false;
+
+    @Column(name = "pregnancy_check")
+    private Boolean pregnancyCheck = false;
     
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private RadiologyReport report;

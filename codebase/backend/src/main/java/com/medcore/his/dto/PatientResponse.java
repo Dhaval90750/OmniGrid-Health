@@ -32,33 +32,56 @@ public class PatientResponse {
     private String emergencyContactName;
     private String emergencyContactRelation;
     private String emergencyContactPhone;
+    private String photoBase64;
+    private String middleName;
+    private String occupation;
+    private String secondaryMobile;
+    private String abhaId;
+    private String passportNumber;
+    private String religion;
+    private String referredBy;
+
+    // Generated QR code for patient card (optional, only populated in some endpoints)
     private String qrCodeBase64;
 
     public static PatientResponse fromEntity(Patient patient, String qrCodeBase64) {
-        PatientResponse dto = new PatientResponse();
-        dto.setId(patient.getId());
-        dto.setUhid(patient.getUhid());
-        dto.setFirstName(patient.getFirstName());
-        dto.setLastName(patient.getLastName());
-        dto.setDateOfBirth(patient.getDateOfBirth());
-        dto.setGender(patient.getGender());
-        dto.setMobileNumber(patient.getMobileNumber());
-        dto.setBloodGroup(patient.getBloodGroup());
-        dto.setEmail(patient.getEmail());
-        dto.setAddressLine1(patient.getAddressLine1());
-        dto.setAddressLine2(patient.getAddressLine2());
-        dto.setCity(patient.getCity());
-        dto.setState(patient.getState());
-        dto.setCountry(patient.getCountry());
-        dto.setZipCode(patient.getZipCode());
-        dto.setMaritalStatus(patient.getMaritalStatus());
-        dto.setNationality(patient.getNationality());
-        dto.setPrimaryLanguage(patient.getPrimaryLanguage());
-        dto.setNationalId(patient.getNationalId());
-        dto.setEmergencyContactName(patient.getEmergencyContactName());
-        dto.setEmergencyContactRelation(patient.getEmergencyContactRelation());
-        dto.setEmergencyContactPhone(patient.getEmergencyContactPhone());
-        dto.setQrCodeBase64(qrCodeBase64);
-        return dto;
+        if (patient == null) return null;
+        
+        PatientResponse response = new PatientResponse();
+        response.setId(patient.getId());
+        response.setUhid(patient.getUhid());
+        response.setFirstName(patient.getFirstName());
+        response.setLastName(patient.getLastName());
+        response.setDateOfBirth(patient.getDateOfBirth());
+        response.setGender(patient.getGender());
+        response.setMobileNumber(patient.getMobileNumber());
+        response.setBloodGroup(patient.getBloodGroup());
+        response.setEmail(patient.getEmail());
+        response.setAddressLine1(patient.getAddressLine1());
+        response.setAddressLine2(patient.getAddressLine2());
+        response.setCity(patient.getCity());
+        response.setState(patient.getState());
+        response.setCountry(patient.getCountry());
+        response.setZipCode(patient.getZipCode());
+        response.setMaritalStatus(patient.getMaritalStatus());
+        response.setNationality(patient.getNationality());
+        response.setPrimaryLanguage(patient.getPrimaryLanguage());
+        response.setNationalId(patient.getNationalId());
+        response.setEmergencyContactName(patient.getEmergencyContactName());
+        response.setEmergencyContactRelation(patient.getEmergencyContactRelation());
+        response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
+        
+        response.setMiddleName(patient.getMiddleName());
+        response.setOccupation(patient.getOccupation());
+        response.setSecondaryMobile(patient.getSecondaryMobile());
+        response.setAbhaId(patient.getAbhaId());
+        response.setPassportNumber(patient.getPassportNumber());
+        response.setReligion(patient.getReligion());
+        response.setReferredBy(patient.getReferredBy());
+        response.setPhotoBase64(patient.getPhoto());
+        
+        response.setQrCodeBase64(qrCodeBase64);
+        
+        return response;
     }
 }

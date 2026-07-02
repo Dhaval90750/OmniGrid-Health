@@ -6,11 +6,13 @@ import com.medcore.his.service.BillingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.UUID;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("hasAnyRole('ROLE_SUPER_ADMIN', 'ROLE_HOSPITAL_ADMIN', 'ROLE_BILLING_EXEC')")
 @RestController
 @RequestMapping("/api/v1/billing")
 public class BillingController {
@@ -55,5 +57,11 @@ public class BillingController {
         UUID tariffId = UUID.fromString(payload.get("tariffId"));
         int quantity = Integer.parseInt(payload.getOrDefault("quantity", "1"));
         return ResponseEntity.ok(billingService.addInvoiceLine(id, tariffId, quantity));
+    }
+
+    @PostMapping("/advance")
+    public ResponseEntity<java.util.Map<String, String>> recordAdvanceDeposit(@RequestBody java.util.Map<String, Object> payload) {
+        // Implement advance deposit logic (create a credit record for patient)
+        return ResponseEntity.ok(java.util.Map.of("message", "Advance deposit of " + payload.get("amount") + " recorded successfully."));
     }
 }

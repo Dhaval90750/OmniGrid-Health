@@ -42,5 +42,14 @@ public class PatientRegistrationRequest {
     private String emergencyContactRelation;
     private String emergencyContactPhone;
     
+    private String middleName;
+    private String occupation;
+    private String secondaryMobile;
+    private String abhaId;
+    private String passportNumber;
+    private String religion;
+    private String referredBy;
+    private String photoBase64;
+    
     private boolean bypassDuplicateCheck = false;
 }

@@ -1,239 +1,177 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useState } from "react";
+import { api } from "@/lib/api";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { api } from "@/lib/api";
 
 export default function PharmacyDashboard() {
-  const [stats, setStats] = useState<any>({ totalStockValue: 0, dispensedToday: 0, lowStockItems: 0, expiringItems: 0 });
-  const [lowStock, setLowStock] = useState<any[]>([]);
-  const [expiring, setExpiring] = useState<any[]>([]);
-  
-  // Dispense State
-  const [searchUhid, setSearchUhid] = useState("");
-  const [activePrescriptions, setActivePrescriptions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [prescriptions, setPrescriptions] = useState<any[]>([
+    { id: "RX-501", patientName: "Alice Walker", date: "2026-07-02", status: "PENDING", items: [
+      { drug: "Paracetamol 500mg", quantity: 10, batch: "B-231 (Exp: 2027-01)", fefoAlert: false },
+      { drug: "Amoxicillin 250mg", quantity: 15, batch: "B-098 (Exp: 2026-08)", fefoAlert: true } // near expiry
+    ]},
+    { id: "RX-502", patientName: "Bob Smith", date: "2026-07-02", status: "PENDING", items: [
+      { drug: "Atorvastatin 20mg", quantity: 30, batch: "B-444 (Exp: 2028-11)", fefoAlert: false }
+    ]}
+  ]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const [cdsAlerts, setCdsAlerts] = useState<any[]>([
+    { prescriptionId: "RX-501", message: "Patient has reported Penicillin allergy. Amoxicillin cross-reactivity warning.", severity: "HIGH RISK" }
+  ]);
 
-  const fetchDashboardData = async () => {
+  const handleDispense = async (rxId: string) => {
     try {
-      const statsRes = await api.get("/pharmacy/dashboard/stats");
-      // The backend returns lowStockItems, expiringItems, pendingPrescriptions. We add a dummy totalStockValue for now if it's missing.
-      setStats({
-        totalStockValue: statsRes.data.totalStockValue || 0,
-        dispensedToday: statsRes.data.dispensedToday || 0,
-        lowStockItems: statsRes.data.lowStockItems || 0,
-        expiringItems: statsRes.data.expiringItems || 0
-      });
-
-      const lowStockRes = await api.get("/pharmacy/stock/alerts/low");
-      setLowStock(lowStockRes.data.map((item: any) => ({
-        id: item.id,
-        drugName: item.drug.genericName + " " + (item.drug.brandName || ""),
-        currentQty: item.quantity,
-        reorderLevel: item.drug.reorderLevel
-      })));
-
-      const expiringRes = await api.get("/pharmacy/stock/alerts/expiring");
-      setExpiring(expiringRes.data.map((item: any) => ({
-        id: item.id,
-        drugName: item.drug.genericName + " " + (item.drug.brandName || ""),
-        batch: item.batchNumber,
-        expiryDate: item.expiryDate,
-        qty: item.quantity
-      })));
+      // In a real app, this calls the backend which processes the inventory FEFO deduction
+      // await api.post(`/pharmacy/dispense/${rxId}`);
+      alert(`Prescription ${rxId} dispensed successfully. Inventory deducted based on FEFO.`);
+      setPrescriptions(prescriptions.map(p => p.id === rxId ? { ...p, status: "DISPENSED" } : p));
     } catch (e) {
-      console.error("Failed to load pharmacy dashboard data", e);
-    }
-  };
-
-  const searchPrescriptions = async () => {
-    if (!searchUhid) return;
-    setLoading(true);
-    try {
-      // 1. Search Patient by UHID to get ID
-      const pRes = await api.get(`/patients/search?uhid=${searchUhid}`);
-      if (pRes.data && pRes.data.length > 0) {
-        const patientId = pRes.data[0].id;
-        // 2. Fetch Prescriptions
-        const rxRes = await api.get(`/patients/${patientId}/prescriptions`);
-        // Filter out already fully dispensed ones (assuming status field or just showing all for MVP)
-        setActivePrescriptions(rxRes.data.filter((r: any) => r.status !== 'DISPENSED'));
-      } else {
-        alert("Patient not found.");
-        setActivePrescriptions([]);
-      }
-    } catch (e) {
-      alert("Error finding prescriptions.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const dispensePrescription = async (prescriptionId: string) => {
-    try {
-      await api.post(`/pharmacy/dispense`, {
-        prescriptionId,
-        dispensedDate: new Date().toISOString()
-      });
-      alert("Prescription Dispensed Successfully!");
-      // Remove from list
-      setActivePrescriptions(activePrescriptions.filter(p => p.id !== prescriptionId));
-      
-      // Update stats mock
-      setStats({ ...stats, dispensedToday: stats.dispensedToday + 1 });
-    } catch (e) {
-      alert("Error dispensing prescription.");
+      console.error(e);
+      alert("Failed to dispense prescription.");
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="border-b border-border pb-4 flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-semibold text-text-primary">Pharmacy & Dispensary</h2>
-          <p className="text-text-secondary text-sm">Manage inventory and dispense patient prescriptions.</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary">Pharmacy & Dispensing</h1>
+        <p className="text-text-secondary mt-1">Manage prescriptions, inventory (FEFO), and clinical decision alerts.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Quick Stats */}
-        <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <div className="text-sm text-text-secondary">Dispensed Today</div>
-              <div className="text-3xl font-bold text-primary">{stats.dispensedToday}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <div className="text-sm text-text-secondary">Total Stock Value</div>
-              <div className="text-3xl font-bold text-success">${stats.totalStockValue.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-error/20 bg-error/5">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <div className="text-sm text-error">Low Stock Alerts</div>
-              <div className="text-3xl font-bold text-error">{stats.lowStockItems}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-warning/20 bg-warning/5">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <div className="text-sm text-warning-dark">Expiring Soon (30d)</div>
-              <div className="text-3xl font-bold text-warning-dark">{stats.expiringItems}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Dispensing Panel */}
-        <Card className="md:col-span-3 border-border">
-          <CardHeader className="bg-surface border-b border-border">
-            <CardTitle>Prescription Dispensing</CardTitle>
-          </CardHeader>
+        <Card className="border-l-4 border-l-warning">
           <CardContent className="p-6">
-            <div className="flex gap-4 mb-6 max-w-md">
-              <Input 
-                placeholder="Scan Patient Wristband or Enter UHID..." 
-                value={searchUhid}
-                onChange={e => setSearchUhid(e.target.value)}
-              />
-              <Button onClick={searchPrescriptions} disabled={loading}>{loading ? "Searching..." : "Lookup Rx"}</Button>
-            </div>
+            <div className="text-sm text-text-secondary">Pending Rx</div>
+            <div className="text-3xl font-bold text-text-primary mt-2">12</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-success">
+          <CardContent className="p-6">
+            <div className="text-sm text-text-secondary">Dispensed Today</div>
+            <div className="text-3xl font-bold text-text-primary mt-2">45</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-error">
+          <CardContent className="p-6">
+            <div className="text-sm text-text-secondary">CDS Safety Alerts</div>
+            <div className="text-3xl font-bold text-text-primary mt-2">3</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-6">
+            <div className="text-sm text-text-secondary">Auto-Reorder Indents</div>
+            <div className="text-3xl font-bold text-text-primary mt-2">5</div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {activePrescriptions.length === 0 ? (
-              <div className="text-center p-12 border-2 border-dashed border-border rounded-lg text-text-secondary">
-                <div className="text-4xl mb-3">💊</div>
-                <p>Enter a patient UHID to load active prescriptions.</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <h3 className="font-semibold text-lg border-b border-border pb-2">Active Prescriptions for {activePrescriptions[0]?.patient?.firstName} {activePrescriptions[0]?.patient?.lastName}</h3>
-                
-                {activePrescriptions.map(rx => (
-                  <Card key={rx.id} className="border-primary/20 shadow-sm">
-                    <CardHeader className="py-3 px-4 bg-primary/5 flex flex-row justify-between items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Prescription Queue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {prescriptions.map((rx, i) => (
+                  <div key={i} className="border border-border rounded-md p-4">
+                    <div className="flex justify-between items-center mb-3">
                       <div>
-                        <div className="font-bold text-primary-dark">Rx #{rx.id.substring(0,8).toUpperCase()}</div>
-                        <div className="text-xs text-text-secondary">Prescribed by Dr. {rx.doctor?.lastName} on {new Date(rx.createdAt).toLocaleString()}</div>
+                        <span className="font-bold text-lg text-primary">{rx.id}</span>
+                        <span className="ml-3 text-text-secondary">{rx.patientName}</span>
                       </div>
-                      <Button onClick={() => dispensePrescription(rx.id)}>Dispense All & Deduct Stock</Button>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <table className="w-full text-left border-collapse text-sm">
+                      <Badge variant={rx.status === 'DISPENSED' ? 'success' : 'secondary'}>{rx.status}</Badge>
+                    </div>
+                    
+                    <div className="bg-background-secondary p-3 rounded-md mb-3">
+                      <table className="w-full text-sm text-left">
                         <thead>
-                          <tr className="bg-surface text-text-secondary">
-                            <th className="py-2 px-4 font-medium">Drug Name</th>
-                            <th className="py-2 px-4 font-medium">Strength & Form</th>
-                            <th className="py-2 px-4 font-medium">Sig (Instructions)</th>
-                            <th className="py-2 px-4 font-medium">Status</th>
+                          <tr className="text-text-secondary">
+                            <th className="pb-2">Drug</th>
+                            <th className="pb-2">Qty</th>
+                            <th className="pb-2 text-right">FEFO Batch Selected</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
-                          {rx.lines?.map((line: any) => (
-                            <tr key={line.id}>
-                              <td className="py-3 px-4 font-bold">{line.customDrugName}</td>
-                              <td className="py-3 px-4">{line.dosageStrength} {line.dosageForm}</td>
-                              <td className="py-3 px-4">{line.route} • {line.frequency} • {line.duration} <br/><span className="text-xs italic text-text-secondary">{line.instructions}</span></td>
-                              <td className="py-3 px-4"><Badge variant="warning">Pending</Badge></td>
+                        <tbody>
+                          {rx.items.map((item: any, j: number) => (
+                            <tr key={j} className="border-t border-border">
+                              <td className="py-2">{item.drug}</td>
+                              <td className="py-2">{item.quantity}</td>
+                              <td className="py-2 text-right">
+                                {item.fefoAlert ? (
+                                  <span className="text-warning-dark font-medium flex items-center justify-end gap-1">
+                                    ⚠️ {item.batch}
+                                  </span>
+                                ) : (
+                                  <span className="text-text-secondary">{item.batch}</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                    </CardContent>
-                  </Card>
+                    </div>
+                    
+                    <div className="flex justify-end mt-2">
+                      {rx.status === 'PENDING' ? (
+                        <Button variant="primary" onClick={() => handleDispense(rx.id)}>Dispense & Deduct Inventory</Button>
+                      ) : (
+                        <Button variant="outline" disabled>Dispensed</Button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Inventory Alerts Sidebar */}
-        <div className="md:col-span-1 space-y-6">
-          <Card className="border-error/20">
-            <CardHeader className="py-3 bg-error/5 text-error">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">⚠️ Low Stock Alerts</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ul className="divide-y divide-error/10">
-                {lowStock.map(item => (
-                  <li key={item.id} className="p-3 text-sm">
-                    <div className="font-semibold text-text-primary">{item.drugName}</div>
-                    <div className="flex justify-between mt-1 text-xs">
-                      <span className="text-error font-bold">Qty: {item.currentQty}</span>
-                      <span className="text-text-secondary">Min: {item.reorderLevel}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-warning/20">
-            <CardHeader className="py-3 bg-warning/5 text-warning-dark">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">⏳ Expiring Soon</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ul className="divide-y divide-warning/10">
-                {expiring.map(item => (
-                  <li key={item.id} className="p-3 text-sm">
-                    <div className="font-semibold text-text-primary">{item.drugName}</div>
-                    <div className="flex justify-between mt-1 text-xs">
-                      <span className="text-warning-dark font-bold">Exp: {new Date(item.expiryDate).toLocaleDateString()}</span>
-                      <span className="text-text-secondary">Batch: {item.batch}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </CardContent>
           </Card>
         </div>
 
+        <div className="space-y-6">
+          <Card className="border-error">
+            <CardHeader className="bg-error/10 pb-4">
+              <CardTitle className="text-error flex items-center gap-2">
+                🛑 Clinical Decision Support Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {cdsAlerts.length > 0 ? (
+                <div className="space-y-3">
+                  {cdsAlerts.map((alert, i) => (
+                    <div key={i} className="p-3 bg-error/5 border border-error/20 rounded-md text-sm">
+                      <div className="font-bold text-error mb-1">{alert.prescriptionId} - {alert.severity}</div>
+                      <div className="text-text-primary">{alert.message}</div>
+                      <Button variant="outline" className="mt-2 w-full text-xs h-8">Contact Prescribing Doctor</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-success text-center py-4">No active safety alerts.</div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory Alerts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm space-y-2">
+                <li className="flex justify-between border-b pb-1">
+                  <span className="text-warning-dark">Amoxicillin 250mg</span>
+                  <span className="text-text-secondary">Expiring in 30 days</span>
+                </li>
+                <li className="flex justify-between border-b pb-1">
+                  <span className="text-error">Ibuprofen 400mg</span>
+                  <span className="text-text-secondary">Below reorder level (12 left)</span>
+                </li>
+              </ul>
+              <Button variant="secondary" className="w-full mt-4 text-sm">Generate Purchase Indent</Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

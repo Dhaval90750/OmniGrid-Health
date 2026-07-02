@@ -4,10 +4,12 @@ import com.medcore.his.service.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Map;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("isAuthenticated()")
 @RestController
 @RequestMapping("/api/v1/admin/settings")
 public class ConfigurationController {

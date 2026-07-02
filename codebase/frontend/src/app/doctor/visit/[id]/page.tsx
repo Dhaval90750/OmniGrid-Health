@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
 import { AllergyBanner } from "@/components/AllergyBanner";
 import { api } from "@/lib/api";
 
@@ -15,7 +16,13 @@ export default function ClinicalWorkspace() {
   const [visit, setVisit] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hpi, setHpi] = useState("");
-  const [examination, setExamination] = useState("");
+  const [pastMedicalHistory, setPastMedicalHistory] = useState("");
+  const [familyHistory, setFamilyHistory] = useState("");
+  const [socialHistory, setSocialHistory] = useState("");
+  const [reviewOfSystems, setReviewOfSystems] = useState("");
+  const [subjectiveNotes, setSubjectiveNotes] = useState("");
+  const [objectiveNotes, setObjectiveNotes] = useState("");
+  const [assessmentNotes, setAssessmentNotes] = useState("");
   const [plan, setPlan] = useState("");
   
   // New State for Diagnosis & Rx
@@ -59,15 +66,78 @@ export default function ClinicalWorkspace() {
   const searchIcd10 = async (q: string) => {
     setDiagnosis(q);
     if (q.length > 2) {
-      const res = await api.get(`/search/icd10?q=${q}`);
+      const res = await api.get(`/icd/search?q=${q}`);
       setDiagnosisResults(res.data);
     } else {
       setDiagnosisResults([]);
     }
   };
 
+  const suggestIcdWithAI = async () => {
+    try {
+      setLoading(true);
+      const combinedText = `${subjectiveNotes} ${hpi} ${objectiveNotes} ${assessmentNotes}`;
+      const res = await api.post("/ai/icd-suggest", { clinicalText: combinedText });
+      
+      if (res.data && res.data.suggestions) {
+        setDiagnosisResults(res.data.suggestions.map((s: any) => ({
+          id: s.code,
+          code: s.code,
+          description: s.description,
+          confidence: s.confidence
+        })));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to get AI suggestions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignAndLock = async () => {
+    if (!window.confirm("Are you sure you want to sign and lock this chart? No further edits will be allowed.")) return;
+    try {
+      setLoading(true);
+      await api.post(`/visits/${id}/notes/sign`, {
+        subjectiveNotes,
+        objectiveNotes,
+        assessmentNotes,
+        plan,
+        diagnoses: selectedDiagnoses,
+        prescriptions
+      });
+      alert("Chart officially signed and locked.");
+      router.push("/doctor/dashboard");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to sign and lock chart.");
+      setLoading(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      setLoading(true);
+      await api.post(`/visits/${id}/notes`, {
+        subjectiveNotes,
+        objectiveNotes,
+        assessmentNotes,
+        plan,
+        diagnoses: selectedDiagnoses,
+        prescriptions
+      });
+      alert("Draft Saved Successfully");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save draft");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addDiagnosis = (diag: any) => {
-    if (!selectedDiagnoses.find(d => d.id === diag.id)) {
+    if (!selectedDiagnoses.find(d => d.code === diag.code || d.id === diag.id)) {
       setSelectedDiagnoses([...selectedDiagnoses, diag]);
     }
     setDiagnosis("");
@@ -109,7 +179,13 @@ export default function ClinicalWorkspace() {
       // Save Notes
       await api.post(`/visits/${id}/notes`, {
         historyOfPresentIllness: hpi,
-        physicalExamination: examination,
+        pastMedicalHistory: pastMedicalHistory,
+        familyHistory: familyHistory,
+        socialHistory: socialHistory,
+        reviewOfSystems: reviewOfSystems,
+        subjectiveNotes: subjectiveNotes,
+        objectiveNotes: objectiveNotes,
+        assessmentNotes: assessmentNotes,
         treatmentPlan: plan,
       });
 
@@ -271,25 +347,62 @@ export default function ClinicalWorkspace() {
         {/* Right Col: Clinical Note Entry */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader><CardTitle>History of Present Illness (HPI)</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Subjective & History (S)</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-text-secondary">History of Present Illness (HPI)</label>
+                <textarea 
+                  className="w-full h-24 p-3 border border-border rounded-md focus:border-primary outline-none resize-y"
+                  placeholder="Patient presents with..."
+                  value={hpi}
+                  onChange={(e) => setHpi(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-text-secondary">Past Medical History</label>
+                  <textarea className="w-full h-20 p-2 border border-border rounded-md focus:border-primary outline-none resize-y" value={pastMedicalHistory} onChange={e => setPastMedicalHistory(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-secondary">Family History</label>
+                  <textarea className="w-full h-20 p-2 border border-border rounded-md focus:border-primary outline-none resize-y" value={familyHistory} onChange={e => setFamilyHistory(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-secondary">Social History</label>
+                  <textarea className="w-full h-20 p-2 border border-border rounded-md focus:border-primary outline-none resize-y" value={socialHistory} onChange={e => setSocialHistory(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-secondary">Review of Systems</label>
+                  <textarea className="w-full h-20 p-2 border border-border rounded-md focus:border-primary outline-none resize-y" value={reviewOfSystems} onChange={e => setReviewOfSystems(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-text-secondary">Additional Subjective Notes</label>
+                <textarea className="w-full h-16 p-2 border border-border rounded-md focus:border-primary outline-none resize-y" value={subjectiveNotes} onChange={e => setSubjectiveNotes(e.target.value)} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Objective (O)</CardTitle></CardHeader>
             <CardContent>
               <textarea 
                 className="w-full h-32 p-3 border border-border rounded-md focus:border-primary outline-none resize-y"
-                placeholder="Patient presents with..."
-                value={hpi}
-                onChange={(e) => setHpi(e.target.value)}
+                placeholder="Physical Examination, Vitals findings..."
+                value={objectiveNotes}
+                onChange={(e) => setObjectiveNotes(e.target.value)}
               />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Physical Examination</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Assessment (A)</CardTitle></CardHeader>
             <CardContent>
               <textarea 
-                className="w-full h-32 p-3 border border-border rounded-md focus:border-primary outline-none resize-y"
-                placeholder="O/E..."
-                value={examination}
-                onChange={(e) => setExamination(e.target.value)}
+                className="w-full h-24 p-3 border border-border rounded-md focus:border-primary outline-none resize-y"
+                placeholder="Diagnostic reasoning..."
+                value={assessmentNotes}
+                onChange={(e) => setAssessmentNotes(e.target.value)}
               />
             </CardContent>
           </Card>
@@ -298,20 +411,23 @@ export default function ClinicalWorkspace() {
             <CardHeader><CardTitle>Diagnoses</CardTitle></CardHeader>
             <CardContent>
               <div className="relative mb-4">
-                <div className="flex gap-4">
-                  <input 
-                    type="text"
-                    className="flex-1 p-2 border border-border rounded-md focus:border-primary outline-none"
-                    placeholder="Search ICD-10..."
-                    value={diagnosis}
+                <div className="flex gap-2 mb-2 items-center">
+                  <Input 
+                    placeholder="Search ICD-10 Code or Description..." 
+                    value={diagnosis} 
                     onChange={(e) => searchIcd10(e.target.value)}
                   />
+                  <Button variant="secondary" onClick={suggestIcdWithAI} disabled={loading}>
+                    ✨ AI Suggest
+                  </Button>
                 </div>
+                
                 {diagnosisResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {diagnosisResults.map((d: any) => (
-                      <div key={d.id} className="p-2 hover:bg-surface cursor-pointer text-sm" onClick={() => addDiagnosis(d)}>
-                        <span className="font-semibold">{d.code}</span> - {d.description}
+                  <div className="absolute z-10 w-full bg-surface border border-border mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {diagnosisResults.map((diag, i) => (
+                      <div key={i} className="p-2 hover:bg-background-secondary cursor-pointer border-b text-sm flex justify-between" onClick={() => addDiagnosis(diag)}>
+                        <span><span className="font-bold text-primary">{diag.code}</span> - {diag.description}</span>
+                        {diag.confidence && <Badge variant="info" className="text-xs">{(diag.confidence * 100).toFixed(0)}% Match</Badge>}
                       </div>
                     ))}
                   </div>
@@ -412,12 +528,14 @@ export default function ClinicalWorkspace() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-4">
-            <Button variant="secondary" onClick={downloadPrescription}>Print Prescription PDF</Button>
-            <Button variant="primary" onClick={handleSave}>Sign & Finalize Encounter</Button>
-          </div>
+          <div className="flex justify-end gap-4 mt-8 pb-10">
+          <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
+          <Button variant="secondary" onClick={handleSaveDraft} disabled={loading}>Save Draft</Button>
+          <Button variant="primary" onClick={handleSignAndLock} disabled={loading}>
+            Sign & Lock Chart
+          </Button>
         </div>
-
+      </div>
       </div>
     </div>
   );

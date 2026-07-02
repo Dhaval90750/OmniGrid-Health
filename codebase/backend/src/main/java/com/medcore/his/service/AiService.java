@@ -112,6 +112,60 @@ public class AiService {
         return mockResp;
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> predictReadmissionRisk(int patientAge, int lengthOfStayDays, boolean isEmergency, int comorbiditiesCount) {
+        if (!useMock) {
+            try {
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("patientAge", patientAge);
+                requestBody.put("lengthOfStayDays", lengthOfStayDays);
+                requestBody.put("isEmergency", isEmergency);
+                requestBody.put("comorbiditiesCount", comorbiditiesCount);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                ResponseEntity<String> response = restTemplate.postForEntity(pythonAiUrl + "/predict/readmission", entity, String.class);
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    return objectMapper.readValue(response.getBody(), Map.class);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to call local Python AI API for Readmission, falling back to mock: {}", e.getMessage());
+            }
+        }
+        
+        Map<String, Object> mockResp = new HashMap<>();
+        mockResp.put("readmissionRiskScore", 0.25);
+        mockResp.put("riskLevel", "MODERATE");
+        return mockResp;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> suggestIcdCodes(String clinicalText) {
+        if (!useMock) {
+            try {
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("clinicalText", clinicalText);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                ResponseEntity<String> response = restTemplate.postForEntity(pythonAiUrl + "/icd-suggest", entity, String.class);
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    return objectMapper.readValue(response.getBody(), Map.class);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to call local Python AI API for ICD Suggest, falling back to mock: {}", e.getMessage());
+            }
+        }
+        
+        return Map.of("suggestions", List.of(
+            Map.of("code", "R69", "description", "Illness, unspecified", "confidence", 0.5)
+        ));
+    }
+
     private Map<String, Object> fallbackMockExtraction(String transcript) {
         Map<String, Object> response = new HashMap<>();
         

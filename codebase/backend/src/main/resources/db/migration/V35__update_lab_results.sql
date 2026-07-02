@@ -1,0 +1,3 @@
+ALTER TABLE lab_results
+    ADD COLUMN is_critical BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN delta_warning VARCHAR(255);

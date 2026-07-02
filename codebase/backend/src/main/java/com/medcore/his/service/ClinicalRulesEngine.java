@@ -17,11 +17,15 @@ public class ClinicalRulesEngine {
 
     private final PatientRepository patientRepository;
     private final AllergyRepository allergyRepository;
+    private final com.medcore.his.repository.DrugInteractionRepository interactionRepository;
 
     @Autowired
-    public ClinicalRulesEngine(PatientRepository patientRepository, AllergyRepository allergyRepository) {
+    public ClinicalRulesEngine(PatientRepository patientRepository, 
+                               AllergyRepository allergyRepository,
+                               com.medcore.his.repository.DrugInteractionRepository interactionRepository) {
         this.patientRepository = patientRepository;
         this.allergyRepository = allergyRepository;
+        this.interactionRepository = interactionRepository;
     }
 
     /**
@@ -41,7 +45,8 @@ public class ClinicalRulesEngine {
                 .map(a -> a.getAllergen().toLowerCase())
                 .collect(Collectors.toList());
 
-        for (String drug : prescribedDrugGenericNames) {
+        for (int i = 0; i < prescribedDrugGenericNames.size(); i++) {
+            String drug = prescribedDrugGenericNames.get(i);
             String lowerDrug = drug.toLowerCase();
             
             // Check direct allergy match
@@ -55,13 +60,25 @@ public class ClinicalRulesEngine {
             if (lowerDrug.contains("amoxicillin") && patientAllergens.stream().anyMatch(a -> a.contains("penicillin"))) {
                 alerts.add("WARNING: Patient has Penicillin allergy. 'Amoxicillin' may cause cross-reactivity.");
             }
+
+            // Drug-Drug interactions (DB-driven)
+            for (int j = i + 1; j < prescribedDrugGenericNames.size(); j++) {
+                String otherDrug = prescribedDrugGenericNames.get(j).toLowerCase();
+                
+                // Check both directions
+                List<com.medcore.his.domain.pharmacy.DrugInteraction> interactions = interactionRepository.findByPrimaryDrugGenericIgnoreCaseAndSecondaryDrugGenericIgnoreCase(lowerDrug, otherDrug);
+                interactions.addAll(interactionRepository.findByPrimaryDrugGenericIgnoreCaseAndSecondaryDrugGenericIgnoreCase(otherDrug, lowerDrug));
+                
+                for (com.medcore.his.domain.pharmacy.DrugInteraction interaction : interactions) {
+                    alerts.add(interaction.getSeverity() + ": " + interaction.getDescription());
+                }
+            }
         }
         
-        // Drug-Drug interactions (example rules)
-        boolean hasParacetamol = prescribedDrugGenericNames.stream().anyMatch(d -> d.toLowerCase().contains("paracetamol"));
-        boolean hasIbuprofen = prescribedDrugGenericNames.stream().anyMatch(d -> d.toLowerCase().contains("ibuprofen"));
-        if (hasParacetamol && hasIbuprofen) {
-            alerts.add("CAUTION: Concurrent use of Paracetamol and Ibuprofen may increase risk of hepatotoxicity if overdosed.");
+        // Dose Range / Therapy duplication checking
+        long paracetamolCount = prescribedDrugGenericNames.stream().filter(d -> d.toLowerCase().contains("paracetamol")).count();
+        if (paracetamolCount > 1) {
+            alerts.add("WARNING: Therapeutic duplication. Multiple formulations containing Paracetamol prescribed.");
         }
 
         return alerts;

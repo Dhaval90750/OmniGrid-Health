@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("hasAnyRole('ROLE_SUPER_ADMIN', 'ROLE_HOSPITAL_ADMIN', 'ROLE_DOCTOR', 'ROLE_RECEPTIONIST')")
 @RestController
 @RequestMapping("/api/v1/visits")
 public class VisitController {
@@ -190,9 +192,15 @@ public class VisitController {
                     note.setDoctor(doctor);
                     note.setNoteType("OPD_CONSULT");
                     note.setHistoryOfPresentIllness(payload.get("historyOfPresentIllness"));
-                    note.setPhysicalExamination(payload.get("physicalExamination"));
-                    note.setTreatmentPlan(payload.get("treatmentPlan"));
                     note.setPastMedicalHistory(payload.get("pastMedicalHistory"));
+                    note.setFamilyHistory(payload.get("familyHistory"));
+                    note.setSocialHistory(payload.get("socialHistory"));
+                    note.setReviewOfSystems(payload.get("reviewOfSystems"));
+                    note.setSubjectiveNotes(payload.get("subjectiveNotes"));
+                    note.setObjectiveNotes(payload.get("objectiveNotes"));
+                    note.setAssessmentNotes(payload.get("assessmentNotes"));
+                    note.setPlanNotes(payload.get("planNotes"));
+                    note.setTreatmentPlan(payload.get("treatmentPlan"));
                     note.setFinalized(true);
                     note.setFinalizedAt(LocalDateTime.now());
 

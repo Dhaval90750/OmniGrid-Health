@@ -37,6 +37,13 @@ export default function NewPatientRegistration() {
     emergencyContactName: "",
     emergencyContactRelation: "",
     emergencyContactPhone: "",
+    middleName: "",
+    occupation: "",
+    secondaryMobile: "",
+    abhaId: "",
+    passportNumber: "",
+    religion: "",
+    referredBy: "",
     photoBase64: ""
   });
   
@@ -132,6 +139,7 @@ export default function NewPatientRegistration() {
             <CardHeader><CardTitle>Demographics</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="First Name *" name="firstName" required value={formData.firstName} onChange={handleChange} />
+              <Input label="Middle Name" name="middleName" value={formData.middleName} onChange={handleChange} />
               <Input label="Last Name *" name="lastName" required value={formData.lastName} onChange={handleChange} />
               <Input label="Date of Birth *" type="date" name="dateOfBirth" required value={formData.dateOfBirth} onChange={handleChange} />
               
@@ -191,6 +199,11 @@ export default function NewPatientRegistration() {
               <Input label="Nationality" name="nationality" value={formData.nationality} onChange={handleChange} />
               <Input label="Primary Language" name="primaryLanguage" value={formData.primaryLanguage} onChange={handleChange} />
               <Input label="Aadhaar Number (National ID)" name="nationalId" placeholder="12-digit Aadhaar number" value={formData.nationalId} onChange={handleChange} />
+              <Input label="Passport Number" name="passportNumber" value={formData.passportNumber} onChange={handleChange} />
+              <Input label="ABHA ID" name="abhaId" placeholder="14-digit ABHA ID" value={formData.abhaId} onChange={handleChange} />
+              <Input label="Religion" name="religion" value={formData.religion} onChange={handleChange} />
+              <Input label="Occupation" name="occupation" value={formData.occupation} onChange={handleChange} />
+              <Input label="Referred By" name="referredBy" value={formData.referredBy} onChange={handleChange} />
             </CardContent>
           </Card>
 
@@ -199,6 +212,7 @@ export default function NewPatientRegistration() {
             <CardHeader><CardTitle>Contact Information</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Mobile Number *" type="tel" name="mobileNumber" required value={formData.mobileNumber} onChange={handleChange} />
+              <Input label="Secondary Mobile" name="secondaryMobile" value={formData.secondaryMobile} onChange={handleChange} />
               <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} />
               <div className="md:col-span-2">
                 <Input label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleChange} />

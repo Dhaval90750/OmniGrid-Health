@@ -1,6 +1,6 @@
-# MedCore HIS — Complete SRS vs Codebase Audit
+# MedCore HIS — Complete SRS vs Codebase Audit (File-by-File)
 
-This document presents a comprehensive, module-by-module audit comparing the requirements specified in the **System Requirements Specification (SRS)** against the actual implementation in the codebase (Database, Spring Boot Backend, and Next.js Frontend).
+This document presents a highly detailed, file-by-file audit comparing the requirements specified in the **System Requirements Specification (SRS)** against the actual implementation in the codebase.
 
 ---
 
@@ -12,96 +12,60 @@ This document presents a comprehensive, module-by-module audit comparing the req
 | **API Endpoints** | 500+ APIs | ~40 stubs/basic CRUD | **8%** |
 | **Frontend Screens** | 250+ Screens | ~24 screens (mostly mockups) | **10%** |
 | **Functional Modules** | 30+ Modules | 2 (Authentication & Patient Registration) | **7%** |
-| **Seed/Master Data** | ICD-10, Wards, Beds, Tests, Drugs | Basic seeds for users & staff only | **1%** |
 
 ---
 
-## Module-by-Module Gap Analysis
+## Detailed File-by-File Deviations
 
 ### 1. Authentication & Access Control (SRS §2)
-* **SRS Requirement:** 14 user roles, RBAC, session management, MFA, PIN/biometric login, user account registration/creation.
-* **Codebase Status:**
-  * **Database:** `users`, `roles`, `permissions`, `role_permissions`, `user_roles` exist.
-  * **Backend:** `AuthController` (`/api/v1/auth/login`) uses BCrypt and JWT. *Note: Fixed role doubling bug.*
-  * **Frontend:** Protected routes with middleware redirecting to `/login`.
-  * **What's Missing:** User Registration/Creation endpoint (no `/auth/register` exists), CRUD endpoints for user/role management, session tracking, MFA, biometric login, and 13 out of 14 default roles.
+**Key SRS Requirements:** 
+- Hybrid RBAC + ABAC model with 14 strict roles (Doctor, Nurse, Admin, etc.)
+- Break-the-glass emergency protocol
+- MFA, PIN, Biometric session support
+- Dynamic Access Control matrix
 
-### 2. Patient Registration & Profile (SRS §3.2)
-* **SRS Requirement:** Demographic capturing, photo capture, unique UHID, QR codes, emergency contact relationships.
-* **Codebase Status:**
-  * **Database:** `patients` table has fields for detailed demographics.
-  * **Backend:** `PatientService` handles registrations, auto-generates UHIDs (`MED-YYYY-XXXXXX`), and encodes QR codes.
-  * **Frontend:** Fully responsive form in `/patients/new` with state/country dropdowns, emergency contact relations, and Aadhaar inputs. Profile screen shows the live QR code.
-  * **What's Missing:** Patient photo uploads, duplicate detection algorithms, patient search/merge functionality.
+**Files Audited & Deviations:**
+- **[MODIFY] `backend/src/main/java/com/medcore/his/controller/AuthController.java`**:
+  - The `/signup` endpoint accepts almost any arbitrary role name, automatically prefixing it with `ROLE_`, instead of enforcing the strict 14 roles defined in the SRS.
+  - If no role is provided, it defaults to `ROLE_DOCTOR`.
+  - There is no logic for MFA, Biometric login, PIN login, or Break-the-glass protocols.
+  - Hardcoded session creation logic does not respect the timeout limits (e.g., 15 mins for Admin, 60 mins for Clinical).
+- **[MODIFY] `backend/src/main/java/com/medcore/his/security/SecurityConfig.java`**:
+  - Sets up JWT correctly but does not contain or integrate with a dynamic ABAC policy engine or the required Access Control Matrix.
+- **[MODIFY] `Controllers (43 files)`**:
+  - Only `PatientController`, `RiskAlertController`, `RoleController`, and `UserController` actually use the `@PreAuthorize` annotation to secure endpoints.
+  - The remaining 39 controllers (e.g., `BillingController.java`, `PharmacyController.java`, `VisitController.java`) completely lack `@PreAuthorize` method-level security, essentially bypassing the RBAC model for those modules.
 
-### 3. OPD & Visit Management (SRS §3.3)
-* **SRS Requirement:** Visit workflows (walk-in, follow-up, referral), token queues, queue display systems.
-* **Codebase Status:**
-  * **Database:** Basic `visits` table (status, chief complaint).
-  * **Backend:** `VisitController` contains stub endpoints.
-  * **Frontend:** Visited queues are simulated/hardcoded in mock dashboards.
-  * **What's Missing:** Token generation service, live queue status dashboard, doctor allocation system.
+### 2. Patient Registration & Lifecycle (SRS §3.2)
+**Key SRS Requirements:**
+- Highly detailed demographic capture including Photo uploads and Aadhaar/ABHA fields.
+- Duplicate detection via fuzzy matching.
+- Multi-format QR generation (Wristband, Slip, Digital).
 
-### 4. Admission, Discharge, and Transfer / ADT (SRS §3.4)
-* **SRS Requirement:** Bed availability checking, ward transfers, advance deposit collection, automatic bed release.
-* **Codebase Status:**
-  * **Database:** `admissions` table exists.
-  * **Backend:** Basic `AdmissionService` with simple CRUD.
-  * **Frontend:** Admissions list and new admission screens exist as static mockups.
-  * **What's Missing:** Real-time bed selection, transfer tracking logs, advance payments integration.
+**Files Audited & Deviations:**
+- **[MODIFY] `frontend/src/app/patients/new/page.tsx`**:
+  - Frontend has the `react-webcam` UI for photo capture and a Duplicate Detection Modal. However, it sends `photoBase64` which the backend ignores.
+- **[MODIFY] `backend/src/main/java/com/medcore/his/controller/PatientController.java` & `PatientRegistrationRequest.java`**:
+  - The API explicitly ignores the `photoBase64` field sent by the frontend (it is completely missing in the DTO).
+  - The QR code endpoint `/qr-pdf` strictly returns a PDF. It does not separate logic for thermal wristband printing or raw digital links.
+- **[MODIFY] `backend/src/main/java/com/medcore/his/service/PatientService.java`**:
+  - **Duplicate Detection**: Implements a strict match on mobile number or exact match on First + Last Name + DOB, missing the required "fuzzy matching" (SRS 3.2.2). The frontend handles the HTTP 409 response nicely, but the backend matching is too rigid.
+  - **UHID Format**: Generates `MED-YYYY-XXXXXX` instead of the mandated `HOS-YYYY-NNNNNNN` format.
+  - **QR Code Payload**: Encodes only `uhid`, `name`, and `dob`. It misses mandatory fields like `hospital_code` and `blood_group` specified in the QR JSON structure (SRS 3.2.3).
 
-### 5. Doctor Workflow & Clinical Notes (SRS §3.5-3.7)
-* **SRS Requirement:** HPI notes, physical examinations, SOAP templates, ICD-10 diagnosis search, AI voice dictation.
-* **Codebase Status:**
-  * **Database:** `clinical_notes` and `diagnoses` tables exist.
-  * **Backend:** No dedicated controller; no active ICD-10 search API.
-  * **Frontend:** Mock doctor dashboard and visit summary sheets.
-  * **What's Missing:** SOAP template generator, active ICD-10 lookup backend integration, voice recorder UI.
+### 3. OPD & Doctor Assessment (SRS §3.3 - §3.7)
+**Key SRS Requirements:**
+- Priority queues, live token displays.
+- Detailed clinical assessment (HPI, ROS).
+- Structured ICD-10 diagnosis entry.
+- AI Voice-to-Clinical Notes & Auto-SOAP Note generation.
 
-### 6. Laboratory Information System / LIS (SRS §4.2)
-* **SRS Requirement:** Test ordering, sample collection (barcodes), analyzer interfaces, reference ranges, authorization flow.
-* **Codebase Status:**
-  * **Database:** `lab_tests`, `lab_orders`, `lab_samples`, and `lab_results` tables exist.
-  * **Backend:** `LabService` with basic CRUD.
-  * **Frontend:** LIS dashboard mockup.
-  * **What's Missing:** Automated barcode generator/reader integration, abnormal value flags, approval workflows, reference range validations.
-
-### 7. Radiology Information System / RIS (SRS §4.3)
-* **SRS Requirement:** Modality selection, PACS/DICOM viewer integration, reporting templates (BI-RADS).
-* **Codebase Status:**
-  * **Database:** `radiology_orders`, `radiology_reports`, `radiology_templates` exist.
-  * **Backend:** `RadiologyService` with CRUD.
-  * **Frontend:** RIS report viewer mockup.
-  * **What's Missing:** Actual DICOM link or media uploader, template-based auto-fill reporting.
-
-### 8. Pharmacy Management (SRS §5.4)
-* **SRS Requirement:** Stock tracking, batch expiries, FEFO enforcement, controlled/narcotic drug registers.
-* **Codebase Status:**
-  * **Database:** `pharmacy_stock`, `stock_movements`, `dispensing_records` exist.
-  * **Backend:** `PharmacyService` with basic inventory updates.
-  * **Frontend:** Pharmacy page mockup.
-  * **What's Missing:** FEFO stock depletion validation, narcotic registry logging, auto-billing integration.
-
-### 9. Billing, Invoices, and Revenue (SRS §5.1)
-* **SRS Requirement:** OPD/IPD/Pharmacy invoicing, tariff masters, package configurations, GST/tax calculations.
-* **Codebase Status:**
-  * **Database:** `invoices`, `invoice_items`, `payments`, `ipd_bills`, `bill_items` exist.
-  * **Backend:** `BillingService` and `IpdBillingService` (basic CRUD).
-  * **Frontend:** Invoices list and details mockup.
-  * **What's Missing:** Automatic charge capturing from visits/orders, tax calculators, invoice printing, refund processing.
-
-### 10. Operations & Housekeeping (SRS §7)
-* **SRS Requirement:** Work orders, porter requests, housekeeping checklists.
-* **Codebase Status:**
-  * **Database:** `housekeeping_tasks`, `work_orders`, `transport_requests` exist.
-  * **Backend:** `OperationsService` with simple CRUD.
-  * **Frontend:** Operations checklist mockup.
-  * **What's Missing:** Live ticket assignments, SLA breach warnings, ambulance/dietary modules.
+**Files Audited & Deviations:**
+- **[MODIFY] `backend/src/main/java/com/medcore/his/controller/VisitController.java`**:
+  - **Visit Creation**: The `createVisit` endpoint is very basic. It takes a raw Map payload and extracts `chiefComplaint`, ignoring required fields like `priority`, `department`, and `referredBy`.
+  - **Token Logic**: Implements a simplistic `maxToken + 1` logic per doctor/date. There is no concept of priority queues (e.g., for Emergency/VIP patients) or live WebSocket notifications.
+  - **Clinical Notes**: The `/{id}/notes` endpoint takes free-text for HPI, Physical Exam, and Treatment Plan, but completely misses the structured ICD-10 diagnosis fields.
+  - **AI & SOAP**: There is no integration with Whisper AI or LLMs for Voice-to-Text or SOAP generation here. The data is just saved directly to the database.
 
 ---
-
-## Technical Debt & Infrastructure Gaps
-1. **Security Rules:** Many controllers have commented-out `@PreAuthorize` annotations, letting any authenticated user access all APIs.
-2. **Flyway Migrations:** Versioned DB migrations are disabled (`flyway.enabled: false`). The schema relies on manual/hibernate validation checks.
-3. **Error Handling:** Missing a global `@ControllerAdvice` handler, meaning exceptions result in raw, unstyled 500 error pages.
-4. **Pagination:** API endpoints return unbounded lists, which will degrade performance as data grows.
+*Audit is ongoing. More modules will be appended here.*

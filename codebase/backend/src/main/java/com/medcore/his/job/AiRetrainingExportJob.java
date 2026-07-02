@@ -43,7 +43,7 @@ public class AiRetrainingExportJob {
                 // Escape quotes and newlines for proper JSONL format
                 String combined = (note.getHistoryOfPresentIllness() != null ? note.getHistoryOfPresentIllness() : "") + " "
                                 + (note.getPastMedicalHistory() != null ? note.getPastMedicalHistory() : "") + " "
-                                + (note.getPhysicalExamination() != null ? note.getPhysicalExamination() : "") + " "
+                                + (note.getObjectiveNotes() != null ? note.getObjectiveNotes() : "") + " "
                                 + (note.getTreatmentPlan() != null ? note.getTreatmentPlan() : "");
                 String text = combined.replace("\"", "\\\"").replace("\n", "\\n");
                 

@@ -13,5 +13,7 @@ import java.time.LocalDateTime;
 public interface ClinicalNoteRepository extends JpaRepository<ClinicalNote, UUID> {
     List<ClinicalNote> findByVisitPatientIdOrderByCreatedAtDesc(UUID patientId);
     
+    List<ClinicalNote> findByParentNoteIdOrderByNoteVersionDesc(UUID parentNoteId);
+    
     List<ClinicalNote> findByIsFinalizedTrueAndCreatedAtGreaterThanEqual(LocalDateTime createdAt);
 }

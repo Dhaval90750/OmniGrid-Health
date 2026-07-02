@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("hasAnyRole('ROLE_SUPER_ADMIN', 'ROLE_HOSPITAL_ADMIN', 'ROLE_DOCTOR')")
 @RestController
 @RequestMapping("/api/v1")
 public class DiagnosisController {
@@ -35,7 +37,7 @@ public class DiagnosisController {
 
     @GetMapping("/icd/search")
     public ResponseEntity<List<com.medcore.his.domain.clinical.Icd10>> searchIcd10(@RequestParam String q) {
-        List<com.medcore.his.domain.clinical.Icd10> results = icd10Repository.findByCodeContainingIgnoreCaseOrDescriptionContainingIgnoreCase(q, q);
+        List<com.medcore.his.domain.clinical.Icd10> results = icd10Repository.searchByText(q);
         return ResponseEntity.ok(results);
     }
 

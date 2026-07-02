@@ -28,6 +28,18 @@ public class Drug extends BaseEntity {
     @Column(name = "is_narcotic", nullable = false)
     private Boolean isNarcotic = false;
 
+    @Column(name = "is_lasa", nullable = false)
+    private Boolean isLasa = false;
+
+    @Column(name = "schedule_category", length = 50)
+    private String scheduleCategory; // e.g., H, H1, X
+
+    @Column(name = "hsn_code", length = 50)
+    private String hsnCode;
+
+    @Column(name = "gst_percentage")
+    private java.math.BigDecimal gstPercentage;
+
     @Column(name = "reorder_level", nullable = false)
     private Integer reorderLevel = 100;
 }

@@ -15,11 +15,24 @@ public class EmergencyService {
 
     private final TriageAssessmentRepository triageAssessmentRepository;
     private final PatientRepository patientRepository;
+    private final com.medcore.his.repository.BreakTheGlassLogRepository breakGlassRepo;
 
     @Autowired
-    public EmergencyService(TriageAssessmentRepository triageAssessmentRepository, PatientRepository patientRepository) {
+    public EmergencyService(TriageAssessmentRepository triageAssessmentRepository, 
+                            PatientRepository patientRepository,
+                            com.medcore.his.repository.BreakTheGlassLogRepository breakGlassRepo) {
         this.triageAssessmentRepository = triageAssessmentRepository;
         this.patientRepository = patientRepository;
+        this.breakGlassRepo = breakGlassRepo;
+    }
+
+    public void logBreakGlass(UUID patientId, UUID userId, String reason, String ipAddress) {
+        com.medcore.his.domain.security.BreakTheGlassLog log = new com.medcore.his.domain.security.BreakTheGlassLog();
+        log.setPatientId(patientId);
+        log.setUserId(userId);
+        log.setReason(reason);
+        log.setIpAddress(ipAddress);
+        breakGlassRepo.save(log);
     }
 
     public TriageAssessment recordTriage(UUID patientId, TriageAssessment assessment) {

@@ -43,11 +43,23 @@ public class Invoice extends BaseEntity {
     @Column(name = "discount_amount", nullable = false)
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
+    @Column(name = "gst_amount", nullable = false)
+    private BigDecimal gstAmount = BigDecimal.ZERO;
+
     @Column(name = "net_amount", nullable = false)
     private BigDecimal netAmount = BigDecimal.ZERO;
 
+    @Column(name = "advance_applied", nullable = false)
+    private BigDecimal advanceApplied = BigDecimal.ZERO;
+
+    @Column(name = "insurance_coverage", nullable = false)
+    private BigDecimal insuranceCoverage = BigDecimal.ZERO;
+
     @Column(name = "amount_paid", nullable = false)
     private BigDecimal amountPaid = BigDecimal.ZERO;
+
+    @Column(name = "balance_due", nullable = false)
+    private BigDecimal balanceDue = BigDecimal.ZERO;
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;

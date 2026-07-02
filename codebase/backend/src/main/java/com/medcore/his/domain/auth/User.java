@@ -42,6 +42,12 @@ public class User extends BaseEntity {
     @Column(name = "mfa_secret", length = 255)
     private String mfaSecret;
 
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 

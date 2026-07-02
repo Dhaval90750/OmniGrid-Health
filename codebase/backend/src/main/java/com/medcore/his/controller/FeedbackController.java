@@ -7,6 +7,7 @@ import com.medcore.his.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("isAuthenticated()")
 @RestController
 @RequestMapping("/api/v1/feedback")
 public class FeedbackController {

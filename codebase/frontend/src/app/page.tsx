@@ -130,7 +130,7 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="col-span-2">
-            <CardHeader><CardTitle>Today's Appointments</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Today&apos;s Appointments</CardTitle></CardHeader>
             <CardContent>
               <div className="text-center p-8 text-text-secondary border-2 border-dashed rounded-lg">
                 No upcoming appointments scheduled for today.

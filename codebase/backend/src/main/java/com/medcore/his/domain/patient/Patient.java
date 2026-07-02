@@ -83,4 +83,28 @@ public class Patient extends BaseEntity {
 
     @Column(name = "abha_address", length = 100)
     private String abhaAddress;
+
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
+    @Column(length = 100)
+    private String occupation;
+
+    @Column(name = "secondary_mobile", length = 20)
+    private String secondaryMobile;
+
+    @Column(name = "abha_id", length = 50)
+    private String abhaId;
+
+    @Column(name = "passport_number", length = 50)
+    private String passportNumber;
+
+    @Column(length = 50)
+    private String religion;
+
+    @Column(name = "referred_by", length = 150)
+    private String referredBy;
+
+    @Column(columnDefinition = "TEXT")
+    private String photo;
 }

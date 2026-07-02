@@ -281,6 +281,45 @@ fun MedCoreAppContent(sessionManager: SessionManager) {
         }
 
         // Add more routes as we implement screens
+        composable(NavRoutes.SoapNoteEditor.route) {
+            SoapNoteEditorScreen(
+                sessionManager = sessionManager,
+                onBack = { navController.popBackStack() },
+                onSaveSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.OpdConsultation.route) {
+            OpdConsultationScreen(
+                sessionManager = sessionManager,
+                onNavigateToAiScribe = { navController.navigate(NavRoutes.AiScribe.route) },
+                onNavigateToSoapEditor = { navController.navigate(NavRoutes.SoapNoteEditor.route) },
+                onNavigateToPrescription = { navController.navigate(NavRoutes.PrescriptionWriter.route) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.MyIpdPatients.route) {
+            MyIpdPatientsScreen(
+                sessionManager = sessionManager,
+                onBack = { navController.popBackStack() },
+                onNavigateToPatient = { navController.navigate(NavRoutes.PatientSummary.route) }
+            )
+        }
+
+        composable(NavRoutes.ErDashboard.route) {
+            ErDashboardScreen(
+                sessionManager = sessionManager,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.VoiceRecording.route) {
+            VoiceRecordingScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(NavRoutes.AiScribe.route) {
             AiScribeScreen(
                 apiUrl = "https://medcore-his-backend-production.up.railway.app/api/v1",

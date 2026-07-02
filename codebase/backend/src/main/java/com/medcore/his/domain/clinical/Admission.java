@@ -39,6 +39,27 @@ public class Admission extends BaseEntity {
     @Column(name = "admission_reason", nullable = false, columnDefinition = "TEXT")
     private String admissionReason;
 
+    @Column(name = "admission_type", length = 50)
+    private String admissionType; // Emergency, Elective, Transfer
+
+    @Column(name = "room_type", length = 50)
+    private String roomType;
+
+    @Column(length = 100)
+    private String insurance;
+
+    @Column(name = "pre_auth_number", length = 50)
+    private String preAuthNumber;
+
+    @Column(name = "consent_for_treatment")
+    private Boolean consentForTreatment = false;
+
+    @Column(name = "mlc_flag")
+    private Boolean mlcFlag = false;
+
+    @Column(name = "provisional_diagnosis", length = 255)
+    private String provisionalDiagnosis;
+
     @Column(name = "admission_date", nullable = false)
     private LocalDateTime admissionDate = LocalDateTime.now();
 

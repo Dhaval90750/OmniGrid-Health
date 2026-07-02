@@ -5,10 +5,12 @@ import com.medcore.his.domain.clinical.TelemedicineRoom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Map;
 
 @CrossOrigin(originPatterns = "*", maxAge = 3600)
+@PreAuthorize("isAuthenticated()")
 @RestController
 @RequestMapping("/api/v1/telemedicine")
 public class TelemedicineController {

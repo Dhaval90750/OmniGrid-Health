@@ -53,24 +53,51 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        
+        User user = userRepository.findByUsername(loginRequest.getUsername()).orElse(null);
+        if (user != null) {
+            if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(java.time.LocalDateTime.now())) {
+                return ResponseEntity.status(403).body(Map.of("message", "Account locked. Try again later."));
+            }
+        }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getUsername(), // mapping email placeholder for now
-                roles,
-                userDetails.getPermissions()));
+            if (user != null) {
+                user.setFailedLoginAttempts(0);
+                user.setLockedUntil(null);
+                user.setLastLoginAt(java.time.LocalDateTime.now());
+                userRepository.save(user);
+            }
+
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getUsername(), // mapping email placeholder for now
+                    roles,
+                    userDetails.getPermissions()));
+                    
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            if (user != null) {
+                int attempts = user.getFailedLoginAttempts() + 1;
+                user.setFailedLoginAttempts(attempts);
+                if (attempts >= 5) {
+                    user.setLockedUntil(java.time.LocalDateTime.now().plusMinutes(15));
+                }
+                userRepository.save(user);
+            }
+            return ResponseEntity.status(401).body(Map.of("message", "Error: Unauthorized"));
+        }
     }
 
     @PostMapping("/signup")
@@ -99,32 +126,28 @@ public class AuthController {
         Set<Role> roles = new HashSet<>();
 
         if (strRole == null || strRole.isEmpty()) {
-            Role userRole = roleRepository.findByName("ROLE_DOCTOR")
-                    .orElseGet(() -> {
-                        Role role = new Role();
-                        role.setName("ROLE_DOCTOR");
-                        role.setDescription("Doctor Role");
-                        return roleRepository.save(role);
-                    });
-            roles.add(userRole);
-        } else {
-            String roleName = strRole.toUpperCase();
-            if (!roleName.startsWith("ROLE_")) {
-                roleName = "ROLE_" + roleName;
-            }
-            if (roleName.equals("ROLE_ADMIN")) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Error: Registration of administrative roles is not permitted."));
-            }
-            final String finalRoleName = roleName;
-            Role userRole = roleRepository.findByName(finalRoleName)
-                    .orElseGet(() -> {
-                        Role role = new Role();
-                        role.setName(finalRoleName);
-                        role.setDescription(finalRoleName.substring(5) + " Role");
-                        return roleRepository.save(role);
-                    });
-            roles.add(userRole);
+            return ResponseEntity.badRequest().body(Map.of("message", "Error: Role must be specified."));
         }
+
+        String roleName = strRole.toUpperCase();
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;
+        }
+
+        Set<String> allowedRoles = Set.of(
+                "ROLE_SUPER_ADMIN", "ROLE_HOSPITAL_ADMIN", "ROLE_DOCTOR", "ROLE_NURSE",
+                "ROLE_LAB_TECH", "ROLE_PATHOLOGIST", "ROLE_RADIOLOGIST", "ROLE_PHARMACIST",
+                "ROLE_RECEPTIONIST", "ROLE_BILLING_EXEC", "ROLE_INVENTORY_MGR",
+                "ROLE_OPERATIONS_MGR", "ROLE_DIETITIAN", "ROLE_MANAGEMENT"
+        );
+
+        if (!allowedRoles.contains(roleName)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Error: Invalid role provided."));
+        }
+
+        Role userRole = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found in database. Please run migrations."));
+        roles.add(userRole);
 
         user.setRoles(roles);
         User savedUser = userRepository.save(user);
@@ -149,5 +172,38 @@ public class AuthController {
         staffProfileRepository.save(profile);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully!"));
+    }
+
+    @Autowired
+    com.medcore.his.repository.EmergencyAccessLogRepository emergencyAccessLogRepository;
+
+    @PostMapping("/emergency-access")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> requestEmergencyAccess(
+            @Valid @RequestBody com.medcore.his.dto.EmergencyAccessRequest request,
+            jakarta.servlet.http.HttpServletRequest httpServletRequest) {
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        com.medcore.his.domain.auth.EmergencyAccessLog log = new com.medcore.his.domain.auth.EmergencyAccessLog();
+        log.setUserId(userDetails.getId());
+        log.setPatientId(request.getPatientId());
+        log.setJustificationType(request.getJustificationType());
+        log.setJustificationText(request.getJustificationText());
+        log.setAccessGrantedAt(java.time.LocalDateTime.now());
+        log.setAccessExpiresAt(java.time.LocalDateTime.now().plusMinutes(60));
+        log.setIpAddress(httpServletRequest.getRemoteAddr());
+
+        emergencyAccessLogRepository.save(log);
+
+        // Generate a special 60-minute JWT token with emergency flag (in a real system, claims would be updated)
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Emergency access granted for 60 minutes.",
+            "token", jwt,
+            "expiresAt", log.getAccessExpiresAt()
+        ));
     }
 }

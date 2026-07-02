@@ -59,6 +59,17 @@ public class PatientController {
         return ResponseEntity.ok(patientService.searchPatients(q));
     }
 
+    @GetMapping("/advanced-search")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('NURSE') or hasRole('RECEPTIONIST')")
+    public ResponseEntity<List<PatientResponse>> advancedSearchPatients(
+            @RequestParam(required = false) String uhid,
+            @RequestParam(required = false) String mobileNumber,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String nationalId) {
+        return ResponseEntity.ok(patientService.advancedSearchPatients(uhid, mobileNumber, firstName, lastName, nationalId));
+    }
+
     @GetMapping("/{id}/qr-pdf")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('NURSE') or hasRole('RECEPTIONIST')")
     public ResponseEntity<byte[]> getPatientQrPdf(@PathVariable UUID id) {
@@ -67,7 +78,12 @@ public class PatientController {
             return ResponseEntity.notFound().build();
         }
         
-        String qrJson = "{\"uhid\":\"" + patient.getUhid() + "\",\"name\":\"" + patient.getFirstName() + " " + patient.getLastName() + "\"}";
+        int checksum = patient.getUhid().length() + (patient.getFirstName() + patient.getLastName()).length();
+        String bloodGroup = patient.getBloodGroup() != null ? patient.getBloodGroup() : "Unknown";
+        String qrJson = String.format("{\"uhid\":\"%s\",\"hospital_code\":\"MEDCORE-01\",\"name\":\"%s %s\",\"dob\":\"%s\",\"blood_group\":\"%s\",\"allergies_flag\":\"false\",\"checksum\":\"%s\"}",
+                patient.getUhid(), patient.getFirstName(), patient.getLastName(),
+                patient.getDateOfBirth().toString(), bloodGroup, checksum);
+        
         byte[] qrBytes = qrCodeService.generateQrCodeImage(qrJson, 150, 150);
         
         byte[] pdfBytes = pdfGenerationService.generatePatientQrCardPdf(patient, qrBytes);
